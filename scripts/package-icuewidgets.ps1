@@ -268,7 +268,7 @@ foreach ($widget in $widgets) {
   }
 
   $manifest = [ordered]@{
-    author = "stealthsrc"
+    author = "inerthel-agi"
     id = $widget.id
     name = $widget.name
     description = $widget.desc
