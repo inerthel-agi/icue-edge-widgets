@@ -1,0 +1,15 @@
+:root { --x-accent: #e8c477; }
+#widget { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: var(--x-gap); }
+#place { flex: 1; margin: 0; }
+#condition { max-width: 45%; }
+.hero { min-height: 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: calc(var(--x-gap) * 2); }
+#icon { color: var(--x-accent); font-size: clamp(28px, calc(var(--layout-unit) * 8), 56px); font-weight: 600; letter-spacing: 0.08em; }
+h1 { margin: 0; min-width: 0; font-size: clamp(86px, calc(var(--layout-unit) * 36), 230px); font-weight: 600; line-height: 1; letter-spacing: -0.06em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+h1 small { margin-left: 12px; font-size: 0.24em; color: var(--x-muted); letter-spacing: 0; }
+.metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+article { padding: 12px 0 0; display: flex; flex-direction: column; gap: 6px; }
+b { font-size: clamp(26px, calc(var(--layout-unit) * 6), 46px); font-weight: 600; }
+@media (max-aspect-ratio: 1/1) {
+    .hero { flex-direction: column; gap: 12px; }
+    .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

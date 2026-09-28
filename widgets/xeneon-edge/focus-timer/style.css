@@ -1,0 +1,71 @@
+:root { --x-accent: #e8b68d; }
+body[data-mode="break"] { --x-accent: #a8d5ba; }
+body[data-mode="long"] { --x-accent: #c7c9aa; }
+#widget {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(160px, 0.7fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--x-gap);
+}
+header { grid-column: 1 / -1; }
+header > div { flex: 1; min-width: 0; }
+#modeBadge { color: var(--x-accent); text-transform: uppercase; letter-spacing: 0.08em; }
+.stage {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    container-type: size;
+}
+.ring-wrap {
+    --ring-size: min(94cqw, 94cqh, 440px);
+    position: relative;
+    width: var(--ring-size);
+    aspect-ratio: 1;
+}
+.ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--x-line); stroke-width: 2; }
+.ring-fill {
+    fill: none;
+    stroke: var(--x-accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 326.726;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.25s linear;
+}
+.ring-center {
+    position: absolute;
+    inset: 10%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+}
+.ring-center b { font-size: calc(var(--ring-size) * 0.25); font-weight: 600; letter-spacing: -0.05em; }
+.ring-center small { font-size: clamp(18px, calc(var(--ring-size) * 0.065), 24px); }
+.cycle-dots { display: flex; gap: 8px; }
+.cd { width: 8px; height: 8px; border: 1px solid var(--x-muted); border-radius: 50%; }
+.cd.done, .cd.active { background: var(--x-accent); border-color: var(--x-accent); }
+.cd.active { outline: 1px solid var(--x-accent); outline-offset: 3px; }
+.controls { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.ctrl {
+    min-height: var(--x-touch-size);
+    font-size: var(--x-control-size);
+    padding: 12px 20px;
+    border: 1px solid var(--x-line);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--x-text);
+    font-weight: 600;
+    cursor: pointer;
+}
+.ctrl.primary { background: var(--x-accent); color: #141a16; border-color: var(--x-accent); }
+.ctrl:hover { border-color: var(--x-accent); }
+@media (max-aspect-ratio: 1/1) {
+    #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+    .controls { flex-direction: row; }
+    .ctrl { flex: 1; }
+}

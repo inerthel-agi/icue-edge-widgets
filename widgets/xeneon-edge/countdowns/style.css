@@ -1,0 +1,18 @@
+:root { --x-accent: #e8c477; }
+#widget { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: var(--x-gap); }
+header { grid-column: 1 / -1; }
+header > div { flex: 1; min-width: 0; }
+.hero { border: 0; display: flex; flex-direction: column; justify-content: center; padding-right: var(--x-gap); }
+.hero h2 { margin: 12px 0; font-size: clamp(76px, calc(var(--layout-unit) * 32), 200px); font-weight: 600; line-height: 1; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hero h2 small { margin-left: 12px; color: var(--x-muted); font-size: 0.17em; letter-spacing: 0; }
+#nextStatus { margin: 0; color: var(--x-muted); font-size: var(--x-label-size); }
+.cards { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); }
+.count-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: center; gap: 4px 12px; padding-top: 8px; }
+.count-card .x-kicker { align-self: end; margin: 0; }
+.count-card b { grid-column: 2; grid-row: 1; font-size: clamp(30px, calc(var(--layout-unit) * 8), 56px); font-weight: 600; }
+.count-card small { grid-column: 2; grid-row: 2; justify-self: end; }
+.count-card .date { grid-column: 1; grid-row: 2; color: var(--x-muted); font-size: var(--x-label-size); }
+@media (max-aspect-ratio: 1/1) {
+    #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(240px, 35%); }
+    .hero { align-items: center; text-align: center; padding: 0; }
+}

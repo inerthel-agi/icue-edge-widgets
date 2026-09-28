@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://geocoding-api.open-meteo.com https://api.open-meteo.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Daily Brief</title>
+    <meta name="x-icue-property" content="briefCity" data-label="tr('City')" data-type="textfield"
+        data-default="'Paris'" />
+    <meta name="x-icue-property" content="briefUnits" data-label="tr('Units')" data-type="tab-buttons"
+        data-default="'celsius'" data-values="[{'key':'celsius','value':'Celsius'},{'key':'fahrenheit','value':'Fahrenheit'}]" />
+    <meta name="x-icue-property" content="briefFormat" data-label="tr('Format')" data-type="tab-buttons"
+        data-default="'24h'" data-values="[{'key':'24h','value':'24h'},{'key':'12h','value':'12h'}]" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Daily Brief')", "properties": ["briefCity", "briefUnits", "briefFormat"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget">
+        <header class="x-top">
+            <div class="x-stack">
+                <p id="dayName" class="x-kicker">Today</p>
+                <h1 id="dateLine" class="x-title">Loading</h1>
+            </div>
+            <span id="clock" class="x-badge">--:--</span>
+        </header>
+
+        <section class="brief-main">
+            <div class="weather-card x-card">
+                <span id="weatherIcon" class="weather-icon">--</span>
+                <div class="x-stack">
+                    <p id="place" class="x-kicker x-truncate">Weather</p>
+                    <h2 class="temp-line"><span id="temp">--</span><small id="unit">°C</small></h2>
+                    <p id="condition" class="x-clamp-2">Loading weather</p>
+                </div>
+            </div>
+            <p id="note" class="daily-note x-clamp-2">Plan the day, then keep it simple.</p>
+        </section>
+
+        <section class="metrics x-grid">
+            <article class="x-card"><b id="sunrise" class="x-value">--</b><small class="x-label">Sunrise</small></article>
+            <article class="x-card"><b id="sunset" class="x-value">--</b><small class="x-label">Sunset</small></article>
+            <article class="x-card"><b id="wind" class="x-value">--</b><small class="x-label">Wind</small></article>
+            <article class="x-card"><b id="rain" class="x-value">--</b><small class="x-label">Rain</small></article>
+        </section>
+
+        <p id="dataStatus" class="x-status">Loading · No data yet</p>
+        <section class="x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">City Missing</strong>
+            <span id="overlaySub">Set a city in iCUE settings.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

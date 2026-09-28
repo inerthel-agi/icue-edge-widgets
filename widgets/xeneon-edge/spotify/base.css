@@ -1,0 +1,209 @@
+/* ═══════════════════════════════════════════════════════════════
+   XENEON EDGE WIDGET SYSTEM — Design System v2.0
+   Corsair Xeneon Edge Secondary Display (12.7")
+
+   USAGE
+   ─────
+   <link rel="stylesheet" href="../xeneon-edge.css" />
+   <link rel="stylesheet" href="./style.css" />
+   <script src="../size-loader.js"></script>   ← in <head>
+
+   SIZES via URL param  ?size=m | ?size=l (default) | ?size=xl
+   ─────────────────────────────────────────────────────────────
+   M   300 × 200 px   compact, single-metric, digital display
+   L   400 × 280 px   standard widget with ring   (DEFAULT)
+   XL  560 × 380 px   full-featured, stats row, large ring
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+}
+
+/* ── Design Tokens — Dark (default / AMOLED) ────────────────── */
+:root,
+:root[data-theme="dark"] {
+  /* Backgrounds */
+  --bg:           #000000;
+  --surface:      rgba(255, 255, 255, 0.04);
+  --surface-h:    rgba(255, 255, 255, 0.07);
+
+  /* Borders */
+  --border:       rgba(255, 255, 255, 0.08);
+  --border-h:     rgba(255, 255, 255, 0.18);
+
+  /* Text */
+  --text-1:       #ffffff;
+  --text-2:       rgba(255, 255, 255, 0.60);
+  --text-3:       rgba(255, 255, 255, 0.35);
+
+  /* Corsair Cyan — interactive & active states */
+  --accent:       #00c8ff;
+  --accent-d:     rgba(0, 200, 255, 0.12);
+  --accent-b:     rgba(0, 200, 255, 0.28);
+  --accent-glow:  rgba(0, 200, 255, 0.22);
+
+  /* Gold — KPI digits & key values */
+  --gold:         #f9ca24;
+  --gold-d:       rgba(249, 202, 36, 0.14);
+
+  /* Break / Teal */
+  --break-c:      #4ecdc4;
+  --break-d:      rgba(78, 205, 196, 0.12);
+  --break-b:      rgba(78, 205, 196, 0.28);
+
+  /* Semantic */
+  --green:        #34d399;
+  --red:          #ff6b6b;
+
+  /* Overlays */
+  --overlay-2:    rgba(255, 255, 255, 0.025);
+  --overlay-5:    rgba(255, 255, 255, 0.05);
+  --overlay-8:    rgba(255, 255, 255, 0.08);
+  --overlay-10:   rgba(255, 255, 255, 0.10);
+  --overlay-15:   rgba(255, 255, 255, 0.15);
+
+  /* Misc */
+  --toast-bg:     #141414;
+  --tr:           0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --tr-b:         0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --font-h:       'Space Grotesk', 'Inter', sans-serif;
+  --font-b:       'IBM Plex Sans', 'Inter', sans-serif;
+  --font-m:       'JetBrains Mono', monospace;
+}
+
+/* ── Design Tokens — Light ──────────────────────────────────── */
+:root[data-theme="light"] {
+  --bg:           #efefef;
+  --surface:      #ffffff;
+  --surface-h:    #f5f5f7;
+  --border:       rgba(0, 0, 0, 0.09);
+  --border-h:     rgba(0, 0, 0, 0.18);
+  --text-1:       #080810;
+  --text-2:       rgba(8, 8, 16, 0.56);
+  --text-3:       rgba(8, 8, 16, 0.36);
+
+  --accent:       #0099cc;
+  --accent-d:     rgba(0, 153, 204, 0.10);
+  --accent-b:     rgba(0, 153, 204, 0.22);
+  --accent-glow:  rgba(0, 153, 204, 0.16);
+
+  --gold:         #b8860b;
+  --gold-d:       rgba(184, 134, 11, 0.10);
+
+  --break-c:      #0d9488;
+  --break-d:      rgba(13, 148, 136, 0.10);
+  --break-b:      rgba(13, 148, 136, 0.22);
+
+  --green:        #059669;
+  --red:          #dc2626;
+
+  --overlay-2:    rgba(0, 0, 0, 0.025);
+  --overlay-5:    rgba(0, 0, 0, 0.05);
+  --overlay-8:    rgba(0, 0, 0, 0.08);
+  --overlay-10:   rgba(0, 0, 0, 0.10);
+  --overlay-15:   rgba(0, 0, 0, 0.15);
+
+  --toast-bg:     #ffffff;
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
+html,
+body {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-b);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scanline grid overlay — subtle CRT texture */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent      0px,
+    transparent      3px,
+    rgba(255, 255, 255, 0.014) 3px,
+    rgba(255, 255, 255, 0.014) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Widget Container ───────────────────────────────────────── */
+.widget {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color var(--tr),
+    box-shadow   var(--tr);
+}
+
+/* Accent bar — top edge, visible when running */
+.widget::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent) 60%,
+    transparent   100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+/* ── Toast ──────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%) translateY(14px);
+  background: var(--toast-bg);
+  border: 1px solid var(--border-h);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-b);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-1);
+  opacity: 0;
+  transition: all 0.3s var(--tr-b);
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

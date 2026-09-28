@@ -6,6 +6,31 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Changed - 1.2.1 XENEON EDGE readability
+- Increase dashboard labels, status text, primary values, and font weight for viewing at a distance.
+- Enlarge primary touch controls to at least 60 pixels and rearrange compact dashboard content.
+- Place the ISS map controls in a separate toolbar and constrain larger pass popups to the map viewport.
+- Verify minimum text/control sizes and three-digit weather values across dashboard layouts.
+
+### Added - 1.2.0 usability
+- Show data age and scheduled retries without replacing the last weather or commit details.
+- Keep the Daily Brief clock visible during weather errors and explain invalid World Clock zones.
+- Add optional manual cooling-sensor selection while retaining automatic selection by default.
+- Support ISS pass estimates by touch, mouse, or a keyboard-accessible map-center button.
+- Select the first nearby estimated pass, reject stale positions, and label the orbital model's limitations.
+- Pause map following during manual navigation and expose the follow state to assistive technology.
+
+### Changed - 1.1.1 local package preparation
+- Reworked the ten widget layouts and retained existing widget IDs and settings.
+- Fixed timer persistence, calendar-day countdowns, weather error handling, habit progress and keyboard focus, and paginated GitHub counts.
+- Isolated saved data by iCUE instance while retaining legacy records.
+- Added request cancellation, timeouts, retry backoff, resume handling, and native provider reconnection.
+- Replaced key-protected CARTO tiles with OpenStreetMap for ISS dark/day modes, retaining satellite mode and visible attribution.
+- Centralized package versions in `VERSION` and declared iCUE 5.47 as the minimum application version.
+- Added staged package verification, distribution backups, failed-promotion rollback, and a packaging lock.
+- Added logic, browser, and packaging-failure checks; replaced nonexistent pnpm instructions with verified commands.
+
+
 ### Added - Widget polish layer
 - `widget-polish.css`: shared Huashu design finish layer for active widgets, with compact icon-only headers, tighter controls, restrained 8px surfaces, improved borders, focus states, and less title-heavy UI.
 - `scripts/package-icuewidgets.ps1`: validates and builds active widgets into `dist/icuewidgets/*.icuewidget`.

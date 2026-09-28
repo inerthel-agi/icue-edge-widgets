@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>GitHub Repo Monitor</title>
+    <meta name="x-icue-property" content="githubRepo" data-label="tr('Repository')" data-type="textfield"
+        data-default="'inerthel-agi/icue-edge-widgets'" />
+    <meta name="x-icue-property" content="githubToken" data-label="tr('GitHub Token')" data-type="textfield"
+        data-default="''" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('GitHub')", "properties": ["githubRepo", "githubToken"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget">
+        <header class="x-top">
+            <div class="x-stack">
+                <p class="x-kicker">GitHub</p>
+                <h1 id="repo" class="x-title">Repo Monitor</h1>
+            </div>
+            <span id="branch" class="x-badge">main</span>
+        </header>
+        <section class="stats x-grid">
+            <article class="x-card"><b id="stars" class="x-value">--</b><small class="x-label">Stars</small></article>
+            <article class="x-card"><b id="issues" class="x-value">--</b><small class="x-label">Issues</small></article>
+            <article class="x-card"><b id="prs" class="x-value">--</b><small class="x-label">Pulls</small></article>
+            <article class="x-card"><b id="pushed" class="x-value">--</b><small class="x-label">Pushed</small></article>
+        </section>
+        <section class="commit x-card">
+            <span id="sha" class="x-badge">------</span>
+            <strong id="message" class="x-clamp-2">Latest commit unavailable</strong>
+        </section>
+        <p id="dataStatus" class="x-status">Loading · No data yet</p>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">Repository Missing</strong>
+            <span id="overlaySub">Set owner/repo in iCUE settings.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" class="legible">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' http://127.0.0.1:47821; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <script src="./theme-loader.js"></script>
+    <title>Spotify</title>
+    <link rel="stylesheet" href="./base.css" />
+    <link rel="stylesheet" href="./widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-polish.css" />
+</head>
+
+<body data-endpoint="http://127.0.0.1:47821">
+    <!-- Dynamic blurred background -->
+    <div id="bgBlur"><img id="bgImg" alt="" aria-hidden="true" /></div>
+
+    <!-- Main widget card -->
+    <div id="widget">
+        <div id="content">
+            <!-- Left column: album + info + controls -->
+            <div class="col-left" id="colLeft">
+                <div class="col-left-inner" id="colLeftInner">
+                    <div class="album-wrap" id="albumWrap">
+                        <div class="no-art" id="noArt">♪</div>
+                        <img id="albumImg" alt="Album art" class="ui-hidden" />
+                        <div class="vinyl-ring" id="vinylRing"></div>
+                    </div>
+                    <div class="track-info" id="trackInfo">
+                        <div class="track-name" id="trackName">—</div>
+                        <div class="track-artist" id="trackArtist">—</div>
+                        <div class="track-album" id="trackAlbum"></div>
+                    </div>
+                </div>
+
+                <div class="progress-wrap" id="progressWrap">
+                    <div class="progress-bar" id="progressBar" role="slider" aria-label="Track progress">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-times">
+                        <span id="timeElapsed">0:00</span>
+                        <span id="timeTotal">0:00</span>
+                    </div>
+                </div>
+
+                <div class="controls" id="controls">
+                    <button class="ctrl-btn ctrl-sm" id="shuffleBtn" aria-label="Shuffle">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                            <line x1="15" y1="15" x2="21" y2="21" />
+                        </svg>
+                    </button>
+                    <button class="ctrl-btn" id="prevBtn" aria-label="Previous">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="19 20 9 12 19 4 19 20" />
+                            <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <button class="ctrl-btn play" id="playBtn" aria-label="Play/Pause">
+                        <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                    </button>
+                    <button class="ctrl-btn" id="nextBtn" aria-label="Next">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 4 15 12 5 20 5 4" />
+                            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <button class="ctrl-btn ctrl-sm" id="repeatBtn" aria-label="Repeat" data-mode="off">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="17 1 21 5 17 9" />
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                            <polyline points="7 23 3 19 7 15" />
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Volume -->
+                <div class="volume-row" id="volumeRow">
+                    <button class="ctrl-btn ctrl-sm volume-btn" id="volumeBtn" aria-label="Mute/Unmute">
+                        <svg id="volumeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                        </svg>
+                    </button>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="100" aria-label="Volume" />
+                    <span class="sp-logo" role="img" aria-label="Spotify">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" /></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Right column: lyrics -->
+            <div class="col-right" id="colRight">
+                <div id="lyricsScroll">
+                    <div class="no-lyrics" id="noLyrics">
+                        <div class="icon">MUSIC</div>
+                        <div>Play a song to see lyrics</div>
+                    </div>
+                </div>
+                <div class="lyrics-ctrl-bar" id="lyricsCtrlBar">
+                    <button class="lyrics-ctrl-btn active" id="lyricsAutoBtn" title="Auto-scroll">AUTO</button>
+                    <button class="lyrics-ctrl-btn" id="lyricsScrollUp" aria-label="Scroll up">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round">
+                            <polyline points="18 15 12 9 6 15" />
+                        </svg>
+                    </button>
+                    <button class="lyrics-ctrl-btn" id="lyricsScrollDown" aria-label="Scroll down">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- State overlay (not connected / nothing playing) -->
+        <div id="stateOverlay" class="hidden">
+            <div class="state-icon" id="stateIcon">SPOTIFY</div>
+            <div class="state-title" id="stateTitle"></div>
+            <div class="state-sub" id="stateSub"></div>
+            <button class="state-btn ui-hidden" id="stateAction"></button>
+        </div>
+
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">DARK</button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./widget.js"></script>
+</body>
+
+</html>

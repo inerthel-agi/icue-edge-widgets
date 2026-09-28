@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' file:; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' file: data: blob:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Windows Media Pump</title>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body data-endpoint="http://127.0.0.1:47821">
+    <main id="widget" data-view="empty">
+        <div class="art">
+            <div class="ph" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.2l12-2.2v12.5a3 3 0 1 1-2-2.83V6.4l-8 1.47z" /></svg>
+            </div>
+            <img id="art" alt="" hidden />
+        </div>
+        <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="track" cx="50" cy="50" r="48.5" />
+            <circle class="prog" id="prog" cx="50" cy="50" r="48.5" />
+        </svg>
+        <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+        <section class="info">
+            <div class="chip" id="chip"><i aria-hidden="true"></i><span id="chipText"></span></div>
+            <div class="title" id="title"></div>
+            <div class="artist" id="artist"></div>
+            <div class="times" id="times"></div>
+        </section>
+        <section class="empty" id="empty" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.2l12-2.2v12.5a3 3 0 1 1-2-2.83V6.4l-8 1.47z" /></svg>
+            <b id="emptyTitle"></b>
+            <span id="emptySub"></span>
+        </section>
+    </main>
+
+    <script src="./app.js"></script>
+</body>
+
+</html>

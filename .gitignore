@@ -1,5 +1,8 @@
 .tools/
 .icuewidget-build/
 icuewidget-build/
+previews/
+drafts/
+.claude/
 .wrangler/
 **/.wrangler/
