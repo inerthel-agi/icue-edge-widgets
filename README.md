@@ -38,6 +38,22 @@ In iCUE, open the device's Widgets section, choose the add/import control, and s
 
 Each package name has the `.icuewidget` extension. The widget UI is in English.
 
+Screenshots: usage figures, the sensor reading, countdowns and habits are demo values. Weather, GitHub and ISS data are live at capture time. The music is real tracks with their album artwork.
+
+| | |
+| --- | --- |
+| <img src="docs/screenshots/claude-usage.png" width="400" alt="Claude Usage, 840 × 696" /><br>Claude Usage, 840 × 696 | <img src="docs/screenshots/codex-usage.png" width="400" alt="Codex Usage, 840 × 696" /><br>Codex Usage, 840 × 696 |
+| <img src="docs/screenshots/spotify.png" width="400" alt="Spotify, 840 × 696" /><br>Spotify, 840 × 696 | <img src="docs/screenshots/now-playing.png" width="400" alt="Now Playing, 840 × 696" /><br>Now Playing, 840 × 696 |
+| <img src="docs/screenshots/windows-media-pump.png" width="400" alt="Windows Media Pump, pump LCD 480 × 480" /><br>Windows Media Pump, pump LCD 480 × 480 | <img src="docs/screenshots/cooling-sensor-pump.png" width="400" alt="Cooling Sensor Pump, pump LCD 480 × 480" /><br>Cooling Sensor Pump, pump LCD 480 × 480 |
+| <img src="docs/screenshots/weather-now.png" width="400" alt="Weather Now, 840 × 344" /><br>Weather Now, 840 × 344 | <img src="docs/screenshots/daily-brief.png" width="400" alt="Daily Brief, 840 × 344" /><br>Daily Brief, 840 × 344 |
+| <img src="docs/screenshots/github-repo-monitor.png" width="400" alt="GitHub Repo Monitor, 840 × 344" /><br>GitHub Repo Monitor, 840 × 344 | <img src="docs/screenshots/world-clock.png" width="400" alt="World Clock, 840 × 344" /><br>World Clock, 840 × 344 |
+| <img src="docs/screenshots/focus-timer.png" width="400" alt="Focus Timer, 840 × 344" /><br>Focus Timer, 840 × 344 | <img src="docs/screenshots/countdowns.png" width="400" alt="Countdowns, 840 × 344" /><br>Countdowns, 840 × 344 |
+| <img src="docs/screenshots/habit-rings.png" width="400" alt="Habit Rings, 840 × 344" /><br>Habit Rings, 840 × 344 | <img src="docs/screenshots/iss-horizon.png" width="400" alt="ISS Horizon, 1688 × 696" /><br>ISS Horizon, 1688 × 696 |
+
+<img src="docs/screenshots/spotify-lyrics.png" width="820" alt="Spotify with synced lyrics, 1688 × 696" />
+
+Spotify, 1688 × 696, with synced lyrics. The track and its lyrics are invented for the demo; real lyrics come from LRCLIB at run time.
+
 <img src="icons/companion.png" width="64" height="64" alt="iCUE Edge Companion logo" />
 
 Five widgets read their data from [iCUE Edge Companion](https://github.com/inerthel-agi/icue-edge-companion), a Windows tray application that must run on the same computer. Download it from its [releases page](https://github.com/inerthel-agi/icue-edge-companion/releases). The other nine work on their own.
@@ -61,6 +77,7 @@ Repository layout:
 | `drafts/` | Unpackaged drafts |
 | `scripts/`, `tests/` | Packaging script and tests |
 | `dist/icuewidgets/` | Generated packages |
+| `docs/screenshots/` | README screenshots |
 
 XENEON EDGE layouts use labels of at least 18 px, status text of at least 16 px, and primary touch controls of at least 60 × 60 px. Compact layouts rearrange content to keep the larger text readable. Pump LCD layouts retain their separate sizing.
 
