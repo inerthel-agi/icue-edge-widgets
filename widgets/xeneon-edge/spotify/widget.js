@@ -20,21 +20,19 @@
     const fmt = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     const svgEl = (tag, attrs) => { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); return el; };
 
-    // ---------- Theme (dark -> light -> blur), as in the original ----------
-    function applyTheme(th) {
-        state.theme = ["dark", "light", "blur"].includes(th) ? th : "dark";
-        document.documentElement.setAttribute("data-theme", state.theme);
-        $("themeToggle").textContent = state.theme.toUpperCase();
+    // ---------- Theme: the iCUE setting `spotifyTheme` (Dark, Light, Blur) ----------
+    function applyTheme() {
+        const th = typeof spotifyTheme !== "undefined" ? String(spotifyTheme) : new URLSearchParams(location.search).get("theme");
+        const next = ["dark", "light", "blur"].includes(th) ? th : "dark";
+        if (next === state.theme && document.documentElement.getAttribute("data-theme") === next) return;
+        state.theme = next;
+        document.documentElement.setAttribute("data-theme", next);
         refreshBgBlur();
     }
     function refreshBgBlur() {
         const bg = $("bgImg");
         bg.style.opacity = state.theme === "blur" && bg.getAttribute("src") && bg.complete && bg.naturalWidth > 0 ? "1" : "0";
     }
-    $("themeToggle").addEventListener("click", () => {
-        applyTheme({ dark: "light", light: "blur", blur: "dark" }[state.theme] || "dark");
-        try { localStorage.setItem("pa_theme", state.theme); } catch (_) { /* storage may be blocked */ }
-    });
 
     // ---------- Size classes from the widget width, as in the original ----------
     const sizeFor = w => (w < 1200 ? "sz-m" : w < 2000 ? "sz-l" : "sz-xl");
@@ -117,7 +115,9 @@
         });
         if (state.autoScroll && els[active] && state.shownLine !== active) {
             state.shownLine = active;
-            els[active].scrollIntoView({ block: "center", behavior: "smooth" });
+            // Only the lyrics box scrolls: scrollIntoView also moved the whole page up, cutting the cover.
+            const box = $("lyricsScroll"), br = box.getBoundingClientRect(), er = els[active].getBoundingClientRect();
+            box.scrollTo({ top: box.scrollTop + er.top - br.top - (box.clientHeight - er.height) / 2, behavior: "smooth" });
         }
     }
 
@@ -293,52 +293,100 @@
 
         renderLyrics();
         highlight(ms);
+        renderExtras(s, ms);
+    }
+
+    // ---------- Up next, playing device, current lyric line (M and S) ----------
+    // Tapping a row skips forward to that track; the companion refuses it if the queue moved meanwhile.
+    $("upNextList").addEventListener("click", e => {
+        const row = e.target.closest(".up-next-row");
+        if (!row || !state.snap || stale(state.snap)) return;
+        cmd("skipTo", { value: Number(row.dataset.index), q: state.snap.queueRev });
+    });
+    const make = (tag, cls, text) => { const e = document.createElement(tag); e.className = cls; if (text != null) e.textContent = text; return e; };
+    function renderExtras(s, ms) {
+        // L and XL show up next beside the lyrics; M and S under the controls.
+        const wide = state.sizeClass !== "sz-m";
+        const panel = $("upNext");
+        const home = wide ? $("colRight") : $("colLeft");
+        if (panel.parentElement !== home) home.appendChild(panel);
+        const queue = (s.queue || []).slice(0, 5);
+        const qKey = queue.map(q => `${q.title}|${q.artist}|${q.art ? q.art.url : ""}`).join("\n");
+        if (qKey !== state.queueKey) {
+            state.queueKey = qKey;
+            $("upNextList").replaceChildren(...queue.map((q, i) => {
+                const row = make("button", "up-next-row");
+                row.type = "button";
+                row.dataset.index = String(i);
+                row.setAttribute("aria-label", `Play ${q.title} by ${q.artist}`);
+                const img = make("img", "up-next-art");
+                img.alt = "";
+                if (q.art && q.art.url) img.src = q.art.url;
+                const txt = make("div", "up-next-text");
+                txt.append(make("div", "up-next-title", q.title), make("div", "up-next-artist", q.artist));
+                row.append(img, txt);
+                return row;
+            }));
+        }
+        panel.classList.toggle("ui-hidden", !queue.length);
+
+        const d = s.device;
+        $("deviceLine").textContent = d ? `Playing on ${d.name}${d.volume != null ? ` · ${d.volume}%` : ""}` : "";
+
+        const lines = s.lyrics && s.lyrics.state === "ready" ? s.lyrics.lines : [];
+        let cur = "";
+        for (const l of lines) { if (l.timeMs > ms) break; if (l.text) cur = l.text; }
+        $("miniLyric").textContent = cur;
     }
 
     // ---------- Source: iCUE Edge Companion ----------
     const blobs = new Map();
 
-    // Artwork is fetched with the same connection rules as the data and shown from a blob URL;
-    // only the current revision's image is kept, replaced ones are released at once.
+    // Images are fetched with the same connection rules as the data and shown from blob URLs.
+    // Only the images of the current snapshot are kept (cover of this revision, up-next covers);
+    // replaced ones are aborted and released at once.
+    function blobFor(key, path, keep) {
+        keep.add(key);
+        let entry = blobs.get(key);
+        if (entry) return entry.url;
+        entry = { url: null, controller: new AbortController() };
+        blobs.set(key, entry);
+        fetch(ENDPOINT + path, { cache: "no-store", credentials: "omit", signal: entry.controller.signal })
+            .then(r => {
+                const raw = r.headers.get("content-length"), size = Number(raw);
+                if (!r.ok || raw === null || !Number.isFinite(size) || size > MAX_ART_BYTES) throw new Error(String(r.status));
+                return r.blob();
+            })
+            .then(blob => {
+                if (!/^image\/(png|jpeg|gif|bmp|webp)$/.test(blob.type) || blob.size > MAX_ART_BYTES) throw new Error("type");
+                if (blobs.get(key) !== entry) return;
+                entry.url = URL.createObjectURL(blob);
+                if (!link.wire) return;
+                // An image arriving after the stream dropped must not bring back a "connected" state.
+                const snap = withArt(link.wire);
+                state.snap = link.live ? snap : { ...snap, source: { ...snap.source, connected: false } };
+                render();
+            })
+            .catch(() => { /* no image: the placeholder stays */ });
+        return null;
+    }
+
     function withArt(wire) {
+        const keep = new Set();
         const it = wire.item;
-        const art = it && it.art;
-        const key = art ? `${it.id}|${it.rev}` : null;
+        const art = it && it.art ? blobFor(`${it.id}|${it.rev}`, it.art.url, keep) : null;
+        const queue = (wire.queue || []).map(q => ({ ...q, art: q.art ? { url: blobFor(q.art.url, q.art.url, keep) } : null }));
         for (const [k, entry] of blobs) {
-            if (k === key) continue;
+            if (keep.has(k)) continue;
             entry.controller.abort();
             if (entry.url) URL.revokeObjectURL(entry.url);
             blobs.delete(k);
         }
-        if (!key) return wire;
-        let entry = blobs.get(key);
-        if (!entry) {
-            entry = { url: null, controller: new AbortController() };
-            blobs.set(key, entry);
-            fetch(ENDPOINT + art.url, { cache: "no-store", credentials: "omit", signal: entry.controller.signal })
-                .then(r => {
-                    const raw = r.headers.get("content-length"), size = Number(raw);
-                    if (!r.ok || raw === null || !Number.isFinite(size) || size > MAX_ART_BYTES) throw new Error(String(r.status));
-                    return r.blob();
-                })
-                .then(blob => {
-                    if (!/^image\/(png|jpeg|gif|bmp|webp)$/.test(blob.type) || blob.size > MAX_ART_BYTES) throw new Error("type");
-                    if (blobs.get(key) !== entry) return;
-                    entry.url = URL.createObjectURL(blob);
-                    if (state.snap && state.snap.item && `${state.snap.item.id}|${state.snap.item.rev}` === key) {
-                        // Artwork arriving after the stream dropped must not bring back a "connected" state.
-                        const snap = withArt(link.wire);
-                        state.snap = link.live ? snap : { ...snap, source: { ...snap.source, connected: false } };
-                        render();
-                    }
-                })
-                .catch(() => { /* no artwork: the placeholder stays */ });
-        }
-        return { ...wire, item: { ...it, art: entry.url ? { url: entry.url } : null } };
+        return { ...wire, queue, item: it ? { ...it, art: art ? { url: art } : null } : it };
     }
 
     function companionSend(msg) {
-        const body = { cmd: msg.cmd, rev: msg.rev, value: msg.value, deviceId: msg.deviceId };
+        const body = { cmd: msg.cmd, rev: msg.rev, value: msg.value, deviceId: msg.deviceId, q: msg.q };
         // text/plain keeps it a simple request (no preflight); the companion parses the JSON body.
         fetch(ENDPOINT + "/api/spotify/command", { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(body), credentials: "omit", cache: "no-store" })
             .then(r => {
@@ -407,9 +455,7 @@
     new ResizeObserver(entries => applySize(sizeFor(entries[0].contentRect.width))).observe($("widget"));
     // Also sized at once: the observer only fires on a rendered frame.
     applySize(sizeFor($("widget").offsetWidth || window.innerWidth));
-    let initialTheme = "dark";
-    try { initialTheme = localStorage.getItem("pa_theme") || "dark"; } catch (_) { /* default */ }
-    applyTheme(initialTheme);
+    applyTheme();
 
     const params = new URLSearchParams(location.search);
     if (params.get("source") === "preview" && window.parent !== window) {
@@ -424,9 +470,11 @@
         window.parent.postMessage({ type: "sp-ready" }, "*");
     } else {
         send = companionSend;
-        window.icueEvents = { onICUEInitialized: render, onDataUpdated: render };
+        const update = () => { applyTheme(); render(); };
+        window.icueEvents = { onICUEInitialized: update, onDataUpdated: update };
         runCompanion();
     }
     render();
-    setInterval(render, 250);
+    // iCUE may update a setting long before it sends an event: the theme is checked on every tick too.
+    setInterval(() => { applyTheme(); render(); }, 250);
 })();

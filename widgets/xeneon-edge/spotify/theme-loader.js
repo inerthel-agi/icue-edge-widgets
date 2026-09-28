@@ -1,13 +1,6 @@
 (function () {
   "use strict";
-
-  try {
-    var theme = localStorage.getItem("pa_theme") || "dark";
-    if (theme !== "dark" && theme !== "light" && theme !== "blur") {
-      theme = "dark";
-    }
-    document.documentElement.setAttribute("data-theme", theme);
-  } catch (_) {
-    document.documentElement.setAttribute("data-theme", "dark");
-  }
+  // Applies the iCUE setting before the first paint; widget.js follows later changes.
+  var th = typeof spotifyTheme !== "undefined" ? String(spotifyTheme) : "dark";
+  document.documentElement.setAttribute("data-theme", th === "light" || th === "blur" ? th : "dark");
 })();

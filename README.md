@@ -47,7 +47,7 @@ Screenshots: usage figures, the sensor reading, countdowns and habits are demo v
 
 <img src="docs/screenshots/spotify-lyrics.png" width="820" alt="Spotify with synced lyrics, 1688 × 696" />
 
-Spotify, 1688 × 696, with synced lyrics. The track and its lyrics are invented for the demo; real lyrics come from LRCLIB at run time.
+Spotify, 1688 × 696, with synced lyrics and `Up next` (tap a track to skip to it; needs iCUE Edge Companion 0.1.3 or later). The track and its lyrics are invented for the demo; real lyrics come from LRCLIB at run time.
 
 <img src="icons/companion.png" width="64" height="64" alt="iCUE Edge Companion logo" />
 

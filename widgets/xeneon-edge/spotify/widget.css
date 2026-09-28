@@ -228,50 +228,6 @@ body {
     z-index: 1;
 }
 
-/* Controls — lang-toggle style (from xeneon-edge pattern) */
-.icon-btn {
-    font-family: var(--font-h);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    min-width: 30px;
-    height: 28px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid var(--hairline);
-    color: var(--text-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--tr);
-    flex-shrink: 0;
-    user-select: none;
-}
-
-#themeToggle {
-    position: absolute;
-    left: 14px;
-    bottom: 14px;
-    z-index: 12;
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    padding: 0;
-    opacity: 0.62;
-    margin: 0;
-}
-
-#themeToggle:hover {
-    opacity: 1;
-}
-
-.icon-btn:hover {
-    background: var(--overlay-10);
-    color: var(--text-1);
-    border-color: var(--border-h);
-}
-
 /* ── Main content area ──────────────────────────────────── */
 #content {
     flex: 1;
@@ -1648,19 +1604,6 @@ html.sz-xl .lyrics-ctrl-btn svg {
    LIGHT MODE COMPONENT OVERRIDES
 ══════════════════════════════════════════════════════════ */
 
-/* Header buttons */
-:root[data-theme="light"] .icon-btn {
-    background: rgba(0, 0, 0, 0.07);
-    border-color: rgba(0, 0, 0, 0.16);
-    color: #111111;
-}
-
-:root[data-theme="light"] .icon-btn:hover {
-    background: rgba(0, 0, 0, 0.13);
-    color: #000000;
-    border-color: rgba(0, 0, 0, 0.28);
-}
-
 /* Control buttons (prev/next/play/shuffle/repeat) */
 :root[data-theme="light"] .ctrl-btn {
     background: rgba(0, 0, 0, 0.07);
@@ -1759,3 +1702,121 @@ html.legible .state-sub { font-size: 18px !important; }
 /* Spotify attribution mark (Simple Icons, CC0), end of the volume row. */
 .sp-logo { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: 10px; color: #1ed760; }
 .sp-logo svg { width: 100%; height: 100%; fill: currentColor; }
+
+/* ══ Up next, playing device, current lyric line, touch-size controls (2026-09-28) ══
+   Validated in the proposals preview. Hidden by default; each size places them. */
+.device-line, .mini-lyric { display: none; }
+
+/* ── 1. Up next: large touch rows ─────────────────────── */
+html.legible .up-next { display: flex; flex-direction: column; gap: 14px; }
+.up-next-head { font: 700 16px var(--font-m); letter-spacing: .18em; color: var(--accent); }
+.up-next-list { display: flex; flex-direction: column; gap: 8px; }
+.up-next-row { display: flex; align-items: center; gap: 18px; min-width: 0; min-height: 80px; padding: 6px 10px; border-radius: 12px; }
+.up-next-row:first-child { background: var(--overlay-8); }
+.up-next-art { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; flex: none; background: var(--overlay-8); }
+.up-next-text { min-width: 0; }
+.up-next-title { font: 600 24px var(--font-h); color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.up-next-artist { font-size: 19px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+html.legible.sz-xl #colRight, html.legible.sz-l #colRight { position: relative; }
+html.legible.sz-xl .up-next, html.legible.sz-l .up-next { position: absolute; top: 24px; bottom: 24px; justify-content: center;
+  padding: 20px 22px; border: 1px solid var(--border); border-radius: 18px; background: var(--overlay-5); }
+html.legible.sz-xl .up-next { right: 150px; width: 700px; }
+html.legible.sz-xl .up-next-art { width: 84px; height: 84px; }
+html.legible.sz-xl .up-next-title { font-size: 28px; }
+html.legible.sz-xl .up-next-artist { font-size: 21px; }
+html.legible.sz-l .up-next { right: 150px; width: 480px; }
+html.legible.sz-l .up-next-row:nth-child(n+6) { display: none; }
+html.legible.sz-m .up-next { width: 100%; padding: 0 24px; gap: 8px; }
+html.legible.sz-m .up-next-list { flex-direction: row; gap: 10px; }
+html.legible.sz-m .up-next-row { flex: 1 1 0; gap: 12px; min-height: 76px; }
+html.legible.sz-m .up-next-row:nth-child(n+3) { display: none; }
+html.legible.sz-m .up-next-art { width: 60px; height: 60px; }
+html.legible.sz-m .up-next-title { font-size: 20px; }
+html.legible.sz-m .up-next-artist { font-size: 18px; }
+@media (max-height: 450px) {
+  html.legible.sz-m .up-next { flex-direction: row; align-items: center; justify-content: center; gap: 12px; padding: 0; margin-top: 2px; }
+  html.legible.sz-m .up-next-head { font-size: 13px; }
+  html.legible.sz-m .up-next-row:nth-child(n+2) { display: none; }
+  html.legible.sz-m .up-next-row { flex: none; gap: 10px; min-height: 0; padding: 2px 10px; }
+  html.legible.sz-m .up-next-art { width: 34px; height: 34px; border-radius: 6px; }
+  html.legible.sz-m .up-next-text { display: flex; gap: 8px; align-items: baseline; }
+  html.legible.sz-m .up-next-title, html.legible.sz-m .up-next-artist { font-size: 18px; }
+  html.legible.sz-m .device-line { display: none; }
+}
+
+/* ── 2. Bigger track text ──────────────────────────────── */
+html.legible.sz-xl .track-name, html.legible.sz-l .track-name { font-size: 32px !important; }
+html.legible.sz-xl .track-artist, html.legible.sz-l .track-artist { font-size: 22px !important; }
+html.legible.sz-xl .track-album, html.legible.sz-l .track-album { font-size: 18px !important; }
+html.legible .progress-times { font-size: 18px !important; }
+html.legible.sz-m .track-name { font-size: 30px !important; }
+html.legible.sz-m .track-artist { font-size: 22px !important; }
+html.legible.sz-m .track-album { font-size: 18px !important; }
+
+/* ── 3. Bigger lyrics (beats the .legible sizes) ────────── */
+html.legible.sz-xl .lyric-line, html.legible.sz-l .lyric-line { font-size: 24px !important; }
+html.legible.sz-xl .lyric-line.near, html.legible.sz-l .lyric-line.near { font-size: 28px !important; }
+html.legible.sz-l .lyric-line.active { font-size: 42px !important; }
+html.legible.sz-xl .lyric-line.active { font-size: 50px !important; }
+html.legible.sz-xl .lyric-line { max-width: 1300px; }
+
+/* ── 4. Touch-size controls (beats the .legible 60 px) ── */
+html.legible .controls .ctrl-btn, html.legible .controls .ctrl-btn.ctrl-sm,
+html.legible .volume-row .ctrl-btn.ctrl-sm { width: 84px !important; height: 84px !important; min-width: 84px !important; border-radius: 14px !important; }
+html.legible .controls .ctrl-btn svg, html.legible .volume-row .ctrl-btn svg { width: 32px !important; height: 32px !important; }
+html.legible .controls .ctrl-btn.play { width: 112px !important; height: 112px !important; min-width: 112px !important; border-radius: 50% !important; }
+html.legible .controls .ctrl-btn.play svg { width: 42px !important; height: 42px !important; }
+html.legible .controls { gap: 14px !important; }
+html.legible #volumeSlider { height: 8px !important; }
+html.legible .lyrics-ctrl-btn { width: 84px !important; height: 84px !important; font-size: 17px !important; }
+html.legible .lyrics-ctrl-btn svg { width: 26px !important; height: 26px !important; }
+@media (max-height: 450px) {
+  html.legible .controls .ctrl-btn, html.legible .controls .ctrl-btn.ctrl-sm,
+  html.legible .volume-row .ctrl-btn.ctrl-sm { width: 64px !important; height: 64px !important; min-width: 64px !important; }
+  html.legible .controls .ctrl-btn.play { width: 80px !important; height: 80px !important; min-width: 80px !important; }
+  html.legible .controls .ctrl-btn svg { width: 26px !important; height: 26px !important; }
+}
+
+/* ── 5. Playing device ─────────────────────────────────── */
+html.legible .device-line { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 18px; color: var(--accent); }
+html.legible.sz-m .device-line { justify-content: center; }
+
+/* ── 6. Current lyric line where there is no lyrics column (M, S) ── */
+html.legible.sz-m .mini-lyric { display: block; margin-top: 10px; font: italic 600 20px var(--font-h); color: var(--accent);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-height: 450px) { html.legible.sz-m .mini-lyric { font-size: 18px; margin-top: 4px; } }
+
+/* ── Fit fixes when the features are combined ───────────── */
+/* XL: 5 rows fit the height; lyrics keep clear of the panel. */
+html.legible.sz-xl .up-next-row:nth-child(n+6) { display: none; }
+html.legible.sz-xl .up-next, html.legible.sz-l .up-next { top: 16px; bottom: 16px; gap: 10px; }
+html.legible.sz-xl #lyricsScroll { padding-right: 890px !important; }
+html.legible.sz-l #lyricsScroll { padding-right: 670px !important; }
+html.legible.sz-l .up-next-row { min-height: 76px; }
+/* L: wider left column and smaller cover so touch controls and volume fit. */
+html.legible.sz-l .col-left { width: 520px !important; min-width: 520px !important; }
+html.legible.sz-l .album-wrap, html.legible.sz-xl .album-wrap { width: 230px !important; height: 230px !important; }
+/* M: smaller cover so the up-next row fits. */
+@media (min-height: 451px) {
+  html.legible.sz-m .album-wrap { width: 176px !important; height: 176px !important; }
+  html.legible.sz-m .col-left { gap: 14px !important; }
+}
+/* S: one compact line at the right of the volume row. */
+@media (max-height: 450px) {
+  html.legible.sz-m .up-next { position: absolute; right: 22px; bottom: 30px; margin: 0; max-width: 270px; }
+  html.legible.sz-m .up-next-head { display: none; }
+  html.legible.sz-m .up-next-row { padding: 4px 10px; min-width: 0; }
+  html.legible.sz-m .up-next-text { flex-direction: column; gap: 0; }
+  html.legible.sz-m .up-next-art { width: 44px; height: 44px; }
+  html.legible.sz-m .up-next-title { font-size: 18px; }
+  html.legible.sz-m .up-next-artist { font-size: 16px; }
+  html.legible.sz-m { --album-compact-size: 110px; }
+}
+/* Up-next rows are buttons: tap to skip forward to that track. */
+.up-next-row { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+  transition: background var(--tr), transform var(--tr); }
+.up-next-row:first-child { background: var(--overlay-8); }
+.up-next-row:hover { background: var(--overlay-10); }
+.up-next-row:active { background: var(--accent-dim); transform: scale(0.98); }
+.up-next-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
