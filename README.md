@@ -40,7 +40,7 @@ Each package name has the `.icuewidget` extension. The widget UI is in English.
 
 <img src="icons/companion.png" width="64" height="64" alt="iCUE Edge Companion logo" />
 
-Five widgets read their data from iCUE Edge Companion, a Windows tray application that must run on the same computer. The other nine work on their own.
+Five widgets read their data from [iCUE Edge Companion](https://github.com/inerthel-agi/icue-edge-companion), a Windows tray application that must run on the same computer. Download it from its [releases page](https://github.com/inerthel-agi/icue-edge-companion/releases). The other nine work on their own.
 
 | Widget | Without the companion |
 | --- | --- |
