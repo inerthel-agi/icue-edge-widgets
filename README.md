@@ -12,16 +12,11 @@ HTML, CSS, and JavaScript widgets for CORSAIR iCUE on Windows. The collection ta
 
 ## Install
 
-Clone the repository:
+Clone the repository, then build the packages with an already installed Widget CLI:
 
 ```powershell
 git clone https://github.com/inerthel-agi/icue-edge-widgets.git
 cd icue-edge-widgets
-```
-
-Build the packages using an already installed Widget CLI:
-
-```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-icuewidgets.ps1
 ```
 
@@ -93,16 +88,11 @@ python -m http.server 8080 --bind 127.0.0.1
 
 Open `http://127.0.0.1:8080/widgets/xeneon-edge/focus-timer/` or another widget directory. Native sensors and media require iCUE; a regular browser shows the unavailable state.
 
-Run the dependency-free logic tests and isolated packaging failure tests:
+Run the dependency-free logic tests, the isolated packaging failure tests and, if Playwright is already resolvable by Node.js, the browser tests:
 
 ```powershell
 node --test tests/widgets.test.cjs
 powershell -NoProfile -ExecutionPolicy Bypass -File tests/packaging.test.ps1
-```
-
-If Playwright is already resolvable by Node.js:
-
-```powershell
 node tests/ui-smoke.cjs
 ```
 
