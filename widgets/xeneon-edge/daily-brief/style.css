@@ -1,0 +1,29 @@
+:root { --x-accent: #e8c477; }
+#widget { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: var(--x-gap); }
+header > div { flex: 1; min-width: 0; }
+#clock { color: var(--x-text); font-size: clamp(30px, calc(var(--layout-unit) * 8), 56px); font-weight: 600; font-variant-numeric: tabular-nums; max-width: 48%; }
+.brief-main { min-width: 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--x-gap); align-items: center; }
+.weather-card { border: 0; display: flex; align-items: center; align-self: stretch; gap: var(--x-gap); }
+.weather-icon { color: var(--x-accent); font-size: clamp(24px, calc(var(--layout-unit) * 6), 42px); letter-spacing: 0.06em; }
+.temp-line { margin: 0; color: var(--x-text); font-size: clamp(68px, calc(var(--layout-unit) * 26), 176px); font-weight: 600; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.temp-line small { margin-left: 8px; font-size: 0.3em; color: var(--x-muted); }
+#condition { margin: 8px 0 0; color: var(--x-muted); font-size: var(--x-label-size); }
+.daily-note { margin: 0; padding-left: var(--x-gap); border-left: 1px solid var(--x-line); color: var(--x-muted); font-size: clamp(22px, calc(var(--layout-unit) * 6), 36px); font-weight: 600; line-height: 1.4; -webkit-line-clamp: 4; }
+.metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.metrics article { padding: 12px 0 0; }
+.metrics b { display: block; margin-bottom: 6px; font-size: clamp(26px, calc(var(--layout-unit) * 6), 46px); font-weight: 600; }
+#widget > #overlay { grid-row: 2 / 3; grid-column: 1; inset: 0; }
+@media (max-aspect-ratio: 1/1) {
+    .brief-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+    .weather-card { justify-content: center; }
+    .daily-note { padding: 12px 0; border-left: 0; border-top: 1px solid var(--x-line); }
+    .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-height: 416px) {
+    .weather-icon { display: none; }
+    .weather-card > .x-stack { flex: 1; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 18px; align-items: center; }
+    .temp-line { grid-column: 1; grid-row: 1 / 3; }
+    #place { grid-column: 2; grid-row: 1; align-self: end; margin: 0; }
+    #condition { grid-column: 2; grid-row: 2; align-self: start; margin: 0; }
+}

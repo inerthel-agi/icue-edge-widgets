@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Codex Usage</title>
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background')" data-type="color"
+        data-default="'#111111'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Widget Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f0f0f0'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#f0f0f0'" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Widget Personalization')", "properties": ["backgroundColor", "transparency", "textColor", "accentColor"] }]
+    </script>
+    <link rel="stylesheet" href="./widget.css" />
+</head>
+
+<body data-endpoint="http://127.0.0.1:47821" data-provider="codex">
+    <main class="w" id="w"></main>
+    <script src="./core.js"></script>
+    <script src="./widget.js"></script>
+</body>
+
+</html>

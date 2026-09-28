@@ -1,0 +1,15 @@
+:root { --x-accent: #a8d5ba; }
+#widget { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: var(--x-gap); }
+header > div { flex: 1; min-width: 0; }
+h1 { font-size: clamp(28px, calc(var(--layout-unit) * 7.5), 48px); overflow-wrap: anywhere; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+#branch { max-width: 25%; }
+.stats { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; }
+article { padding: 16px 0 0; display: flex; flex-direction: column; gap: 10px; }
+b { font-size: clamp(36px, calc(var(--layout-unit) * 13), 90px); font-weight: 600; }
+.commit { padding: 14px 0 0; display: flex; align-items: center; gap: var(--x-gap); }
+#sha { flex-shrink: 0; font-family: Consolas, monospace; color: var(--x-accent); border-left: 0; padding-left: 0; }
+.commit strong { font-size: clamp(20px, calc(var(--layout-unit) * 4.5), 30px); font-weight: 600; color: var(--x-muted); }
+@media (max-aspect-ratio: 1/1) {
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .commit { flex-direction: column; align-items: start; }
+}

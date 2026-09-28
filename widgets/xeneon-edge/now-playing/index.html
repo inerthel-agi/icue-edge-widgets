@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Now Playing</title>
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#a8d5ba'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./widget.css" />
+</head>
+
+<body data-endpoint="http://127.0.0.1:47821">
+    <main id="player" class="player" data-view="empty">
+        <div class="art-zone" id="artZone">
+            <div class="art-frame">
+                <div class="art-fallback" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M9 18.5a3 3 0 1 1-2-2.83V5l11-2v11.5a3 3 0 1 1-2-2.83V7.2l-7 1.27z" /></svg>
+                </div>
+                <img id="art" alt="" hidden />
+            </div>
+            <div class="art-note" id="artNote" hidden></div>
+        </div>
+
+        <section class="info">
+            <div class="topline">
+                <button class="source-chip" id="sourceBtn" type="button" aria-haspopup="dialog">
+                    <span class="state-dot" aria-hidden="true"></span>
+                    <span id="appName">—</span>
+                    <span class="sep" aria-hidden="true">·</span>
+                    <span id="playState">—</span>
+                </button>
+                <span class="pill" id="statusPill" hidden></span>
+            </div>
+            <div class="meta">
+                <h1 class="title" id="title"></h1>
+                <p class="artist" id="artist"></p>
+                <p class="album" id="album"></p>
+            </div>
+            <div class="timeline" id="timeline" hidden>
+                <span class="time" id="pos"></span>
+                <input type="range" id="seek" min="0" max="1" step="1" value="0" aria-label="Playback position" />
+                <span class="live" id="live" hidden>LIVE</span>
+                <span class="time" id="dur"></span>
+            </div>
+            <div class="controls">
+                <button class="ctl" id="prev" type="button" aria-label="Previous">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.4v14H6zm3.6 7L19 5v14z" /></svg>
+                </button>
+                <button class="ctl primary" id="play" type="button" aria-label="Play">
+                    <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" /></svg>
+                    <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h4.5v15H6zm7.5 0H18v15h-4.5z" /></svg>
+                    <svg class="i-toggle" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5v14l9-7zm11 0h2.8v14H14zm4.5 0h2.8v14h-2.8z" /></svg>
+                </button>
+                <button class="ctl" id="next" type="button" aria-label="Next">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.6 5H18v14h-2.4zM14.4 12L5 19V5z" /></svg>
+                </button>
+            </div>
+        </section>
+
+        <section class="empty" id="empty" hidden>
+            <div class="empty-title" id="emptyTitle"></div>
+            <div class="empty-sub" id="emptySub"></div>
+            <button class="empty-action" id="emptyAction" type="button" hidden></button>
+        </section>
+
+        <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+            <div class="sheet-head">
+                <div class="sheet-title" id="sheetTitle">Media source</div>
+                <button class="ctl" id="sheetClose" type="button" aria-label="Close">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4z" /></svg>
+                </button>
+            </div>
+            <div class="sheet-list" id="sheetList"></div>
+        </section>
+    </main>
+
+    <script src="./widget.js"></script>
+</body>
+
+</html>

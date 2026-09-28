@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Focus Timer</title>
+    <meta name="x-icue-property" content="focusWork" data-label="tr('Work')" data-type="slider"
+        data-default="25" data-min="5" data-max="60" data-step="1" />
+    <meta name="x-icue-property" content="focusBreak" data-label="tr('Break')" data-type="slider"
+        data-default="5" data-min="3" data-max="30" data-step="1" />
+    <meta name="x-icue-property" content="focusLong" data-label="tr('Long Break')" data-type="slider"
+        data-default="15" data-min="10" data-max="45" data-step="1" />
+    <meta name="x-icue-property" content="focusCycles" data-label="tr('Cycles')" data-type="slider"
+        data-default="4" data-min="2" data-max="8" data-step="1" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Focus Timer')", "properties": ["focusWork","focusBreak","focusLong","focusCycles"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget">
+        <header class="x-top">
+            <div class="x-stack">
+                <p class="x-kicker">Pomodoro</p>
+                <h1 class="x-title">Focus Timer</h1>
+            </div>
+            <span id="modeBadge" class="x-badge">Work</span>
+        </header>
+        <section class="stage">
+            <div class="ring-wrap">
+                <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+                    <circle class="ring-track" cx="60" cy="60" r="52" />
+                    <circle id="ringFill" class="ring-fill" cx="60" cy="60" r="52" />
+                </svg>
+                <div class="ring-center">
+                    <b id="time" class="x-value">25:00</b>
+                    <small id="cycle" class="x-label">Cycle 1 / 4</small>
+                    <div id="cycleDots" class="cycle-dots" aria-hidden="true"></div>
+                </div>
+            </div>
+        </section>
+        <section class="controls">
+            <button type="button" id="btnStart" class="ctrl primary">Start</button>
+            <button type="button" id="btnReset" class="ctrl">Reset</button>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

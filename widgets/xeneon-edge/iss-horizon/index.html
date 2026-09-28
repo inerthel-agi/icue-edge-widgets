@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-icue-property" content="issMapStyle" data-label="tr('Map Style')" data-type="tab-buttons"
+        data-default="'dark'" data-values="[
+            {'key':'dark','value':'Dark'},
+            {'key':'satellite','value':'Satellite'},
+            {'key':'day','value':'Day'},
+            {'key':'auto','value':'Auto'}
+        ]" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('ISS Horizon')","properties":["issMapStyle"]}]
+    </script>
+    <meta name="referrer" content="origin" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://fonts.googleapis.com https://unpkg.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.wheretheiss.at; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests;" />
+
+    <title>ISS Horizon</title>
+
+    <!-- Xeneon Widget shared tokens & base styles -->
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+
+    <style>
+        /* ── Base and Theme (OLED Dark — Xeneon Edge) ─────────────── */
+        /* Native viewport dimensions determine the layout. */
+        :root {
+            --bg-base:        #080a0b;
+            --bg-panel:       transparent;
+            --bg-overlay:     #101416;
+
+            --text-main:      #f7f8fb;
+            --text-dim:       rgba(247, 248, 251, 0.74);
+            --text-muted:     #b1b9b8;
+
+            --accent-blue:    #a8d5ba;
+            --accent-blue-dim: rgba(0, 200, 255, 0.14);
+            --accent-nasa:    #fc3d21;
+
+            --border-subtle:  rgba(255, 255, 255, 0.12);
+            --border-focus:   rgba(255, 255, 255, 0.22);
+
+            --font-ui:        "Segoe UI Variable", "Segoe UI", sans-serif;
+            --font-mono:      Consolas, ui-monospace, monospace;
+
+            --radius-md:      4px;
+            --radius-sm:      6px;
+
+            --transition:     0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            font-weight: 500;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* ── Responsive layout ───────────────────────────────── */
+        .widget-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: var(--x-gap);
+            padding: var(--x-pad);
+            overflow: hidden;
+        }
+
+        .header-zone {
+            flex-shrink: 0;
+        }
+
+        .telemetry-grid {
+            flex-shrink: 0;
+        }
+
+        .data-map-stack {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--x-gap);
+            min-height: 0;
+        }
+
+        /* ── Header ───────────────────────────────────────────── */
+        .header-zone {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0 12px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-subtle);
+            min-height: 44px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: clamp(22px, calc(var(--layout-unit) * 5.5), 32px);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .brand svg {
+            color: var(--accent-nasa);
+        }
+
+        /* Day / Night Badge */
+        .solar-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: var(--x-label-size);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-dim);
+            transition: var(--transition);
+        }
+
+        .solar-badge.is-day {
+            color: #fbbc04;
+            border-color: rgba(251, 188, 4, 0.3);
+            background: rgba(251, 188, 4, 0.1);
+        }
+
+        .solar-badge.is-night {
+            color: #8ab4f8;
+            border-color: rgba(138, 180, 248, 0.3);
+            background: rgba(138, 180, 248, 0.1);
+        }
+
+        /* ── Telemetry Grid ───────────────────────────────────── */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+
+
+        .tel-card {
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-subtle);
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tel-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-dim);
+            font-size: var(--x-label-size);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+        }
+
+        .tel-header svg {
+            color: var(--accent-blue);
+            opacity: 0.85;
+        }
+
+        /* Value styling */
+        .tel-val {
+            font-family: var(--font-mono);
+            font-size: clamp(28px, calc(var(--layout-unit) * 6.7), 48px);
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (min-aspect-ratio: 3/2) {
+            .data-map-stack { flex-direction: row; }
+            .telemetry-grid { width: 42%; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; }
+        }
+
+        @media (max-aspect-ratio: 1/1) {
+            .telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        /* ── Map Zone ─────────────────────────────────────────── */
+        .map-wrapper {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .map-header {
+            position: relative;
+            padding: 12px;
+            flex-shrink: 0;
+            gap: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .map-title {
+            background: var(--bg-overlay);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-size: var(--x-label-size);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .follow-btn {
+            pointer-events: auto;
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-dim);
+            padding: 4px 12px;
+            border-radius: 4px;
+            min-height: var(--x-touch-size);
+            font-size: var(--x-control-size);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .brand-group { min-width: 0; }
+        .brand-group .x-status { margin-top: 6px; font-size: clamp(16px, calc(var(--layout-unit) * 3.5), 20px); }
+        .map-actions { display: flex; gap: 8px; pointer-events: auto; }
+        .follow-btn:disabled { opacity: 0.5; cursor: default; }
+        #issMap:focus-visible { outline: 2px solid var(--text-main); outline-offset: -2px; }
+        .map-wrapper { container-type: inline-size; }
+        @container (max-width: 380px) {
+            .map-title { display: none; }
+            .map-header { justify-content: flex-end; }
+        }
+
+        .follow-btn.active {
+            color: var(--text-main);
+            border-color: var(--accent-blue);
+            background: var(--bg-overlay);
+        }
+
+        .follow-btn:hover {
+            border-color: var(--text-muted);
+        }
+
+        .map-style-controls {
+            pointer-events: auto;
+            display: flex;
+            gap: 4px;
+            padding: 3px;
+            border-radius: 18px;
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .map-style-btn {
+            border: 0;
+            border-radius: 14px;
+            padding: 4px 9px;
+            background: transparent;
+            color: var(--text-dim);
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .map-style-btn.active {
+            background: var(--accent-blue-dim);
+            color: var(--text-main);
+        }
+
+        #issMap {
+            width: 100%;
+            min-height: 0;
+            flex: 1 1 0;
+            background: #000;
+        }
+
+        #issMap::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 500;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(circle at 50% 45%, transparent 0 30%, rgba(0, 0, 0, 0.58) 72%);
+            transition: opacity var(--transition);
+        }
+
+        body[data-map-style="dark"] .leaflet-tile-pane {
+            filter: grayscale(1) invert(1) brightness(0.8) contrast(1.15);
+        }
+
+        body[data-map-style="day"] .leaflet-tile-pane {
+            filter: grayscale(1);
+        }
+
+        .leaflet-control-attribution {
+            background: var(--bg-overlay) !important;
+            color: var(--text-dim) !important;
+            font-size: 11px;
+        }
+
+        .leaflet-control-attribution a { color: var(--text-main); }
+
+        body.map-night #issMap::after {
+            opacity: 1;
+        }
+
+        /* Leaflet overrides */
+        .leaflet-control-zoom {
+            border: none !important;
+        }
+
+        .leaflet-control-zoom a {
+            background: var(--bg-overlay) !important;
+            color: var(--text-main) !important;
+            border-color: var(--border-subtle) !important;
+        }
+
+        .leaflet-control-zoom a:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .iss-map-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .iss-dot {
+            width: 14px;
+            height: 14px;
+            background-color: #fff;
+            border-radius: 50%;
+            outline: 2px solid #101416;
+            position: relative;
+        }
+
+        .iss-dot::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: radar 2s linear infinite;
+        }
+
+        @keyframes radar {
+            from {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* ── Pass Prediction Popup ────────────────────────────── */
+        .leaflet-popup-content-wrapper {
+            background: rgba(10, 10, 12, 0.92) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+            color: var(--text-main) !important;
+            font-family: var(--font-ui) !important;
+            box-shadow: none !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(10, 10, 12, 0.92) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .leaflet-popup-content {
+            margin: 16px 44px 16px 16px !important;
+            font-size: var(--x-label-size) !important;
+            line-height: 1.5 !important;
+        }
+
+        .pass-popup-title {
+            font-weight: 700;
+            font-size: var(--x-label-size);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .pass-popup-time {
+            font-family: var(--font-mono);
+            font-size: var(--x-title-size);
+            font-weight: 700;
+            color: #fbbc04;
+        }
+
+        .pass-popup-detail {
+            font-size: var(--x-label-size);
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .pass-popup-unreachable {
+            color: var(--accent-nasa);
+            font-weight: 600;
+        }
+
+        .leaflet-popup-close-button {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 28px !important;
+            line-height: 44px !important;
+            color: var(--text-main) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="widget-container">
+
+        <!-- HEADER -->
+        <header class="header-zone">
+            <div class="brand-group">
+            <div class="brand">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M12 2A10 10 0 1 0 22 12 10 10 0 0 0 12 2ZM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                ISS HORIZON
+            </div>
+            <p id="dataStatus" class="x-status">Loading · No data yet</p>
+            </div>
+
+            <div class="solar-badge" id="solarBadge">
+                <span id="solarIcon">🌤️</span> <span id="solarText">CALC...</span>
+            </div>
+        </header>
+
+        <!-- TELEMETRY & MAP STACK -->
+        <div class="data-map-stack">
+            <div class="telemetry-grid">
+                <!-- Speed -->
+                <div class="tel-card">
+                    <div class="tel-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                        Velocity
+                    </div>
+                    <div class="tel-val" id="valSpeed">--</div>
+                </div>
+                <!-- Alt -->
+                <div class="tel-card">
+                    <div class="tel-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="20" x2="12" y2="10" />
+                            <line x1="18" y1="20" x2="18" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="16" />
+                        </svg>
+                        Altitude
+                    </div>
+                    <div class="tel-val" id="valAlt">--</div>
+                </div>
+                <!-- Lat -->
+                <div class="tel-card">
+                    <div class="tel-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="2" y1="12" x2="22" y2="12" />
+                        </svg>
+                        Latitude
+                    </div>
+                    <div class="tel-val" id="valLat">--</div>
+                </div>
+                <!-- Lon -->
+                <div class="tel-card">
+                    <div class="tel-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        </svg>
+                        Longitude
+                    </div>
+                    <div class="tel-val" id="valLon">--</div>
+                </div>
+            </div>
+
+            <div class="map-wrapper">
+                <div class="map-header">
+                    <div class="map-title" id="mapStatus" role="status">Ground Track</div>
+                    <div class="map-actions">
+                    <button type="button" class="follow-btn" id="btnPass" aria-label="Estimate next pass at map center">Pass</button>
+                    <button type="button" class="follow-btn active" id="btnFollow" aria-pressed="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        Follow
+                    </button>
+                    </div>
+                </div>
+                <div id="issMap" tabindex="0" aria-label="ISS map. Tap a location for an estimated pass, or use arrow keys to pan then activate Pass."></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+
+    <script src="./icue-iss-bridge.js"></script>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

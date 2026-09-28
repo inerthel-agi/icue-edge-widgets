@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Cooling Sensor Pump</title>
+    <meta name="x-icue-property" content="coolingAuto" data-label="tr('Automatic sensor')" data-type="switch" data-default="true" />
+    <meta name="x-icue-property" content="coolingSensor" data-label="tr('Manual sensor')" data-type="sensors-combobox" data-default="''" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('Cooling Sensor Pump')","properties":["coolingAuto","coolingSensor"],"info":"tr('Disable automatic selection to use the manual sensor.')"}]
+    </script>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" data-state="loading">
+        <section class="ring" id="ring">
+            <div class="inner">
+                <div class="label" id="label">Cooling</div>
+                <div class="value"><span id="value">--</span><small id="units"></small></div>
+                <div class="device" id="device">Detecting sensor</div>
+            </div>
+        </section>
+    </main>
+    <script src="./app.js"></script>
+</body>
+
+</html>

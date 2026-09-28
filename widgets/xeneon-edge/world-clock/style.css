@@ -1,0 +1,19 @@
+:root { --x-accent: #c7c9aa; --wc-day: #e8c477; --wc-night: #a8b8cd; }
+#widget { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--x-gap); }
+header > div { flex: 1; min-width: 0; }
+#local { font-size: clamp(40px, calc(var(--layout-unit) * 13), 88px); font-weight: 600; font-variant-numeric: tabular-nums; }
+.grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.clock-card { padding: 14px 0 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.clock-card .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.clock-card [data-name] { color: var(--x-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clock-card [data-time] { font-size: clamp(34px, calc(var(--layout-unit) * 12), 84px); font-weight: 600; }
+.clock-card [data-date] { color: var(--x-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot { width: 10px; height: 10px; border: 1px solid var(--wc-night); border-radius: 50%; flex-shrink: 0; }
+.clock-card.is-day .dot { border-color: var(--wc-day); background: var(--wc-day); }
+@media (min-aspect-ratio: 2/1) {
+    .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
+    .clock-card [data-time] { font-size: clamp(30px, calc(var(--layout-unit) * 10), 72px); }
+}
+@media (max-aspect-ratio: 4/5) {
+    .grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Habit Rings</title>
+    <meta name="x-icue-property" content="habit1Label" data-label="tr('Habit 1 Label')" data-type="textfield"
+        data-default="'Water'" />
+    <meta name="x-icue-property" content="habit1Goal" data-label="tr('Habit 1 Goal')" data-type="slider"
+        data-default="8" data-min="1" data-max="50" data-step="1" />
+    <meta name="x-icue-property" content="habit2Label" data-label="tr('Habit 2 Label')" data-type="textfield"
+        data-default="'Move'" />
+    <meta name="x-icue-property" content="habit2Goal" data-label="tr('Habit 2 Goal')" data-type="slider"
+        data-default="30" data-min="1" data-max="120" data-step="1" />
+    <meta name="x-icue-property" content="habit3Label" data-label="tr('Habit 3 Label')" data-type="textfield"
+        data-default="'Read'" />
+    <meta name="x-icue-property" content="habit3Goal" data-label="tr('Habit 3 Goal')" data-type="slider"
+        data-default="20" data-min="1" data-max="120" data-step="1" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Habit Rings')", "properties": ["habit1Label","habit1Goal","habit2Label","habit2Goal","habit3Label","habit3Goal"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget">
+        <header class="x-top">
+            <div class="x-stack">
+                <p id="dateLine" class="x-kicker">Today</p>
+                <h1 class="x-title">Habit Rings</h1>
+            </div>
+            <button type="button" id="reset" class="reset">Reset</button>
+        </header>
+        <section id="rings" class="rings" aria-label="Daily habits"></section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

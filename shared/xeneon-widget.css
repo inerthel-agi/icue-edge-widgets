@@ -1,0 +1,158 @@
+/* Shared instrument palette and sizing for dashboard widgets. */
+:root {
+    --layout-unit: 1vmin;
+    --x-pad: clamp(16px, calc(var(--layout-unit) * 4.5), 32px);
+    --x-gap: clamp(12px, calc(var(--layout-unit) * 3), 24px);
+    --x-bg: #080a0b;
+    --x-panel: #101416;
+    --x-panel-strong: #171d20;
+    --x-line: #30383c;
+    --x-text: #f2f3ed;
+    --x-muted: #b1b9b8;
+    --x-dim: #9aa5a5;
+    --x-accent: #a8d5ba;
+    --x-label-size: clamp(18px, calc(var(--layout-unit) * 4.6), 26px);
+    --x-control-size: clamp(20px, calc(var(--layout-unit) * 5), 28px);
+    --x-touch-size: 60px;
+    --x-title-size: clamp(28px, calc(var(--layout-unit) * 7), 48px);
+    font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
+    font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--x-bg);
+    color: var(--x-text);
+}
+button { font: inherit; touch-action: manipulation; }
+button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--x-text);
+    outline-offset: 4px;
+}
+button:active { transform: translateY(1px); }
+.x-widget {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    padding: var(--x-pad);
+    background: var(--x-bg);
+}
+.x-top, .x-row {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--x-gap);
+}
+.x-top { justify-content: space-between; }
+.x-stack { min-width: 0; }
+.x-kicker {
+    margin: 0 0 6px;
+    color: var(--x-accent);
+    font-size: var(--x-label-size);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+.x-title, .x-truncate {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.x-title {
+    margin: 0;
+    font-size: var(--x-title-size);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+}
+.x-badge {
+    max-width: 40%;
+    min-width: 0;
+    padding: 6px 0 6px 12px;
+    border-left: 2px solid var(--x-accent);
+    color: var(--x-muted);
+    font-size: var(--x-label-size);
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.x-card {
+    min-width: 0;
+    min-height: 0;
+    border: 0;
+    border-top: 1px solid var(--x-line);
+    background: transparent;
+    overflow: hidden;
+}
+.x-clamp-2 {
+    min-width: 0;
+    max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+}
+.x-grid {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    gap: var(--x-gap);
+}
+.x-value {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+}
+.x-label {
+    color: var(--x-muted);
+    font-size: var(--x-label-size);
+    font-weight: 600;
+    line-height: 1.3;
+}
+.x-overlay {
+    position: absolute;
+    inset: var(--x-pad);
+    display: none;
+    place-content: center;
+    gap: 12px;
+    padding: var(--x-pad);
+    text-align: center;
+    border-top: 2px solid var(--x-accent);
+    background: var(--x-bg);
+    z-index: 5;
+}
+.x-overlay.visible { display: grid; }
+.x-widget:has(> .x-status) > .x-overlay { bottom: calc(var(--x-pad) + 3em); }
+.x-overlay strong { font-size: var(--x-title-size); font-weight: 600; }
+.x-overlay span { color: var(--x-muted); font-size: var(--x-label-size); line-height: 1.5; }
+.x-status {
+    margin: 0;
+    color: var(--x-muted);
+    font-size: clamp(16px, calc(var(--layout-unit) * 3.5), 20px);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+@media (max-aspect-ratio: 1/1) {
+    :root { --layout-unit: min(1vw, 4.16px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
