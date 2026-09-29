@@ -47,6 +47,8 @@ Screenshots: usage figures, the sensor reading, countdowns and habits are demo v
 | <img src="docs/screenshots/focus-timer.png" width="400" alt="Focus Timer, 840 × 344" /><br>Focus Timer, 840 × 344 | <img src="docs/screenshots/countdowns.png" width="400" alt="Countdowns, 840 × 344" /><br>Countdowns, 840 × 344 |
 | <img src="docs/screenshots/habit-rings.png" width="400" alt="Habit Rings, 840 × 344" /><br>Habit Rings, 840 × 344 | <img src="docs/screenshots/iss-horizon.png" width="400" alt="ISS Horizon, 1688 × 696" /><br>ISS Horizon, 1688 × 696 |
 
+<img src="docs/screenshots/now-playing-xl.png" width="820" alt="Now Playing, 2536 × 696" /><br>Now Playing, 2536 × 696: player mark, cover colours, synced lyrics (tap a line to seek), shuffle and repeat, visualiser (tap the area for `Up next`, Spotify only), volume and sleep timer. Everything except the player mark and the cover colours needs iCUE Edge Companion 0.1.4 or later. The lyrics, the bars and the queue in this capture are invented.
+
 <img src="docs/screenshots/spotify-lyrics.png" width="820" alt="Spotify with synced lyrics, 1688 × 696" />
 
 Spotify (advanced option), 1688 × 696, with synced lyrics and `Up next` (tap a track to skip to it; needs iCUE Edge Companion 0.1.4 or later). The track and its lyrics are invented for the demo; real lyrics come from LRCLIB at run time.
