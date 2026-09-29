@@ -6,6 +6,10 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Fixed - 1.2.2 Spotify rate limit
+- Show "Spotify is busy" with the remaining wait instead of "Nothing playing" while Spotify rate-limits the companion.
+- Show the wait in hours when it exceeds two hours.
+
 ### Changed - 1.2.1 XENEON EDGE readability
 - Increase dashboard labels, status text, primary values, and font weight for viewing at a distance.
 - Enlarge primary touch controls to at least 60 pixels and rearrange compact dashboard content.

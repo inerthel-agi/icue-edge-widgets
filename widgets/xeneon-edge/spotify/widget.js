@@ -219,6 +219,10 @@
         if (acc === "connecting" && !s.item) return overlay("SPOTIFY", "Connecting to Spotify…", "Finish the sign-in in your browser if it is open.");
         if (acc === "needs_login") return overlay("SPOTIFY", "Sign in again", "Spotify ended the session. Reconnect in iCUE Edge Companion › Spotify.");
         if (acc === "premium_required") return overlay("SPOTIFY", "Spotify Premium required", "Spotify only allows playback control for Premium accounts.");
+        if (!s.item && s.rateLimitedUntil) {
+            const min = Math.max(1, Math.ceil((s.rateLimitedUntil - Date.now()) / 60000));
+            return overlay("SPOTIFY", "Spotify is busy", "Spotify asked to wait. Retrying in about " + (min >= 120 ? Math.round(min / 60) + " h." : min + " min."));
+        }
         if (!s.item) {
             const d = s.devices && s.devices[0];
             return overlay("SPOTIFY", "Nothing playing", "Start Spotify on a device" + (d ? ", or play on " + d.name + "." : "."), d ? "Play on " + d.name : "",
