@@ -12,17 +12,30 @@
     --f-artist: clamp(22px, calc(var(--u) * 6.4), 40px);
     --f-label: clamp(18px, calc(var(--u) * 4.6), 26px);
     --f-status: clamp(16px, calc(var(--u) * 4.2), 22px);
-    --ctl: clamp(60px, calc(var(--u) * 17), 96px);
-    --ctl-main: clamp(72px, calc(var(--u) * 22), 124px);
+    --ctl: clamp(68px, calc(var(--u) * 18.5), 140px);
+    --ctl-main: clamp(88px, calc(var(--u) * 24), 170px);
     --chip: clamp(44px, calc(var(--u) * 10), 56px);
     --radius: clamp(8px, calc(var(--u) * 2), 18px);
     --art: min(calc(100vh - 2 * var(--pad)), 42vw);
+}
+
+/* Panels, lines and secondary text follow the chosen text and background colours, so a custom
+   style (say black text on red) keeps every control readable. */
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+    :root {
+        --x-panel: color-mix(in srgb, var(--x-text) 8%, var(--x-bg));
+        --x-line: color-mix(in srgb, var(--x-text) 24%, var(--x-bg));
+        --x-muted: color-mix(in srgb, var(--x-text) 72%, var(--x-bg));
+        --x-dim: color-mix(in srgb, var(--x-text) 55%, var(--x-bg));
+    }
 }
 
 html, body { background: transparent; }
 body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: var(--x-bg); opacity: var(--bg-opacity); }
 
 .player {
+    /* Cover colour when readable, else the chosen accent. Set here: --art-color lives on this element. */
+    --dyn: var(--art-color, var(--accent));
     position: relative;
     width: 100%;
     height: 100%;
@@ -59,7 +72,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     max-width: 88%;
     padding: 6px 14px;
     border-radius: 999px;
-    background: rgba(8, 10, 11, 0.92);
+    background: var(--x-bg);
     color: var(--x-muted);
     font-size: var(--f-status);
     font-weight: 600;
@@ -93,12 +106,17 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     color: var(--x-muted);
     font-size: var(--f-label);
     font-weight: 700;
+    line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     cursor: pointer;
 }
-.source-chip #appName { overflow: hidden; text-overflow: ellipsis; }
+.source-chip #appName { overflow: hidden; text-overflow: ellipsis; padding-bottom: 0.12em; }
 .state-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--x-dim); }
+/* A known player shows its mark instead of the plain dot. */
+.state-dot.logo { width: calc(var(--f-label) * 1.5); height: calc(var(--f-label) * 1.5); border-radius: 0; background: none; }
+.state-dot.logo svg { display: block; width: 100%; height: 100%; }
+.player[data-playback="playing"] .state-dot.logo, .player[data-stale] .state-dot.logo { background: none; }
 .player[data-playback="playing"] .state-dot { background: var(--accent); }
 .player[data-stale] .state-dot { background: var(--warn); }
 .pill {
@@ -112,6 +130,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     color: var(--warn);
     font-size: var(--f-status);
     font-weight: 700;
+    line-height: 1.4;
     white-space: nowrap;
 }
 .pill.demo { border-color: var(--x-dim); color: var(--x-muted); }
@@ -121,7 +140,8 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
 .title {
     font-size: var(--f-title);
     font-weight: 700;
-    line-height: 1.08;
+    line-height: 1.2;
+    padding-bottom: 0.12em;
     letter-spacing: -0.02em;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -129,13 +149,73 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     overflow: hidden;
 }
 .artist, .album { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.artist { font-size: var(--f-artist); font-weight: 600; opacity: 0.88; line-height: 1.2; }
-.album { font-size: var(--f-label); font-weight: 600; color: var(--x-muted); line-height: 1.3; }
+.artist { font-size: var(--f-artist); font-weight: 600; opacity: 0.88; line-height: 1.3; padding-bottom: 0.12em; }
+.album { font-size: var(--f-label); font-weight: 600; color: var(--x-muted); line-height: 1.4; padding-bottom: 0.12em; }
+
+/* ---------- Lyrics ---------- */
+.meta { min-height: 0; }
+.lyrics { margin-top: calc(var(--gap) * 0.6); min-width: 0; min-height: 0; flex: 0 1 auto; overflow: hidden; }
+.lyric-list { display: flex; flex-direction: column; align-items: flex-start; max-height: 100%; }
+.lyric-line {
+    display: none;
+    width: 100%;
+    margin: 0;
+    padding: 0 0 0.12em;
+    border: 0;
+    background: none;
+    text-align: left;
+    font: inherit;
+    font-size: var(--f-label);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--x-muted);
+    opacity: calc(0.85 - var(--d, 1) * 0.2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+.lyric-line.now {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: var(--f-artist);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--dyn);
+    opacity: 1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.lyric-line.now.enter { animation: lyric-in 0.35s ease; }
+@keyframes lyric-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* Lyrics take the album's place, and are left out of the short formats. */
+.player[data-lyrics] .album { display: none; }
+@media (max-height: 450px) { .lyrics { display: none; } }
+/* Medium heights keep the current line only, so the controls stay on screen. */
+@media (max-height: 850px) {
+    .lyric-line.now { -webkit-line-clamp: 1; }
+    .player[data-lyrics] { --f-title: clamp(28px, calc(var(--u) * 8), 54px); --ctl-main: clamp(88px, calc(var(--u) * 19), 132px); --ctl: clamp(68px, calc(var(--u) * 15), 110px); }
+}
+/* Tall and ultra-wide formats: the surrounding lines and the album come back; what does not fit fades out. */
+@media (min-height: 851px), (min-aspect-ratio: 3/1) {
+    .lyric-line { display: block; }
+    .lyric-line.now { display: -webkit-box; }
+    .player[data-lyrics] .album { display: block; }
+    .lyric-list { -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent); mask-image: linear-gradient(to bottom, #000 78%, transparent); }
+}
+@media (min-aspect-ratio: 3/1) and (max-height: 850px) {
+    .lyric-line.now { -webkit-line-clamp: 2; }
+    .player[data-lyrics] { --f-title: clamp(32px, calc(var(--u) * 10), 68px); --ctl-main: clamp(88px, calc(var(--u) * 24), 170px); --ctl: clamp(68px, calc(var(--u) * 18.5), 140px); }
+}
+@media (prefers-reduced-motion: reduce) { .lyric-line.now.enter { animation: none; } }
 
 /* ---------- Timeline ---------- */
 .timeline { grid-area: time; min-width: 0; display: flex; align-items: center; gap: 14px; }
 .time { flex: none; color: var(--x-muted); font-size: var(--f-label); font-weight: 600; font-variant-numeric: tabular-nums; }
-.timeline input {
+button.time { min-height: 44px; padding: 0; border: 0; background: none; font-family: inherit; cursor: pointer; }
+.timeline input,
+.tools input {
     --pct: 0%;
     flex: 1;
     min-width: 60px;
@@ -146,12 +226,14 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     appearance: none;
     cursor: pointer;
 }
-.timeline input::-webkit-slider-runnable-track {
+.timeline input::-webkit-slider-runnable-track,
+.tools input::-webkit-slider-runnable-track {
     height: 8px;
     border-radius: 4px;
-    background: linear-gradient(to right, var(--accent) var(--pct), #2c3437 var(--pct));
+    background: linear-gradient(to right, var(--dyn) var(--pct), var(--x-line) var(--pct));
 }
-.timeline input::-webkit-slider-thumb {
+.timeline input::-webkit-slider-thumb,
+.tools input::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 28px;
     height: 28px;
@@ -236,7 +318,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     text-align: left;
 }
 .sheet-item[aria-pressed="true"] { border-color: var(--accent); }
-.sheet-item b, .sheet-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet-item b, .sheet-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; }
 .sheet-item b { font-size: var(--f-label); }
 .sheet-item span { color: var(--x-muted); font-size: var(--f-status); font-weight: 600; }
 
@@ -280,7 +362,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
 
 /* ---------- Formats: portrait (696x840, 696x1688, 696x2536) ---------- */
 @media (max-aspect-ratio: 1/1) {
-    :root { --art: min(calc(100vw - 2 * var(--pad)), calc(100vh - 2 * var(--pad) - 430px)); }
+    :root { --art: min(calc(100vw - 2 * var(--pad)), calc(100vh - 2 * var(--pad) - 340px - var(--ctl-main))); --ctl: calc(var(--u) * 28); --ctl-main: calc(var(--u) * 36); }
     .player {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas: "art" "top" "meta" "time" "ctl";
@@ -294,4 +376,127 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
 }
 @media (max-aspect-ratio: 1/1) and (min-height: 1200px) {
     .title { -webkit-line-clamp: 3; }
+}
+
+/* ---------- Motion (off with "reduce motion") ---------- */
+.eq { display: none; align-items: flex-end; gap: 3px; height: 0.9em; margin-right: -4px; }
+.player[data-playback="playing"] .eq { display: inline-flex; }
+.player[data-alert] .eq { display: none; }
+.eq i { width: 4px; height: 100%; border-radius: 2px; background: var(--dyn); transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-duration: 0.8s; animation-delay: -0.3s; }
+.eq i:nth-child(3) { animation-duration: 1.2s; animation-delay: -0.6s; }
+@keyframes eq { 0%, 100% { transform: scaleY(0.25); } 50% { transform: scaleY(1); } }
+
+.meta.enter { animation: slide-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.art-frame.enter { animation: art-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes art-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+
+/* Soft glow behind the artwork: a plain gradient of the cover colour (no blur filter, which is slow to
+   draw on the screen); it fades when playback stops. */
+.art-zone::after {
+    content: "";
+    position: absolute;
+    inset: -14%;
+    z-index: -1;
+    background: radial-gradient(closest-side, var(--dyn), transparent);
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+.player[data-playback="playing"][data-art="ready"] .art-zone::after { opacity: 0.45; }
+
+.ctl { transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease; }
+.ctl:not(:disabled):active { transform: scale(0.9); }
+.ctl.primary svg { animation: icon-pop 0.28s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes icon-pop { from { transform: scale(0.5); opacity: 0; } to { transform: none; opacity: 1; } }
+.empty { animation: fade-in 0.3s ease; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .eq i, .meta.enter, .art-frame.enter, .ctl.primary svg, .empty { animation: none; }
+    .ctl, .art-zone::after { transition: none; }
+}
+
+/* Idle screen: big clock. */
+.empty.idle .empty-title { font-size: calc(var(--f-title) * 2); font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.empty.idle .empty-sub { font-size: var(--f-artist); }
+
+/* With cover colours on, the widget background is washed with the cover's colour, strongest behind the artwork. */
+.player::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(100deg, var(--art-color, transparent), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+.player[data-cover]::before { opacity: 0.34; }
+@media (prefers-reduced-motion: reduce) { .player::before { transition: none; } }
+
+/* ---------- Shuffle, repeat, volume, sleep, visualiser (large formats only) ---------- */
+.ctl.aux { display: none; width: calc(var(--ctl) * 0.72); height: calc(var(--ctl) * 0.72); }
+.ctl.aux[data-on] { background: var(--dyn); border-color: transparent; color: var(--x-bg); }
+.ctl.aux .i-rep1 { display: none; }
+.ctl.aux[data-mode="1"] .i-rep { display: none; }
+.ctl.aux[data-mode="1"] .i-rep1 { display: block; }
+.stage, .tools { display: none; }
+.stage { grid-area: viz; position: relative; min-height: 60px; min-width: 0; cursor: default; }
+.stage:has(.stage-tab:not([hidden])) { cursor: pointer; }
+.viz { width: 100%; height: 100%; display: flex; align-items: flex-end; gap: 0.5%; }
+.stage[data-view="queue"] .viz { display: none; }
+.stage[data-view="viz"] .queue { display: none; }
+.queue { list-style: none; margin: 0; padding: 0; height: 100%; overflow: hidden; display: flex; flex-direction: column; gap: 8px; -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent); mask-image: linear-gradient(to bottom, #000 80%, transparent); }
+.queue li { flex: none; display: flex; align-items: center; gap: 14px; min-width: 0; }
+.queue img { flex: none; width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--x-panel); }
+.queue span { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.queue b, .queue i { font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 0.1em; }
+.queue b { font-size: var(--f-status); font-weight: 700; }
+.queue i { font-size: calc(var(--f-status) * 0.85); font-weight: 600; color: var(--x-muted); }
+/* A small tab names what a tap shows next. */
+.stage-tab { position: absolute; top: 0; right: 0; z-index: 1; min-height: 36px; padding: 0 16px; border: 2px solid var(--x-line); border-radius: 18px; background: var(--x-bg); color: var(--x-muted); font: inherit; font-size: calc(var(--f-status) * 0.85); font-weight: 700; pointer-events: none; }
+.viz i { flex: 1; height: 100%; border-radius: 3px; background: var(--dyn); opacity: 0.85; transform-origin: bottom; transform: scaleY(0.03); }
+.tools { grid-area: tools; align-items: center; gap: var(--gap); min-width: 0; }
+.tool {
+    flex: none;
+    min-height: 60px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 22px;
+    border: 2px solid var(--x-line);
+    border-radius: 30px;
+    background: var(--x-panel);
+    color: var(--x-text);
+    font: inherit;
+    font-size: var(--f-status);
+    font-weight: 700;
+    cursor: pointer;
+}
+.tool.icon { width: 60px; padding: 0; justify-content: center; border-radius: 50%; }
+.tool svg { width: 28px; height: 28px; fill: currentColor; }
+.tool[data-on] { border-color: var(--dyn); color: var(--dyn); }
+.tool .i-mute { display: none; }
+.tool[data-on] .i-vol { display: none; }
+.tool[data-on] .i-mute { display: block; }
+.tools input { flex: 1; min-width: 80px; }
+@media (min-width: 1000px) { .ctl.aux:not([hidden]) { display: grid; } }
+@media (max-aspect-ratio: 1/1) and (min-height: 1200px) { .ctl.aux:not([hidden]) { display: grid; } }
+
+/* Ultra-wide: the empty upper right holds the visualiser; volume and sleep sit under the timeline. */
+@media (min-aspect-ratio: 3/1) {
+    .info { grid-template-rows: auto 1fr auto auto auto; grid-template-areas: "top top" "meta viz" "meta ctl" "meta time" "meta tools"; }
+    .stage { display: block; }
+    .tools:not([hidden]) { display: flex; }
+    .controls { align-self: center; }
+    /* The text column spans four rows: without this its height would push the controls off screen. */
+    .meta { contain: size; overflow: hidden; }
+}
+/* Tall portrait formats have the height for all of it. */
+@media (max-aspect-ratio: 1/1) and (min-height: 1200px) {
+    .player { grid-template-areas: "art" "top" "meta" "viz" "time" "ctl" "tools"; }
+    .stage { display: block; width: 100%; height: clamp(90px, 9vh, 220px); }
+    .tools:not([hidden]) { display: flex; width: 100%; }
 }

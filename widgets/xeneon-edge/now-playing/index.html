@@ -16,8 +16,10 @@
         data-default="'#080a0b'" />
     <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
         data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="coverColors" data-label="tr('Cover colors')" data-type="tab-buttons"
+        data-default="'on'" data-values="[{'key':'on','value':'On'},{'key':'off','value':'Off'}]" />
     <script type="application/json" id="x-icue-groups">
-        [{ "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency"] }]
+        [{ "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "coverColors"] }]
     </script>
     <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
     <link rel="stylesheet" href="./widget.css" />
@@ -38,9 +40,10 @@
         <section class="info">
             <div class="topline">
                 <button class="source-chip" id="sourceBtn" type="button" aria-haspopup="dialog">
-                    <span class="state-dot" aria-hidden="true"></span>
+                    <span class="state-dot" id="appLogo" aria-hidden="true"></span>
                     <span id="appName">—</span>
                     <span class="sep" aria-hidden="true">·</span>
+                    <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
                     <span id="playState">—</span>
                 </button>
                 <span class="pill" id="statusPill" hidden></span>
@@ -49,14 +52,25 @@
                 <h1 class="title" id="title"></h1>
                 <p class="artist" id="artist"></p>
                 <p class="album" id="album"></p>
+                <div class="lyrics" id="lyrics" hidden>
+                    <div class="lyric-list" id="lyricList"></div>
+                </div>
             </div>
             <div class="timeline" id="timeline" hidden>
                 <span class="time" id="pos"></span>
                 <input type="range" id="seek" min="0" max="1" step="1" value="0" aria-label="Playback position" />
                 <span class="live" id="live" hidden>LIVE</span>
-                <span class="time" id="dur"></span>
+                <button class="time" id="dur" type="button" aria-label="Toggle remaining time"></button>
+            </div>
+            <div class="stage" id="stage" data-view="viz">
+                <div class="viz" id="viz" aria-hidden="true"></div>
+                <ol class="queue" id="queue" aria-label="Up next"></ol>
+                <button class="stage-tab" id="stageTab" type="button" hidden></button>
             </div>
             <div class="controls">
+                <button class="ctl aux" id="shuffle" type="button" aria-label="Shuffle" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 9.2 5.4 4 4 5.4l5.2 5.2zM14 4l2.5 2.5L4 19l1.4 1.4L17.9 7.9l2.5 2.5V4zm.5 9.4-1.4 1.4 3.4 3.4-2.5 2.5H20v-6.9l-2.5 2.5z" /></svg>
+                </button>
                 <button class="ctl" id="prev" type="button" aria-label="Previous">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.4v14H6zm3.6 7L19 5v14z" /></svg>
                 </button>
@@ -67,6 +81,21 @@
                 </button>
                 <button class="ctl" id="next" type="button" aria-label="Next">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.6 5H18v14h-2.4zM14.4 12L5 19V5z" /></svg>
+                </button>
+                <button class="ctl aux" id="repeat" type="button" aria-label="Repeat" hidden>
+                    <svg class="i-rep" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z" /></svg>
+                    <svg class="i-rep1" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z" /></svg>
+                </button>
+            </div>
+            <div class="tools" id="tools" hidden>
+                <button class="tool icon" id="mute" type="button" aria-label="Mute">
+                    <svg class="i-vol" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" /></svg>
+                    <svg class="i-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z" /></svg>
+                </button>
+                <input type="range" id="vol" min="0" max="100" step="1" value="0" aria-label="Volume" />
+                <button class="tool" id="sleep" type="button" aria-label="Sleep timer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.34 2.02C6.59 1.82 2 6.42 2 12c0 5.52 4.48 10 10 10 3.71 0 6.93-2.02 8.66-5.02-7.51-.25-12.09-8.43-8.32-14.96z" /></svg>
+                    <span id="sleepLabel">Sleep</span>
                 </button>
             </div>
         </section>
@@ -88,6 +117,7 @@
         </section>
     </main>
 
+    <script src="./brands.js"></script>
     <script src="./widget.js"></script>
 </body>
 
