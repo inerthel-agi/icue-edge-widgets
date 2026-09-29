@@ -6,6 +6,36 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Added - 1.3.0 Now Playing extras (need iCUE Edge Companion 0.1.4)
+- Synced lyrics on several lines in tall and ultra-wide formats; a tap on a line jumps there when the player can seek.
+- Album name back under the artist, and a tap on the length switches it to the time left.
+- Shuffle and repeat buttons (off, all, one) around the transport, shown only when the player supports them (formats 1000 px wide and up, and tall portrait).
+- Volume slider, mute button and a sleep timer (15, 30, 60 min, off) for the computer, in the ultra-wide and tall portrait formats.
+- "Up next" (Spotify only): a tap on the visualiser area switches to the next five tracks with covers, and back. It needs the companion connected to Spotify; other players never show it.
+- Audio visualiser (24 bands from the sound the computer plays) in the ultra-wide and tall portrait formats; the companion listens only while it is on screen.
+
+### Fixed - 1.2.7 Now Playing cover colors setting
+- Apply the "Cover colors" setting at once; it used to be read only when the next cover loaded, so a change showed up at the next track.
+
+### Fixed - 1.2.6 Now Playing load time
+- Replace the blurred-cover glow by a plain gradient: a blur filter over the whole artwork is slow to draw on the screen.
+
+### Changed - 1.2.5 Now Playing cover colors
+- Wash the widget background with the cover's colour (behind the artwork first) so the setting is visible even when the cover resembles the accent.
+
+### Fixed - 1.2.4 Now Playing custom style
+- Apply the cover colours (they stayed on the accent) by resolving them on the player element.
+- Derive panels, lines and secondary text from the chosen text and background colours, so black text on a red background keeps readable buttons and a visible timeline.
+
+### Changed - 1.2.3 Now Playing
+- Stop clipping the descenders of g, j, p, q and y in the title, artist, album and source name.
+- Enlarge the transport buttons at every size (up to 140 px, 170 px for play/pause; larger still in portrait).
+- Show the player's own mark (Spotify, Chrome, Brave, Firefox, Edge, Opera, Vivaldi, VLC) in the source chip instead of a plain dot; other players keep the dot.
+- Show synced lyrics (LRCLIB, through the updated companion) for any player when the artist and length match; one line on medium heights, two plus the next line on tall and ultra-wide ones, none on the short formats.
+- Take the progress bar, equalizer and lyric colour from the cover (new iCUE setting "Cover colors", On by default); grey covers keep the chosen accent.
+- Show a large clock and the date instead of "Nothing playing" when no player is active.
+- Animate: equalizer bars while playing, text and cover slide in on a new track, soft glow of the cover, press feedback on the buttons. All of it stops with "reduce motion".
+
 ### Fixed - 1.2.2 Spotify rate limit
 - Show "Spotify is busy" with the remaining wait instead of "Nothing playing" while Spotify rate-limits the companion.
 - Show the wait in hours when it exceeds two hours.

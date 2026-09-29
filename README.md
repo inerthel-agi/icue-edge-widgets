@@ -33,6 +33,8 @@ In iCUE, open the device's Widgets section, choose the add/import control, and s
 
 Each package name has the `.icuewidget` extension. The widget UI is in English.
 
+Music: use `now-playing`, including for Spotify. It reads the Windows media sessions, so it works with any player, needs no account or Spotify token, and is not subject to Spotify's request limits. `spotify` is an advanced option: it needs your own Spotify app (created on `developer.spotify.com`) and Spotify Premium, and Spotify suspends an app that sends too many requests; the companion then waits for the time Spotify gives, up to 24 hours. `now-playing` shows the Spotify queue only when the companion is connected to Spotify this way.
+
 Screenshots: usage figures, the sensor reading, countdowns and habits are demo values. Weather, GitHub and ISS data are live at capture time. The music is real tracks with their album artwork.
 
 | | |
@@ -47,7 +49,7 @@ Screenshots: usage figures, the sensor reading, countdowns and habits are demo v
 
 <img src="docs/screenshots/spotify-lyrics.png" width="820" alt="Spotify with synced lyrics, 1688 × 696" />
 
-Spotify, 1688 × 696, with synced lyrics and `Up next` (tap a track to skip to it; needs iCUE Edge Companion 0.1.3 or later). The track and its lyrics are invented for the demo; real lyrics come from LRCLIB at run time.
+Spotify (advanced option), 1688 × 696, with synced lyrics and `Up next` (tap a track to skip to it; needs iCUE Edge Companion 0.1.4 or later). The track and its lyrics are invented for the demo; real lyrics come from LRCLIB at run time.
 
 <img src="icons/companion.png" width="64" height="64" alt="iCUE Edge Companion logo" />
 
