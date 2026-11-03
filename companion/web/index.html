@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iCUE Edge Companion</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="ui.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body data-auth="tauri">
+<div class="dragbar" data-tauri-drag-region></div>
+<div class="histnav" aria-label="History">
+  <button type="button" id="navBack" aria-label="Back" title="Back (Alt+Left)" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button type="button" id="navFwd" aria-label="Forward" title="Forward (Alt+Right)" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+</div>
+<div class="winbtns">
+  <button type="button" data-win="minimize" aria-label="Minimize"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 5h8" stroke="currentColor"/></svg></button>
+  <button type="button" data-win="maximize" aria-label="Maximize"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor"/></svg></button>
+  <button type="button" data-win="close" class="close" aria-label="Close"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor"/></svg></button>
+</div>
+<div class="layout">
+  <aside class="side">
+    <span class="nav-ind" id="navInd" aria-hidden="true"></span>
+    <div class="brand" data-tauri-drag-region><strong><svg class="mark-logo" aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><g transform="translate(-6.0 0)"><path d="M150.9 178.9A72 72 0 1 1 170.8 141.0L145.2 136.3A46 46 0 1 0 132.5 160.5Z"/><rect x="48" y="115.0" width="192" height="26" rx="13.0"/></g></svg>iCUE Edge Companion</strong><span class="status" id="side-status">Connecting…</span></div>
+    <button type="button" class="nav" data-page="overview" aria-current="page">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      Overview</button>
+    <div class="nav-label">AI usage</div>
+    <button type="button" class="nav" data-page="claude"><span class="mark sm claude" data-logo="claude"></span>Claude<span class="dot" id="dot-claude"></span></button>
+    <button type="button" class="nav" data-page="codex"><span class="mark sm codex" data-logo="codex"></span>Codex<span class="dot" id="dot-codex"></span></button>
+    <button type="button" class="nav" data-page="aicost"><span class="wico sm" data-icon="ai-cost"><i></i></span>AI cost</button>
+    <div class="nav-label">Activity</div>
+    <button type="button" class="nav" data-page="screentime"><span class="wico sm" data-icon="screen-time"><i></i></span>Screen time</button>
+    <div class="nav-label">Media</div>
+    <button type="button" class="nav" data-page="spotify"><span class="mark sm spotify" data-logo="spotify"></span>Spotify<span class="dot" id="dot-spotify"></span></button>
+    <div class="nav-label">Screens</div>
+    <button type="button" class="nav" data-page="widgets">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="10" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+      Widgets</button>
+    <div class="spacer"></div>
+    <button type="button" class="nav" data-page="settings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      Settings</button>
+    <div class="version" id="version"></div>
+  </aside>
+  <main class="content" id="content"></main>
+</div>
+<footer class="actions">
+  <span class="msg" id="footer-msg" role="status"></span>
+  <button type="button" class="btn" id="refresh">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg>
+    <span id="refresh-label">Refresh limits</span></button>
+</footer>
+<script src="core.js"></script>
+<script src="costs.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

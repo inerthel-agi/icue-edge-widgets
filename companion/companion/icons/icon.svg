@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>iCUE Edge Companion</title>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#0f1214"/>
+  <g fill="#f2f3ed" transform="translate(128 128) scale(0.76) translate(-128 -128) translate(-6.0 0)"><path d="M150.9 178.9A72 72 0 1 1 170.8 141.0L145.2 136.3A46 46 0 1 0 132.5 160.5Z"/><rect x="48" y="115.0" width="192" height="26" rx="13.0"/></g>
+</svg>

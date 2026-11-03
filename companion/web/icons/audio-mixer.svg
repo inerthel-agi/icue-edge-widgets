@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Original icon for this project -->
+<svg width="32px" height="32px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>Audio Mixer</title>
+    <path fill="#ffffff" fill-rule="evenodd" d="M3 2h2v4.2a2 2 0 0 1 0 3.6V14H3V9.8a2 2 0 0 1 0-3.6zM7 2h2v7.2a2 2 0 0 1 0 3.6V14H7v-1.2a2 2 0 0 1 0-3.6zM11 2h2v1.2a2 2 0 0 1 0 3.6V14h-2V6.8a2 2 0 0 1 0-3.6z"/>
+</svg>

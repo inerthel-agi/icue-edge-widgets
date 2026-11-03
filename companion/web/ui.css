@@ -1,0 +1,96 @@
+/* Design v2 preview: neutral dark system inspired by Codex RPC (monochrome, one accent per provider,
+   green reserved for "live"). Desktop scale: this window is read on a monitor, not on the XENEON. */
+:root {
+  --claude: #d97757; --codex: #7aa2f7;
+  font-family: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+/* OLED (default): true black surfaces; cards are set apart by a hairline, not by grey. */
+:root, :root[data-theme="oled"] {
+  color-scheme: dark;
+  --bg: #000; --panel: #000; --panel-2: #121212; --line: rgba(255, 255, 255, .11); --line-2: rgba(255, 255, 255, .18);
+  --text: #f2f2f2; --muted: #a3a3a3; --faint: #8a8a8a; --track: #262626;
+  --hover: rgba(255, 255, 255, .08); --accent: #f2f2f2; --on-accent: #000;
+  --live: #10a37f; --warn: #f5a524; --danger: #f87171;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #171717; --panel: #1f1f1f; --panel-2: #262626; --line: rgba(255, 255, 255, .08); --line-2: rgba(255, 255, 255, .14);
+  --text: #ececec; --muted: #a3a3a3; --faint: #8a8a8a; --track: #333;
+  --hover: rgba(255, 255, 255, .06); --accent: #ececec; --on-accent: #171717;
+  --live: #10a37f; --warn: #f5a524; --danger: #f87171;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f6f7; --panel: #fff; --panel-2: #efeff1; --line: rgba(0, 0, 0, .08); --line-2: rgba(0, 0, 0, .16);
+  --text: #18181b; --muted: #5b5c63; --faint: #6e6f76; --track: #e4e4e7;
+  --hover: rgba(0, 0, 0, .05); --accent: #18181b; --on-accent: #fff;
+  --live: #0b8a6a; --warn: #b45309; --danger: #dc2626;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font-size: 13.5px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--muted); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.muted { color: var(--muted); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border: 1px solid var(--line-2); border-radius: 999px; background: transparent; font-size: 12.5px; font-weight: 500; white-space: nowrap; transition: background .15s, transform .12s, opacity .15s; }
+.btn:hover { background: var(--hover); }
+.btn:active:not(:disabled) { transform: scale(.96); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { opacity: .88; }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+.btn svg { flex: none; }
+
+/* Pills */
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; background: var(--hover); color: var(--muted); font-size: 11.5px; font-weight: 500; white-space: nowrap; transition: background-color .3s, color .3s; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.live { color: var(--live); background: color-mix(in srgb, var(--live) 14%, transparent); }
+.pill.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.pill.danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+
+/* Switch */
+.switch { position: relative; flex: none; width: 32px; height: 18px; padding: 0; border: 0; border-radius: 999px; background: var(--track); transition: background .15s; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+.switch[aria-checked="true"] { background: var(--accent); }
+.switch[aria-checked="true"]::after { transform: translateX(14px); background: var(--on-accent); }
+
+/* Bars: filled part = share of the limit already used */
+.bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width .75s cubic-bezier(.2, .7, .2, 1), background-color .3s; }
+.bar.warn > i { background: var(--warn); }
+.bar.danger > i { background: var(--danger); }
+.bar.off { opacity: .4; }
+
+/* Provider mark */
+.mark { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #111; }
+.mark.claude { background: var(--claude); color: #fff; }
+.mark.codex { background: #f4f4f4; color: #000; box-shadow: inset 0 0 0 1px var(--line); }
+.mark svg { width: 64%; height: 64%; fill: currentColor; }
+.mark.spotify { background: transparent; color: #1ed760; }
+.mark.spotify svg { width: 100%; height: 100%; }
+.mark.sm { width: 20px; height: 20px; border-radius: 6px; font-size: 11px; }
+
+/* Groups of rows (settings-card pattern) */
+.group-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 24px 0 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.group-title small { font-weight: 400; color: var(--faint); font-size: 12px; }
+.group { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.row { display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 11px 16px; }
+.row + .row { border-top: 1px solid var(--line); }
+.row-text { display: grid; flex: 1; min-width: 0; }
+.row-text > span { font-size: 13.5px; }
+.row-text small { color: var(--muted); font-size: 12px; }
+.row-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: var(--track); border-radius: 999px; }
+
+/* Segmented control (theme picker) */
+.seg { display: inline-flex; flex: none; padding: 3px; gap: 2px; border: 1px solid var(--line-2); border-radius: 999px; }
+.seg button { padding: 4px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: 12.5px; font-weight: 500; }
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Original icon for this project -->
+<svg width="32px" height="32px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>System Pulse</title>
+    <path fill="#ffffff" fill-rule="evenodd" d="M7 1.6V3A5 5 0 1 0 13 9h1.4A6.5 6.5 0 1 1 7 1.6zM8.5 1.6A6.5 6.5 0 0 1 14.4 7.5H8.5zM7.5 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/>
+</svg>
