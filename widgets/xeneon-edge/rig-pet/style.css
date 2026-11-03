@@ -111,8 +111,10 @@
 .slime .gloss { fill: #fff; opacity: 0.45; }
 .slime { transform-origin: 50% 100%; animation: wobble 2.4s ease-in-out infinite; }
 @keyframes wobble { 25% { transform: scale(1.04, 0.96); } 75% { transform: scale(0.97, 1.03); } }
-/* Codex pet: one frame of the spritesheet at a time, kept pixel-sharp. */
-.sprite { position: absolute; inset: 0; margin: auto; width: min(76cqw, calc(76cqh * 192 / 208)); height: min(calc(76cqw * 208 / 192), 76cqh); display: none; background-repeat: no-repeat; image-rendering: pixelated; }
+/* Codex pet: one frame of the spritesheet at a time. */
+.sprite { position: absolute; inset: 0; margin: auto; width: min(76cqw, calc(76cqh * 192 / 208)); height: min(calc(76cqw * 208 / 192), 76cqh); display: none; background-repeat: no-repeat; }
+/* Clawd is true pixel art: kept sharp. The other sheets are drawn art, smoothed when scaled up. */
+[data-sheet="clawd"] .sprite { image-rendering: pixelated; }
 [data-pet="codex"] .sprite { display: block; }
 .sprite.flip { scale: -1 1; }
 @media (prefers-reduced-motion: reduce) { .claude .legs rect, .ghost, .slime, .robot .bulb { animation: none; } }
