@@ -371,6 +371,8 @@ pub fn page(st: &State) -> Value {
         "item": it.map(|i| json!({ "title": i.title, "artists": i.artists, "playing": p.is_some_and(|p| p.playing) })),
         "lastSeen": st.last_seen,
         "rateLimitedUntil": st.rate_limited_until.filter(|&t| t > now_ms()),
+        // What the widget follows during a wait: the Spotify app's Windows session.
+        "local": st.local.as_ref().filter(|_| banned(st)).map(|l| json!({ "title": l.title, "artists": l.artist, "playing": l.playing })),
         "lyrics": match &st.lyrics { Lyrics::Ready(_) => "ready", Lyrics::Loading => "loading", Lyrics::Instrumental => "instrumental", Lyrics::None => "none" },
     })
 }

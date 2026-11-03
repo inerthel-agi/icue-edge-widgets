@@ -285,10 +285,15 @@
 
   function spotifyPage(s) {
     if (!s) return '<p class="waiting">Loading…</p>';
-    const [label, cls] = SP_STATUS[s.status] || SP_STATUS.error;
+    let [label, cls] = SP_STATUS[s.status] || SP_STATUS.error;
+    // Spotify asked this app to wait (too many requests): nothing can be read or refreshed until then.
+    const wait = s.rateLimitedUntil ? new Date(s.rateLimitedUntil).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    if (wait) [label, cls] = ["Waiting until " + wait, "warn"];
     const head = '<div class="page-head"><span class="mark spotify">' + U.LOGO.spotify + '</span><h1>Spotify</h1><span class="pill ' + cls + '">' + label + "</span></div>" +
       '<p class="sub">Controls Spotify from the XENEON EDGE widget with your own Spotify app. The companion stores no password and no client secret.</p>';
-    const problem = s.message && s.status !== "connected" ? alert(s.message, s.status === "needs_login" ? "warn page-alert" : "page-alert") : "";
+    const problem = wait
+      ? alert("Spotify asked this app to wait until " + wait + " (too many requests). Until then the account, the token and the queue cannot be read; the widget follows the Spotify app on this PC instead.", "warn page-alert")
+      : s.message && s.status !== "connected" ? alert(s.message, s.status === "needs_login" ? "warn page-alert" : "page-alert") : "";
     if (s.pending) {
       return '<div class="page">' + head + alert("Finish signing in to Spotify in your browser. This page updates by itself.", "warn page-alert") +
         '<div class="group">' + spRow("Browser did not open?", "Start the sign-in again, or cancel.", '<div class="btns"><button type="button" class="btn" data-act="sp-connect">Open again</button><button type="button" class="btn" data-act="sp-cancel">Cancel</button></div>') + "</div></div>";
@@ -299,16 +304,17 @@
       const item = s.item;
       return '<div class="page">' + head + problem +
         '<div class="group-title">Account</div><div class="group">' +
-        spRow(acc ? esc(acc.name) : "Reading account…", acc ? esc(acc.product === "premium" ? "Premium" : acc.product) : "", acc && acc.product === "premium" ? '<span class="tag">Premium</span>' : "") +
+        spRow(acc ? esc(acc.name) : wait ? "Account read after " + wait : "Reading account…", acc ? esc(acc.product === "premium" ? "Premium" : acc.product) : "", acc && acc.product === "premium" ? '<span class="tag">Premium</span>' : "") +
         spRow("Client ID", '<span class="mono">' + "•".repeat(28) + esc(s.clientIdTail || "") + "</span>", '<button type="button" class="btn" data-act="sp-change">Change</button>') + "</div>" +
         '<div class="group-title">Access</div><div class="group">' +
-        spRow("Token", "Stored encrypted for your Windows account. Refreshed automatically; never displayed.", '<span class="pill ' + (s.status === "connected" ? "live" : "busy") + '">' + (s.status === "connected" ? "Valid" : "Refreshing") + "</span>") +
+        spRow("Token", "Stored encrypted for your Windows account. Refreshed automatically; never displayed.", (wait && s.status !== "connected" ? '<span class="pill warn">Waiting</span>' : '<span class="pill ' + (s.status === "connected" ? "live" : "busy") + '">' + (s.status === "connected" ? "Valid" : "Refreshing") + "</span>")) +
         spRow("Permissions", '<span class="scopes">' + (s.scopes || []).map((x) => '<span class="tag">' + esc(x) + "</span>").join("") + "</span>") + "</div>" +
         '<div class="group-title">Playback</div><div class="group">' +
-        (dev ? spRow(esc(dev.name) + " · " + esc(dev.type), "Active device" + (dev.volume == null ? " · volume fixed by the device" : " · volume " + dev.volume + "%")) : spRow("No active device", "Start Spotify on a computer, phone or speaker.")) +
-        (item ? spRow(esc(item.title), esc(item.artists) + (item.playing ? " · playing" : " · paused")) : "") +
+        (s.local ? spRow(esc(s.local.title), esc(s.local.artists) + (s.local.playing ? " · playing" : " · paused") + " · from the Spotify app on this PC (Windows)")
+          : dev ? spRow(esc(dev.name) + " · " + esc(dev.type), "Active device" + (dev.volume == null ? " · volume fixed by the device" : " · volume " + dev.volume + "%")) : spRow("No active device", "Start Spotify on a computer, phone or speaker.")) +
+        (item && !s.local ? spRow(esc(item.title), esc(item.artists) + (item.playing ? " · playing" : " · paused")) : "") +
         spRow("Lyrics", "Synced lyrics from LRCLIB (community database) · " + esc(s.lyrics)) +
-        spRow("Refresh", "Every 3 s while playing, 5 to 10 s otherwise, at most 20 requests per 30 s. Spotify rate limits are respected, also across restarts." + (s.rateLimitedUntil ? " Waiting for Spotify, retry in " + U.dur(s.rateLimitedUntil - Date.now()) + "." : "")) + "</div>" +
+        spRow("Refresh", "With the Spotify app open on this PC: every 15 s while playing, 30 s otherwise, and at once on each change in the app. Without it: every 3 s while playing, 5 to 10 s otherwise. At most 20 requests per 30 s; Spotify waits are respected, also across restarts.") + "</div>" +
         '<div class="group-title">XENEON widget</div><div class="group">' + spRow("Spotify widget", "Add “Spotify” in iCUE · XENEON EDGE. Nothing to enter in iCUE.") + "</div>" +
         '<div class="group">' + spRow("Disconnect", "Deletes the token from this computer. The widget shows “Connect Spotify”.", '<button type="button" class="btn danger" data-act="sp-disconnect">Disconnect</button>') + "</div></div>";
     }
