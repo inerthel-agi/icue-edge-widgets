@@ -554,3 +554,15 @@ test('rig pet mood keeps its state near a threshold instead of flickering', () =
     const levelFor = vm.runInNewContext(`(${src.match(/const levelFor = (.*);/)[1]})`);
     assert.deepEqual([0, 39, 40, 360, 1000, 3240].map(levelFor), [1, 1, 2, 4, 6, 10]);
 });
+
+test('rig pet names a song cleanly from music players and video sites', () => {
+    const src = fs.readFileSync(path.join(widgetDir('rig-pet'), 'app.js'), 'utf8');
+    const body = src.match(/const TAG = [\s\S]*?function cleanSong[\s\S]*?\n    }/)[0];
+    const run = vm.runInNewContext(`${body}; cleanSong`);
+    const cleanSong = (t, a) => JSON.parse(JSON.stringify(run(t, a)));
+    assert.deepEqual(cleanSong('Tarantino', 'LISA'), ['Tarantino', 'LISA']);
+    assert.deepEqual(cleanSong('LISA - Tarantino (Official Music Video)', 'LISAVEVO'), ['Tarantino', 'LISA']);
+    assert.deepEqual(cleanSong('Royalty [Lyrics]', 'Egzod - Topic'), ['Royalty', 'Egzod']);
+    assert.deepEqual(cleanSong('Some vlog - part 2', 'A Channel'), ['Some vlog - part 2', 'A Channel']);
+    assert.deepEqual(cleanSong('Midnight City', ''), ['Midnight City', '']);
+});

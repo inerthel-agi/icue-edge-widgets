@@ -41,7 +41,10 @@
         fetch: ["Got it!", "Again! Again!", "Fetched!"],
         level: ["Level {level}! Look at me!", "Level up: {level}!"],
         game: ["{fps} FPS, let's go!", "Game on!", "Go go go! {fps} FPS."],
-        music: ["Nice tune: {song}.", "♪ {song} ♪", "I love this one."],
+        music: ["Nice tune: {song}.", "♪ {song} ♪", "I love this one.", "{artist} on repeat? Fine by me."],
+        // A new song starts: the pet names it and praises your taste; "fav" once an artist came back three times.
+        taste: ["{song} by {artist}? You have great taste.", "Ooh, {artist}! Good pick.", "{song}… this one slaps.", "Your taste in music: chef's kiss.", "Nice track: {song}."],
+        fav: ["{artist} again? I approve.", "You really like {artist}. Me too!", "Another {artist} song. Taste confirmed.", "{artist}, our favourite."],
         claude: ["Claude is {verb}…", "Claude Code at work.", "Shh, Claude is thinking."],
         tired: ["So tired… let it cool down.", "Out of energy.", "Need a break…"],
         sulk: ["Hmph. Nobody plays with me.", "…", "Pet me, maybe?"],
@@ -53,6 +56,7 @@
             calm: ["Let's do something!", "Woohoo! {hot} and fine!", "Ready for anything!"],
             warm: ["Warm-up done! {hot}!", "Feeling the heat, love it!"],
             tap: ["Yay! Hi!!", "Again! Again!", "High five!"],
+            taste: ["{artist}!! Turn it up!", "{song}! Let's dance!", "Banger alert: {song}!"],
         } },
         grumpy: { speed: 0.8, pause: 1.7, lines: {
             calm: ["Fine. {hot}. Whatever.", "Leave me alone.", "Hmph."],
@@ -60,6 +64,7 @@
             hot: ["{hot}. I told you so.", "Unbearable."],
             tap: ["What?", "Don't poke me.", "…hi."],
             fetch: ["Fine. Here's your ball.", "Happy now?"],
+            taste: ["{song}. Not bad. For you.", "{artist}? …acceptable.", "Hmph. Good song, I guess."],
         } },
     };
 
@@ -126,7 +131,7 @@
         $("level").textContent = `Lv ${lv}`;
         const d = life.day;
         $("today").textContent = preview.on ? `Preview ${preview.i + 1}/${SCENES.length}: ${scene().label}`
-            : `Today: max ${Math.round(d.max)}°C · calm ${span(d.calm)} · ${d.taps} pets · ${d.fetches} balls`;
+            : `Today: max ${Math.round(d.max)}°C · calm ${span(d.calm)} · ${d.taps} pets · ${d.fetches} balls · ${d.songs || 0} songs`;
         // The best accessory earned, unless set to none; headphones while music plays.
         const hat = preview.on ? scene().hat || "" : setting("petAccessory", "auto") === "none" ? "" : (HATS.find(([n]) => lv >= n) || [0, ""])[1];
         $("acc").dataset.hat = hat;
@@ -465,16 +470,56 @@
     }
 
     // ---------- Music and Claude Code, through the companion ----------
-    const pc = { music: "", claude: "" };
+    const pc = { music: "", artist: "", claude: "" };
+    // Video sites add tags to music titles: "(Official Video)", "[Lyrics]", "LISAVEVO", "LISA - Topic".
+    const TAG = /\s*[\(\[][^\)\]]*(official|video|audio|lyric|visuali[sz]er|\bmv\b|\bhd\b|4k|remaster)[^\)\]]*[\)\]]/gi;
+    function cleanSong(title, artist) {
+        let song = String(title || "").replace(TAG, "").trim();
+        let who = String(artist || "").replace(/vevo$/i, "").replace(/\s+-\s+topic$/i, "").replace(/\s+official$/i, "").trim();
+        // "LISA - Tarantino" from a channel: the part before the dash is the artist.
+        const dash = song.match(/^(.+?)\s+[-–—]\s+(.+)$/);
+        if (dash && (!who || dash[1].toLowerCase().includes(who.toLowerCase()) || who.toLowerCase().includes(dash[1].toLowerCase()))) { who = dash[1].trim(); song = dash[2].trim(); }
+        return [song.slice(0, 40), who.slice(0, 30)];
+    }
+    // Each new song is named and praised once; the same song again within 30 min is not.
+    const heard = { key: "", at: {} };
+    function noteSong() {
+        const key = pc.music ? `${pc.artist}|${pc.music}`.toLowerCase() : "";
+        if (key === heard.key) return;
+        heard.key = key;
+        const now = Date.now();
+        for (const k of Object.keys(heard.at)) if (now - heard.at[k] > 30 * 60000) delete heard.at[k];
+        if (!key || heard.at[key]) return;
+        heard.at[key] = now;
+        life.day.songs = (life.day.songs || 0) + 1;
+        let fav = false;
+        const who = pc.artist.toLowerCase();
+        if (who) {
+            life.artists = life.artists || {};
+            life.artists[who] = (life.artists[who] || 0) + 1;
+            fav = life.artists[who] >= 3;
+            // Only the 60 most played artists are kept.
+            const names = Object.keys(life.artists);
+            if (names.length > 60) names.sort((a, b) => life.artists[a] - life.artists[b]).slice(0, names.length - 60).forEach(n => delete life.artists[n]);
+        }
+        Object.assign(state.vars, { song: pc.music, artist: pc.artist });
+        shout(fav ? "fav" : "taste", 7000);
+        heart();
+        if (life.day.songs <= 30) gain(2);
+        live(now);
+    }
     async function updateCompanion() {
         if (preview.on) return;   // the preview scene sets the music and Claude Code
-        if (DEMO) { const d = new URLSearchParams(location.search).get("demo"); pc.music = d === "music" ? "Midnight City" : ""; pc.claude = d === "claude" ? "editing" : ""; return; }
-        if (!flag("petCompanion", true)) { pc.music = pc.claude = ""; return; }
+        if (DEMO) { const d = new URLSearchParams(location.search).get("demo"); pc.music = d === "music" ? "Midnight City" : ""; pc.artist = d === "music" ? "M83" : ""; pc.claude = d === "claude" ? "editing" : ""; noteSong(); return; }
+        if (!flag("petCompanion", true)) { pc.music = pc.artist = pc.claude = ""; return; }
         try {
             const media = (await WidgetRuntime.requestJson(`${ENDPOINT}/api/media/state`)).data;
-            const playing = media && (media.sessions || []).find(s => s.playback === "playing");
-            pc.music = playing ? String(playing.title || "this song").slice(0, 40) : "";
-        } catch (_) { pc.music = ""; }
+            // The shown session has the artist; any other playing one only its title.
+            const shown = media && media.session && media.session.playback === "playing" ? media.session : null;
+            const playing = shown || (media && (media.sessions || []).find(s => s.playback === "playing"));
+            [pc.music, pc.artist] = playing ? cleanSong(playing.title || "this song", shown ? shown.artist : "") : ["", ""];
+        } catch (_) { pc.music = pc.artist = ""; }
+        noteSong();
         try {
             const agent = (await WidgetRuntime.requestJson(`${ENDPOINT}/api/agent/state`)).data;
             pc.claude = agent && agent.active ? (agent.step && agent.step.verb ? String(agent.step.verb).toLowerCase() : "working") : "";
@@ -489,7 +534,7 @@
         { label: "Hot", t: 88, l: 95 },
         { label: "Cooled down", t: 50, l: 15 },
         { label: "Sleepy", t: 40, l: 3 },
-        { label: "Music", t: 52, l: 20, music: "Midnight City" },
+        { label: "Music", t: 52, l: 20, music: "Midnight City", artist: "M83" },
         { label: "Claude Code", t: 55, l: 30, claude: "editing" },
         { label: "Gaming", t: 62, l: 80, fps: 144 },
         { label: "Tap", t: 52, l: 20, act: "tap" },
@@ -513,12 +558,13 @@
         preview.i = (preview.i + 1) % SCENES.length;
         preview.at = Date.now();
         const s = scene();
-        pc.music = s.music || ""; pc.claude = s.claude || "";
+        pc.music = s.music || ""; pc.artist = s.artist || ""; pc.claude = s.claude || "";
         state.sayUntil = state.lineAt = 0;   // a fresh line for each scene
         if (s.act === "tap") tap();
         if (s.act === "ball") throwBall(room() > 40 ? (walk.x > 0 ? -1 : 1) * room() * 0.5 : 60);
         if (s.act === "walk" && room() > 40 && !walk.moving) walkTo(walk.x > 0 ? -room() * 0.8 : room() * 0.8, 1);
         live(Date.now());
+        noteSong();
     }
     function previewReading() {
         const s = scene(), c = v => ({ value: v, units: "°C", name: "Preview" }), p = v => ({ value: v, units: "%", name: "Preview" });
@@ -565,7 +611,7 @@
         const mood = moodFor(t, l, prev, warm, hot, isNight());
         state.vars = {
             cpu: deg(r.cpuTemp), gpu: deg(r.gpuTemp), hot: `${hottest[0]} at ${deg(hottest[1])}`, load: loads.length ? `${Math.round(l)}%` : "",
-            for: now - state.since >= 60000 ? span(now - state.since) : "", fps: fps ? String(fps) : "", song: pc.music, verb: pc.claude,
+            for: now - state.since >= 60000 ? span(now - state.since) : "", fps: fps ? String(fps) : "", song: pc.music, artist: pc.artist, verb: pc.claude,
             level: String(levelFor(life.xp)), time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
         };
         if (mood !== prev) {
@@ -576,7 +622,7 @@
             if ((prev === "warm" || prev === "hot") && (mood === "calm" || mood === "sleepy")) {
                 react(4, "hop", 1200);   // a jump for joy when it cools down
                 shout("cooled", 6000);
-            } else say(mood, true);
+            } else if (Date.now() >= state.sayUntil) say(mood, true);   // a song or a tap just spoke: let it finish
         } else {
             // Heat first, then needs, then what the PC is doing, then the plain mood.
             const pool = mood === "hot" ? "hot" : state.need || state.activity || (mood === "sleepy" && isNight() ? "night" : mood);
@@ -599,7 +645,7 @@
         live(Date.now());
     }
 
-    window.RigPet = { moodFor, levelFor };
+    window.RigPet = { moodFor, levelFor, cleanSong };
     window.icueEvents = { onICUEInitialized: settingsChanged, onDataUpdated: settingsChanged };
     // The shipped sheets are loaded once at start, so switching mascot is instant.
     Object.values(BUILTIN).forEach(u => { new Image().src = u; });

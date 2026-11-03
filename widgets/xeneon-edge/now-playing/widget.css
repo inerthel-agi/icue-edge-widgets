@@ -122,6 +122,8 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
 .state-dot.logo { width: calc(var(--f-label) * 1.5); height: calc(var(--f-label) * 1.5); border-radius: 0; background: none; }
 .state-dot.logo svg { display: block; width: 100%; height: 100%; }
 .player[data-playback="playing"] .state-dot.logo, .player[data-stale] .state-dot.logo { background: none; }
+/* The player mark never gets the status colour behind it, whatever the Style (some styles colour .state-dot). */
+:root .state-dot.logo, :root[data-style] .state-dot.logo { background: none; }
 .player[data-playback="playing"] .state-dot { background: var(--accent); }
 .player[data-stale] .state-dot { background: var(--warn); }
 .pill {
