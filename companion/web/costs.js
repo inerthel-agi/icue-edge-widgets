@@ -1,5 +1,5 @@
 // Estimated cost of the Claude and Codex tokens, for the AI cost page. Same prices and rules as the
-// AI Cost widget (icue-edge-widgets, widgets/xeneon-edge/ai-cost/app.js): keep the two in step.
+// AI Cost widget (widgets/xeneon-edge/ai-cost/app.js at the repository root): keep the two in step.
 (function () {
   "use strict";
   const HOUR = 3600e3, DAY = 24 * HOUR;

@@ -2,6 +2,8 @@
 
 HTML, CSS, and JavaScript widgets for CORSAIR iCUE on Windows. The collection targets XENEON EDGE dashboards and pump LCD displays. Import the generated `.icuewidget` files into iCUE.
 
+The repository also holds [iCUE Edge Companion](companion/README.md) in `companion/`: the Windows tray application that feeds twelve of the widgets.
+
 ## Requirements
 
 - Windows and iCUE 5.47 or later, as declared in the generated manifests.
@@ -18,6 +20,13 @@ Clone the repository, then build the packages with an already installed Widget C
 git clone https://github.com/inerthel-agi/icue-edge-widgets.git
 cd icue-edge-widgets
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-icuewidgets.ps1
+```
+
+To build the companion (Rust 1.95 or later, see [companion/README.md](companion/README.md)):
+
+```powershell
+cd companion\companion
+cargo build --release
 ```
 
 The script finds `icuewidget` on PATH or under `%LOCALAPPDATA%\Programs\iCUEWidgetCLI\bin`. An explicit path can also be supplied with `-CliPath`.
@@ -55,7 +64,7 @@ Spotify (advanced option), 1688 × 696, with synced lyrics and `Up next` (tap a 
 
 <img src="icons/companion.png" width="64" height="64" alt="iCUE Edge Companion logo" />
 
-Twelve widgets read their data from [iCUE Edge Companion](https://github.com/inerthel-agi/icue-edge-companion), a Windows tray application that must run on the same computer. Download it from its [releases page](https://github.com/inerthel-agi/icue-edge-companion/releases). The other fifteen work on their own; `system-pulse` and `rig-pet` read the iCUE Sensors plugin and `rain-window` reads Open-Meteo.
+Twelve widgets read their data from [iCUE Edge Companion](companion/README.md), a Windows tray application that must run on the same computer. Build it from `companion/` or download it from the [releases page](https://github.com/inerthel-agi/icue-edge-widgets/releases). Versions up to 0.1.4 were published in the former, archived [icue-edge-companion](https://github.com/inerthel-agi/icue-edge-companion/releases) repository. The other fifteen work on their own; `system-pulse` and `rig-pet` read the iCUE Sensors plugin and `rain-window` reads Open-Meteo.
 
 | Widget | Without the companion |
 | --- | --- |
@@ -154,6 +163,8 @@ Saved timer state, habit counts, and ISS settings/cache are stored under iCUE's 
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE). External map services and libraries retain their own terms and attribution requirements.
+
+iCUE Edge Companion in `companion/` is under the MIT license. See [companion/LICENSE](companion/LICENSE).
 
 The `rig-pet` mascot Jennie (`widgets/xeneon-edge/rig-pet/pet-jennie.webp`) is unofficial, non-commercial fan art drawn by the author. It has no affiliation with the person it depicts and is not endorsed by her or her agency.
 

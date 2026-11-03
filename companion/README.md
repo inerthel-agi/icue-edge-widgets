@@ -2,6 +2,8 @@
 
 <img src="companion/icons/icon-256.png" width="96" height="96" alt="iCUE Edge Companion logo" />
 
+Part of [icue-edge-widgets](../README.md). Paths and commands in this file are relative to this `companion/` folder. Versions up to 0.1.4 were released from the former `icue-edge-companion` repository.
+
 Windows tray application that feeds the CORSAIR XENEON EDGE iCUE widgets and shows the same data in its own window. Its first feature reads Claude and Codex usage on the local machine: token counts, context occupancy and subscription quotas, kept separate, each with its source and age. Its second feature reads the Windows media sessions (title, artwork, playback state, position) for the `Now Playing` widget. Its third feature connects to Spotify with your own Spotify app for the `Spotify` widget (artwork, controls, synced lyrics).
 
 ## Requirements
@@ -9,7 +11,7 @@ Windows tray application that feeds the CORSAIR XENEON EDGE iCUE widgets and sho
 - Windows 10 or 11 with the WebView2 runtime (Tauri 2).
 - Rust 1.95 or later to build (`companion/Cargo.toml`, edition 2021).
 - Python 3 for `companion/icons/make_icon.py` and `scripts/latency-test.py`.
-- iCUE 5.47 or later and the iCUE Widget CLI to package the widgets (`icue-edge-widgets/scripts/package-icuewidgets.ps1`).
+- iCUE 5.47 or later and the iCUE Widget CLI to package the widgets (`../scripts/package-icuewidgets.ps1`).
 
 ## Install
 
@@ -53,31 +55,31 @@ Window with demo usage figures (the track is real):
 
 Claude limits are shown as the share used, with a 24 h chart of the headline limit (10-minute steps, gaps left empty) and an estimate of when it reaches 100% at the last hour's pace. Codex limits are shown as the share left, like the Codex app.
 
-iCUE widgets `Claude Usage` and `Codex Usage` (source folders `icue-edge-widgets/widgets/xeneon-edge/claude-usage` and `icue-edge-widgets/widgets/xeneon-edge/codex-usage`):
+iCUE widgets `Claude Usage` and `Codex Usage` (source folders `../widgets/xeneon-edge/claude-usage` and `../widgets/xeneon-edge/codex-usage`):
 
 1. Copy the shared views into the widget folders: `powershell -File scripts\sync-widgets.ps1`.
-2. Package: `powershell -File ..\icue-edge-widgets\scripts\package-icuewidgets.ps1`.
-3. Install the packages from `icue-edge-widgets/dist/icuewidgets/xeneon-edge/`. No setting is required: the companion recognises iCUE by the process that opens the connection.
+2. Package: `powershell -File ..\scripts\package-icuewidgets.ps1`.
+3. Install the packages from `../dist/icuewidgets/xeneon-edge/`. No setting is required: the companion recognises iCUE by the process that opens the connection.
 4. Optional: style each widget in iCUE under `Widget Personalization` (`Background`, `Widget Transparency`, `Text Color`, `Accent Color`).
 
-iCUE widget `Now Playing` (source folder `icue-edge-widgets/widgets/xeneon-edge/now-playing`, no sync step):
+iCUE widget `Now Playing` (source folder `../widgets/xeneon-edge/now-playing`, no sync step):
 
-1. Package: `powershell -File ..\icue-edge-widgets\scripts\package-icuewidgets.ps1`.
-2. Install `icue-edge-widgets/dist/icuewidgets/xeneon-edge/now-playing.icuewidget`.
+1. Package: `powershell -File ..\scripts\package-icuewidgets.ps1`.
+2. Install `../dist/icuewidgets/xeneon-edge/now-playing.icuewidget`.
 3. Play something in an app that appears in the Windows media flyout. The widget shows its artwork, title, state, position and the controls the app accepts.
 4. Tap the player name to pick a session or return to `Automatic`.
 
 If you listen to Spotify, use the `Now Playing` widget: it reads the Windows media session, so it needs no Spotify app, stores no Spotify token and is not subject to Spotify's request limits. The `Spotify` widget below is for the queue (`Up next`) and device choice, and depends on the Spotify Web API.
 
-iCUE widget `Spotify` (source folder `icue-edge-widgets/widgets/xeneon-edge/spotify`; advanced option: it needs your own Spotify app and Spotify Premium, while `Now Playing` works with any player and no account):
+iCUE widget `Spotify` (source folder `../widgets/xeneon-edge/spotify`; advanced option: it needs your own Spotify app and Spotify Premium, while `Now Playing` works with any player and no account):
 
 1. In the companion window, open `Media` › `Spotify` and follow the steps: create an app on `developer.spotify.com/dashboard`, add the redirect URI `http://127.0.0.1:47821/api/spotify/callback`, add your account under `User Management`, paste the Client ID, select `Connect` and approve in the browser.
-2. Install `icue-edge-widgets/dist/icuewidgets/xeneon-edge/spotify.icuewidget`. Nothing is entered in iCUE.
+2. Install `../dist/icuewidgets/xeneon-edge/spotify.icuewidget`. Nothing is entered in iCUE.
 3. `Disconnect` on the same page deletes the stored token.
 
-iCUE widget `Windows Media Pump` (source folder `icue-edge-widgets/widgets/pump/windows-media-pump`, pump LCD, no touch): same media source as `Now Playing`, shown as full-screen artwork with the player, title, artist and a progress ring (round LCD) or bar. iCUE renders pump widgets in `QmlRenderer.exe`, which cannot reach the loopback server, so the companion also writes the snapshot and artwork into the installed widget folder (`%APPDATA%\Corsair\CUE5\html_widgets\com\stealthsrc\windowsmediapump\live\`, every 2 s, only when that widget is installed). Install `icue-edge-widgets/dist/icuewidgets/corsair-watercooling/windows-media-pump.icuewidget`. Preview: `icue-edge-widgets/previews/pump-media-preview/index.html`.
+iCUE widget `Windows Media Pump` (source folder `../widgets/pump/windows-media-pump`, pump LCD, no touch): same media source as `Now Playing`, shown as full-screen artwork with the player, title, artist and a progress ring (round LCD) or bar. iCUE renders pump widgets in `QmlRenderer.exe`, which cannot reach the loopback server, so the companion also writes the snapshot and artwork into the installed widget folder (`%APPDATA%\Corsair\CUE5\html_widgets\com\stealthsrc\windowsmediapump\live\`, every 2 s, only when that widget is installed). Install `../dist/icuewidgets/corsair-watercooling/windows-media-pump.icuewidget`. Preview: `../previews/pump-media-preview/index.html`.
 
-Without the companion, the `Now Playing` and `Windows Media Pump` widgets fall back after 8 s to the iCUE Media plugin: title and artist only, labelled `Native mode`. The simulated preview is `icue-edge-widgets/previews/media-player-preview/index.html`; it never reaches the companion.
+Without the companion, the `Now Playing` and `Windows Media Pump` widgets fall back after 8 s to the iCUE Media plugin: title and artist only, labelled `Native mode`. The simulated preview is `../previews/media-player-preview/index.html`; it never reaches the companion.
 
 ## Screen Time
 

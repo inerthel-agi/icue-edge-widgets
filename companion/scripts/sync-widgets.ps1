@@ -1,6 +1,6 @@
-# Copies the shared views into the iCUE widget folders of icue-edge-widgets.
+# Copies the shared views into the iCUE widget folders of this repository (widgets/xeneon-edge).
 # web/ is the single source; each widget folder only owns its index.html.
-param([string]$WidgetsRepo = (Join-Path $PSScriptRoot "..\..\icue-edge-widgets"))
+param([string]$WidgetsRepo = (Join-Path $PSScriptRoot "..\.."))
 $ErrorActionPreference = "Stop"
 $web = Join-Path $PSScriptRoot "..\web"
 foreach ($widget in @("claude-usage", "codex-usage")) {
