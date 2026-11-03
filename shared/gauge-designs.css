@@ -1,0 +1,70 @@
+/* Colours and type of the pump gauge designs (shared/gauge-designs.js). A file, not inline <style>:
+   the widget pages only allow style-src 'self'. */
+.g-race .seg{fill:none;stroke-width:26;stroke:#1d1f22}
+.g-race .seg.on{stroke:#e9e9e4}
+.g-race .seg.hot{stroke:#ff2a1a}
+.g-race .num,.g-race .dv{fill:#8b8d90;font-size:20px;font-weight:600}
+.g-race .v{fill:#fff;font-size:120px;font-weight:800;letter-spacing:-4px}
+.g-race .u{fill:#ff2a1a;font-size:24px;font-weight:800;letter-spacing:.2em}
+.g-race .lb{fill:#8b8d90;font-size:20px;font-weight:700;letter-spacing:.3em}
+.g-race .sl{fill:#1a1a1a}
+.g-race .sl.g{fill:#19d24b}
+.g-race .sl.y{fill:#ffcc00}
+.g-race .sl.r{fill:#ff2a1a}
+.redline .g-race .sl{animation:shift .18s steps(2,start) infinite}
+@keyframes shift{from{fill:#2b6dff}
+to{fill:#111}
+}
+.g-mu .t{stroke:#f2f2f2;stroke-width:2}
+.g-mu .t.big{stroke-width:5}
+.g-mu .t.r{stroke:#e8231a}
+.g-mu .num{fill:#f5f5f5;font-size:32px;font-weight:600}
+.g-mu .nd{fill:#ff4a1c;filter:drop-shadow(0 0 6px rgba(255,74,28,.85))}
+.g-mu .v{fill:#f5f5f5;font-size:36px;font-weight:600}
+.g-mu .u,.g-mu .lb{fill:#9fa2a8;font-size:17px;letter-spacing:.08em}
+.g-mu .dv{display:none}
+.g-st .t{stroke:#c9ced6;stroke-width:1.5}
+.g-st .t.big{stroke:#fff;stroke-width:3}
+.g-st .num{fill:#e9edf2;font-size:26px;font-weight:300}
+.g-st .nd{fill:#fff}
+.g-st .v{fill:#fff;font-size:62px;font-weight:200;letter-spacing:-1px}
+.g-st .u,.g-st .lb{fill:#8fb7ff;font-size:17px;letter-spacing:.24em}
+.g-st .dv{display:none}
+.g-gr .bar{fill:none;stroke-width:34;stroke:#1b1b1d}
+.g-gr .fill{fill:none;stroke-width:34;stroke:#f2f2f0}
+.redline .g-gr .fill{stroke:#eb0a1e}
+.g-gr .num{fill:#77787b;font-size:20px;font-weight:700}
+.g-gr .v{fill:#fff;font-size:112px;font-weight:800;letter-spacing:-5px;font-style:italic}
+.g-gr .u{fill:#eb0a1e;font-size:26px;font-weight:900;font-style:italic;letter-spacing:.06em}
+.g-gr .lb{fill:#eee;font-size:19px;font-weight:800;letter-spacing:.24em;font-style:italic}
+.g-gr .dv{display:none}
+.g-gt .seg{fill:#0f2a2c}
+.g-gt .seg.on{fill:#33e0d0}
+.g-gt .seg.hot{fill:#ffb020}
+.g-gt text{font-family:Consolas,"Cascadia Mono",monospace}
+.g-gt .dv{fill:#3a8f88;font-size:15px}
+.g-gt .v{fill:#c9fff8;font-size:84px;font-weight:700}
+.g-gt .u{fill:#33e0d0;font-size:18px;letter-spacing:.2em}
+.g-gt .lb{fill:#ffb020;font-size:16px;letter-spacing:.3em}
+.g-gt .grid{stroke:#0e3236;stroke-width:1}
+.g-gt #hist{fill:none;stroke:#33e0d0;stroke-width:2.5}
+.g-ma .t{stroke:#111;stroke-width:2.5}
+.g-ma .t.big{stroke-width:6}
+.g-ma .num{fill:#111;font-size:32px;font-weight:700}
+.g-ma .nd{fill:#d40000;filter:drop-shadow(2px 4px 3px rgba(0,0,0,.45))}
+.g-ma .v{fill:#ffd21f;font-size:30px;font-weight:700}
+.g-ma .u,.g-ma .lb{fill:#222;font-size:16px;font-weight:700;letter-spacing:.2em}
+.g-ma .dv{display:none}
+.g-fp .trk{fill:none;stroke:#17181b;stroke-width:22}
+.g-fp .disp{fill:none;stroke:var(--x-accent,#7cf29a);stroke-width:22;stroke-linecap:round}
+.g-fp .rend{fill:none;stroke:color-mix(in srgb,var(--x-accent,#7cf29a) 45%,#000);stroke-width:10;stroke-linecap:round}
+.g-fp .trk2{fill:none;stroke:#111214;stroke-width:10}
+.g-fp .num{fill:#6f7175;font-size:18px;font-weight:600}
+.g-fp .v{fill:#fff;font-size:112px;font-weight:750;letter-spacing:-4px}
+.g-fp .u{fill:var(--x-accent,#7cf29a);font-size:22px;font-weight:800;letter-spacing:.24em}
+.g-fp .sub{fill:#c9cbc6;font-size:17px;font-weight:600}
+.g-fp .badge{fill:var(--x-accent,#7cf29a)}
+.g-fp .bt{fill:#06200f;font-size:19px;font-weight:800;letter-spacing:.06em}
+.g-fp .dv{fill:#8f9196;font-size:17px;font-weight:600}
+.g-fp .lb{display:none}
+.g-fp:not(.gen) .rend,.g-fp:not(.gen) .trk2{display:none}

@@ -1,0 +1,50 @@
+/* Flip Clock. One size drives everything: --h, the height of a digit card. */
+#widget { --h: min(64vh, calc(88vw / (var(--n) * 0.74 + var(--groups) * 0.25 + 0.3))); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--h) * 0.1); }
+.clock { display: flex; align-items: center; gap: calc(var(--h) * 0.06); }
+.group { display: flex; gap: calc(var(--h) * 0.05); }
+.digit { position: relative; width: calc(var(--h) * 0.68); height: var(--h); perspective: calc(var(--h) * 4); font: 700 calc(var(--h) * 0.8) / var(--h) var(--s-font, "Segoe UI Variable Display", "Segoe UI", sans-serif); font-variant-numeric: tabular-nums; text-align: center; color: var(--x-text); }
+.half, .flap { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background: var(--card, color-mix(in srgb, var(--x-text) 11%, var(--x-bg))); backface-visibility: hidden; }
+.half.top, .flap.top { top: 0; border-radius: calc(var(--h) * 0.07) calc(var(--h) * 0.07) 0 0; }
+.half.bottom, .flap.bottom { bottom: 0; border-radius: 0 0 calc(var(--h) * 0.07) calc(var(--h) * 0.07); }
+.half.bottom, .flap.bottom { background: var(--card-low, color-mix(in srgb, var(--x-text) 8%, var(--x-bg))); }
+.digit i { position: absolute; left: 0; right: 0; top: 0; height: var(--h); font-style: normal; }
+.bottom i { top: calc(var(--h) * -0.5); }
+/* The split line and the hinge pins of a real flip card. */
+.digit::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(2px, calc(var(--h) * 0.012)); transform: translateY(-50%); background: color-mix(in srgb, var(--x-bg) 80%, #000); z-index: 3; }
+.flap { visibility: hidden; z-index: 2; }
+.flap.top { transform-origin: 50% 100%; }
+.flap.bottom { transform-origin: 50% 0; transform: rotateX(90deg); }
+.digit.flip .flap { visibility: visible; }
+.digit.flip .flap.top { animation: fold 0.3s ease-in forwards; }
+.digit.flip .flap.bottom { animation: unfold 0.3s 0.3s ease-out forwards; }
+@keyframes fold { to { transform: rotateX(-90deg); } }
+@keyframes unfold { to { transform: rotateX(0); } }
+.colon { font: 600 calc(var(--h) * 0.5) / 1 var(--s-font, "Segoe UI", sans-serif); color: var(--x-dim); padding-bottom: calc(var(--h) * 0.08); }
+.period { align-self: flex-end; margin-left: calc(var(--h) * 0.04); font: 700 calc(var(--h) * 0.16) / 1.4 var(--s-font, "Segoe UI", sans-serif); letter-spacing: 0.08em; color: var(--x-accent); }
+.date { margin: 0; color: var(--x-muted); font: 600 clamp(20px, calc(var(--h) * 0.17), 64px) / 1.2 var(--s-font, "Segoe UI", sans-serif); letter-spacing: 0.14em; text-transform: uppercase; }
+
+/* Nixie: orange glow in dark glass tubes, no flaps. */
+[data-face="nixie"] .digit { --card: radial-gradient(ellipse at 50% 40%, #2a1608 0%, #0b0604 70%); --card-low: var(--card); color: #ff9a3c; font-weight: 300; text-shadow: 0 0 calc(var(--h) * 0.04) #ff7a1a, 0 0 calc(var(--h) * 0.12) #ff5a00, 0 0 calc(var(--h) * 0.24) #ff4400; }
+[data-face="nixie"] .half { height: 100%; border-radius: calc(var(--h) * 0.3) calc(var(--h) * 0.3) calc(var(--h) * 0.08) calc(var(--h) * 0.08); background: var(--card); box-shadow: inset 0 0 0 1px #4a2c18, inset 0 calc(var(--h) * 0.04) calc(var(--h) * 0.1) rgba(255, 180, 120, 0.12); }
+[data-face="nixie"] .half.bottom, [data-face="nixie"] .flap, [data-face="nixie"] .digit::after { display: none; }
+/* The unlit wire numbers behind the lit one. */
+[data-face="nixie"] .digit::before { content: "8"; position: absolute; inset: 0; color: transparent; -webkit-text-stroke: 1px rgba(255, 140, 60, 0.12); z-index: 1; }
+[data-face="nixie"] .half.top i { z-index: 2; }
+[data-face="nixie"] .colon { color: #ff7a1a; text-shadow: 0 0 calc(var(--h) * 0.1) #ff5a00; }
+/* Fluorescent (VFD): blue-green segments on a dark smoked panel. */
+[data-face="vfd"] .clock { padding: calc(var(--h) * 0.08) calc(var(--h) * 0.14); border-radius: calc(var(--h) * 0.06); background: linear-gradient(180deg, #071311, #030807); box-shadow: inset 0 0 0 1px #12302a; }
+[data-face="vfd"] .digit { color: #6ff7d6; font: 500 calc(var(--h) * 0.86) / var(--h) "Cascadia Mono", Consolas, monospace; text-shadow: 0 0 calc(var(--h) * 0.03) #6ff7d6, 0 0 calc(var(--h) * 0.12) #1fd7a8; }
+[data-face="vfd"] .half { height: 100%; background: none; }
+[data-face="vfd"] .half.bottom, [data-face="vfd"] .flap, [data-face="vfd"] .digit::after { display: none; }
+[data-face="vfd"] .digit::before { content: "8"; position: absolute; inset: 0; color: rgba(111, 247, 214, 0.07); text-shadow: none; }
+[data-face="vfd"] .colon, [data-face="vfd"] .period { color: #6ff7d6; text-shadow: 0 0 calc(var(--h) * 0.1) #1fd7a8; }
+
+/* Portrait: hours above minutes (and seconds). */
+@media (max-aspect-ratio: 1/1) {
+    #widget { --h: min(calc(84vw / 1.5), calc(78vh / (var(--groups) * 1.08 + 0.2))); }
+    .clock { flex-direction: column; }
+    .colon { display: none; }
+    .period { align-self: center; }
+}
+@media (max-height: 380px) and (min-aspect-ratio: 1/1) { #widget { --h: min(70vh, calc(88vw / (var(--n) * 0.74 + var(--groups) * 0.25 + 0.3))); } .date { display: none; } }
+@media (prefers-reduced-motion: reduce) { .digit.flip .flap { animation: none; visibility: hidden; } }

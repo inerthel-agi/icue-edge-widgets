@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821 https://geocoding-api.open-meteo.com https://api.open-meteo.com; img-src 'self' data: file:; media-src 'self' file:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Rig Pet</title>
+    <meta name="x-icue-property" content="petName" data-label="tr('Name')" data-type="textfield"
+        data-default="''" />
+    <meta name="x-icue-property" content="petKind" data-label="tr('Mascot')" data-type="combobox"
+        data-default="'bit'" data-values="[{'key':'bit','value':'Bit'},{'key':'claude','value':'Claude'},{'key':'ghost','value':'Ghost'},{'key':'robot','value':'Robot'},{'key':'slime','value':'Slime'},{'key':'clawd','value':'Clawd'},{'key':'grace','value':'Grace'},{'key':'sealion','value':'Sea Lion'},{'key':'jennie','value':'Jennie'},{'key':'claire','value':'Claire'},{'key':'dario','value':'Dario'},{'key':'tom','value':'Tom'},{'key':'patrick','value':'Patrick'},{'key':'pepe','value':'Pepe'},{'key':'rick','value':'Rick'},{'key':'doge','value':'Doge'},{'key':'elon','value':'Mini Elon'},{'key':'kirby','value':'Kirby'},{'key':'clippy','value':'Clippy'},{'key':'tux','value':'Tux'},{'key':'frieren','value':'Frieren'},{'key':'anya','value':'Anya'},{'key':'miku','value':'Miku'},{'key':'luffy','value':'Luffy'},{'key':'goku','value':'Goku'},{'key':'gojo','value':'Gojo'},{'key':'umaru','value':'Umaru'},{'key':'asuka','value':'Asuka'},{'key':'doraemon','value':'Doraemon'},{'key':'elaina','value':'Elaina'},{'key':'violet','value':'Violet'},{'key':'bocchi','value':'Bocchi'},{'key':'xiaohei','value':'Luo Xiaohei'},{'key':'sama','value':'Mini Sama'},{'key':'doro','value':'Doro'},{'key':'guga','value':'Guga'},{'key':'kiki','value':'Kiki'},{'key':'usagi','value':'Usagi'},{'key':'hachiware','value':'Hachiware'},{'key':'custom','value':'Your pictures'}]" />
+    <meta name="x-icue-property" content="petPersonality" data-label="tr('Personality')" data-type="tab-buttons"
+        data-default="'calm'" data-values="[{'key':'calm','value':'Calm'},{'key':'energetic','value':'Energetic'},{'key':'grumpy','value':'Grumpy'}]" />
+    <meta name="x-icue-property" content="petAccessory" data-label="tr('Accessory')" data-type="tab-buttons"
+        data-default="'auto'" data-values="[{'key':'auto','value':'Best earned'},{'key':'none','value':'None'}]" />
+    <meta name="x-icue-property" content="warmAt" data-label="tr('Warm from')" data-type="slider"
+        data-default="70" data-min="50" data-max="90" data-step="1" data-unit-label="'°C'" />
+    <meta name="x-icue-property" content="hotAt" data-label="tr('Hot from')" data-type="slider"
+        data-default="82" data-min="60" data-max="100" data-step="1" data-unit-label="'°C'" />
+    <meta name="x-icue-property" content="roomWeather" data-label="tr('Room with the weather')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="weatherCity" data-label="tr('City')" data-type="textfield"
+        data-default="'Paris'" />
+    <meta name="x-icue-property" content="petPreview" data-label="tr('Preview mode')" data-type="switch"
+        data-default="false" />
+    <meta name="x-icue-property" content="petCompanion" data-label="tr('Reacts to music and Claude Code')" data-type="switch"
+        data-default="true" />
+    <meta name="x-icue-property" content="petCalm" data-label="tr('Image when calm')" data-type="media-selector"
+        data-filters="['*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.mp4', '*.webm']" />
+    <meta name="x-icue-property" content="petSleepy" data-label="tr('Image when sleepy')" data-type="media-selector"
+        data-filters="['*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.mp4', '*.webm']" />
+    <meta name="x-icue-property" content="petWarm" data-label="tr('Image when warm')" data-type="media-selector"
+        data-filters="['*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.mp4', '*.webm']" />
+    <meta name="x-icue-property" content="petHot" data-label="tr('Image when hot')" data-type="media-selector"
+        data-filters="['*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.mp4', '*.webm']" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#ffb84d'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Rig Pet')", "properties": ["petName", "petKind", "petPersonality", "petAccessory", "warmAt", "hotAt", "petPreview"], "info": "tr('The pet gets warm and hot from the hotter of CPU and GPU. It earns levels and accessories over time; tap it to say hello, swipe to throw it a ball.')" },
+        { "title": "tr('Room')", "properties": ["roomWeather", "weatherCity", "petCompanion"], "info": "tr('The room behind the pet follows the time and the weather of the city (Open-Meteo). Music and Claude Code need iCUE Edge Companion.')" },
+        { "title": "tr('Your pictures')", "properties": ["petCalm", "petSleepy", "petWarm", "petHot"], "info": "tr('Used only when Mascot is Your pictures. Pictures, GIFs or short videos; a mood without one uses the calm one.')" },
+        { "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget" data-mood="calm" data-pet="bit">
+        <section class="stage" id="stage" aria-label="Your pet: tap to say hello, swipe to throw a ball">
+            <div class="room" id="room" aria-hidden="true"><i class="orb"></i><i class="cloud a"></i><i class="cloud b"></i><div class="fall" id="fall"></div></div>
+            <div class="walker" id="walker" aria-hidden="true">
+                <div class="sprite" id="sprite"></div>
+                <div class="media" id="media"><img id="petImg" alt="" hidden /><video id="petVid" muted loop autoplay playsinline hidden></video></div>
+                <svg class="pet" id="pet" viewBox="0 0 200 200">
+                    <ellipse class="shadow" cx="100" cy="182" rx="56" ry="8" />
+                    <g class="body-wrap">
+                        <g class="kind bit">
+                            <path class="ear l" d="M66 56 52 20l34 24z" /><path class="ear r" d="M134 56l14-36-34 24z" />
+                            <path class="body" d="M100 34c-38 0-62 30-62 70v52c0 10 8 16 18 16h88c10 0 18-6 18-16v-52c0-40-24-70-62-70z" />
+                            <path class="belly" d="M100 110c-20 0-32 12-32 28v18c0 6 4 10 10 10h44c6 0 10-4 10-10v-18c0-16-12-28-32-28z" />
+                            <g class="eyes"><ellipse class="eye" cx="80" cy="84" rx="8" ry="10" /><ellipse class="eye" cx="120" cy="84" rx="8" ry="10" />
+                                <circle class="shine" cx="83" cy="80" r="3" /><circle class="shine" cx="123" cy="80" r="3" /></g>
+                            <path class="lids" d="M70 86q10 6 20 0M110 86q10 6 20 0" />
+                            <ellipse class="cheek" cx="66" cy="102" rx="8" ry="5" /><ellipse class="cheek" cx="134" cy="102" rx="8" ry="5" />
+                            <path class="mouth" d="M90 104q10 9 20 0" />
+                            <path class="pant" d="M90 104q10 16 20 0z" />
+                        </g>
+                        <g class="kind claude">
+                            <g class="legs"><rect x="58" y="132" width="12" height="28" /><rect x="80" y="132" width="12" height="28" /><rect x="108" y="132" width="12" height="28" /><rect x="130" y="132" width="12" height="28" /></g>
+                            <rect class="body" x="46" y="66" width="108" height="70" />
+                            <rect class="arm" x="30" y="92" width="16" height="18" /><rect class="arm" x="154" y="92" width="16" height="18" />
+                            <g class="eyes"><rect class="eye" x="72" y="84" width="12" height="18" /><rect class="eye" x="116" y="84" width="12" height="18" /></g>
+                            <path class="lids" d="M72 96h12M116 96h12" />
+                            <rect class="pant" x="94" y="112" width="12" height="10" />
+                        </g>
+                        <g class="kind ghost">
+                            <path class="body" d="M100 30c-34 0-56 26-56 60v74l14-12 14 12 14-12 14 12 14-12 14 12 14-12 14 12V90c0-34-22-60-56-60z" />
+                            <g class="eyes"><ellipse class="eye" cx="82" cy="84" rx="9" ry="13" /><ellipse class="eye" cx="118" cy="84" rx="9" ry="13" />
+                                <circle class="shine" cx="85" cy="79" r="3" /><circle class="shine" cx="121" cy="79" r="3" /></g>
+                            <path class="lids" d="M72 88q10 6 20 0M108 88q10 6 20 0" />
+                            <ellipse class="cheek" cx="68" cy="106" rx="8" ry="5" /><ellipse class="cheek" cx="132" cy="106" rx="8" ry="5" />
+                            <ellipse class="mouth" cx="100" cy="112" rx="6" ry="7" />
+                            <ellipse class="pant" cx="100" cy="114" rx="9" ry="12" />
+                        </g>
+                        <g class="kind robot">
+                            <path class="antenna" d="M100 46V26" /><circle class="bulb" cx="100" cy="22" r="7" />
+                            <rect class="body" x="44" y="46" width="112" height="92" rx="16" />
+                            <rect class="screen" x="58" y="62" width="84" height="58" rx="10" />
+                            <rect class="leg" x="66" y="138" width="20" height="26" rx="4" /><rect class="leg" x="114" y="138" width="20" height="26" rx="4" />
+                            <g class="eyes"><rect class="eye" x="74" y="76" width="14" height="14" rx="3" /><rect class="eye" x="112" y="76" width="14" height="14" rx="3" /></g>
+                            <path class="lids" d="M74 84h14M112 84h14" />
+                            <path class="mouth" d="M86 104h28" />
+                            <path class="pant" d="M84 102l8 8 8-8 8 8 8-8" />
+                        </g>
+                        <g class="kind slime">
+                            <path class="body" d="M100 50c-44 0-66 44-66 84 0 22 14 34 32 34h68c18 0 32-12 32-34 0-40-22-84-66-84z" />
+                            <ellipse class="gloss" cx="72" cy="82" rx="12" ry="18" transform="rotate(-25 72 82)" />
+                            <g class="eyes"><circle class="eye" cx="84" cy="112" r="9" /><circle class="eye" cx="118" cy="112" r="9" />
+                                <circle class="shine" cx="87" cy="108" r="3" /><circle class="shine" cx="121" cy="108" r="3" /></g>
+                            <path class="lids" d="M75 114q9 5 18 0M109 114q9 5 18 0" />
+                            <path class="mouth" d="M94 130q7 6 14 0" />
+                            <path class="pant" d="M92 128q9 16 18 0z" />
+                        </g>
+                    </g>
+                </svg>
+                <!-- Sweat, z's and steam: drawn around Bit's head, moved onto a pixel pet's head frame by frame (app.js). -->
+                <svg class="fx" id="fx" viewBox="0 0 200 200" aria-hidden="true">
+                    <g class="sweat"><path d="M150 58q7 11 0 15q-7-4 0-15z" /><path d="M48 72q6 9 0 12q-6-3 0-12z" /></g>
+                    <g class="zzz"><text x="150" y="44">z</text><text x="164" y="28">z</text></g>
+                    <g class="steam"><path d="M72 28q-6-8 0-16" /><path d="M100 22q-6-8 0-16" /><path d="M128 28q-6-8 0-16" /></g>
+                </svg>
+                <svg class="acc" id="acc" viewBox="0 0 200 200" aria-hidden="true">
+                    <g class="hat bow"><path d="M100 30 72 16v28zM100 30l28-14v28z" /><circle cx="100" cy="30" r="7" /></g>
+                    <g class="hat wizard"><path d="M64 44 106-6l30 50z" /><path class="band" d="M64 40h72v8H64z" /><circle class="star" cx="104" cy="22" r="5" /></g>
+                    <g class="hat crown"><path d="M66 46V18l17 14 17-22 17 22 17-14v28z" /><circle class="gem" cx="100" cy="34" r="5" /></g>
+                    <g class="phones">
+                        <path class="band" d="M42 86q0-64 58-64t58 64" /><path class="band-hi" d="M50 66q8-36 50-36t50 36" />
+                        <rect class="cup" x="28" y="70" width="24" height="36" rx="10" /><rect class="cup" x="148" y="70" width="24" height="36" rx="10" />
+                        <rect class="pad" x="46" y="74" width="9" height="28" rx="4.5" /><rect class="pad" x="145" y="74" width="9" height="28" rx="4.5" />
+                        <rect class="glow" x="32" y="80" width="4" height="16" rx="2" /><rect class="glow" x="164" y="80" width="4" height="16" rx="2" />
+                    </g>
+                </svg>
+            </div>
+            <span class="ball" id="ball" aria-hidden="true"></span>
+        </section>
+        <section class="card">
+            <p class="x-kicker"><span id="name"></span> <span class="lv" id="level"></span></p>
+            <p class="say" id="say">Waking up</p>
+            <dl class="stats"><div><dt>CPU</dt><dd id="cpu">--</dd></div><div><dt>GPU</dt><dd id="gpu">--</dd></div><div><dt>Load</dt><dd id="load">--</dd></div></dl>
+            <div class="needs"><span>Energy</span><b class="bar"><i id="energy"></i></b><span>Joy</span><b class="bar"><i id="joy"></i></b><span>XP</span><b class="bar"><i id="xp"></i></b></div>
+            <p class="today" id="today"></p>
+        </section>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle"></strong>
+            <span id="overlaySub"></span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="../../../shared/sensor-reader.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

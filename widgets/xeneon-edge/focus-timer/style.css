@@ -1,6 +1,3 @@
-:root { --x-accent: #e8b68d; }
-body[data-mode="break"] { --x-accent: #a8d5ba; }
-body[data-mode="long"] { --x-accent: #c7c9aa; }
 #widget {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(160px, 0.7fr);

@@ -1,4 +1,3 @@
-:root { --x-accent: #a8d5ba; }
 #widget { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: var(--x-gap); }
 header > div { flex: 1; min-width: 0; }
 h1 { font-size: clamp(28px, calc(var(--layout-unit) * 7.5), 48px); overflow-wrap: anywhere; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

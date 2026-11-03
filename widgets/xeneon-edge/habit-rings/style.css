@@ -1,4 +1,3 @@
-:root { --x-accent: #a8d5ba; }
 #widget { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--x-gap); }
 header > div { flex: 1; min-width: 0; }
 .reset, .add {
@@ -51,7 +50,7 @@ header > div { flex: 1; min-width: 0; }
 .habit-footer { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--x-touch-size); gap: 8px; align-items: center; }
 .habit-footer p { margin: 0; font-size: clamp(22px, calc(var(--layout-unit) * 5), 32px); font-weight: 600; }
 .habit-footer span { display: block; margin-top: 4px; color: var(--x-muted); font-size: var(--x-label-size); }
-.add { width: var(--x-touch-size); height: var(--x-touch-size); color: var(--habit-color); border-color: var(--habit-color); font-size: 32px; }
+.add { width: var(--x-touch-size); height: var(--x-touch-size); color: color-mix(in srgb, var(--habit-color) 55%, var(--x-text)); border-color: var(--habit-color); font-size: 32px; }   /* the habit colour pulled towards the text: readable on light styles too */
 .add:hover { background: var(--x-panel-strong); }
 @media (max-aspect-ratio: 1/1) {
     .rings { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(3, minmax(0, 1fr)); }

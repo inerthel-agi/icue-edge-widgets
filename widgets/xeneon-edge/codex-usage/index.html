@@ -7,22 +7,26 @@
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
     <title>Codex Usage</title>
-    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background')" data-type="color"
-        data-default="'#111111'" />
-    <meta name="x-icue-property" content="transparency" data-label="tr('Widget Transparency')" data-type="slider"
-        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
     <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
-        data-default="'#f0f0f0'" />
+        data-default="'#f2f3ed'" />
     <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
-        data-default="'#f0f0f0'" />
+        data-default="'#a8d5ba'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
     <script type="application/json" id="x-icue-groups">
-        [{ "title": "tr('Widget Personalization')", "properties": ["backgroundColor", "transparency", "textColor", "accentColor"] }]
+        [{ "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle"] }]
     </script>
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
     <link rel="stylesheet" href="./widget.css" />
 </head>
 
 <body data-endpoint="http://127.0.0.1:47821" data-provider="codex">
     <main class="w" id="w"></main>
+    <script src="../../../shared/widget-runtime.js"></script>
     <script src="./core.js"></script>
     <script src="./widget.js"></script>
 </body>

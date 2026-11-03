@@ -60,8 +60,8 @@ Expect-BuildFailure "Promotion failure did not surface"
 Write-Output "PASS: failed promotion restores the previous distribution"
 
 & $builder -CliPath $cli *> (Join-Path $fixture "last-build.log")
-Assert-True (@(Get-ChildItem -LiteralPath $output -Filter *.icuewidget -File -Recurse).Count -eq 14) "Expected fourteen packages"
+Assert-True (@(Get-ChildItem -LiteralPath $output -Filter *.icuewidget -File -Recurse).Count -eq 27) "Expected twenty-seven packages"
 $backups = @(Get-ChildItem -LiteralPath (Join-Path $fixture "icuewidget-build") -Directory -Filter 'previous-*')
 Assert-True (@($backups | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'previous.txt') }).Count -gt 0) "Previous distribution was not retained"
-Write-Output "PASS: successful promotion publishes fourteen verified packages and keeps the backup"
+Write-Output "PASS: successful promotion publishes twenty-seven verified packages and keeps the backup"
 Write-Output "Fixtures and logs: $fixture"

@@ -16,12 +16,15 @@
         data-default="'#080a0b'" />
     <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
         data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'apple'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
     <meta name="x-icue-property" content="coverColors" data-label="tr('Cover colors')" data-type="tab-buttons"
         data-default="'on'" data-values="[{'key':'on','value':'On'},{'key':'off','value':'Off'}]" />
     <script type="application/json" id="x-icue-groups">
-        [{ "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "coverColors"] }]
+        [{ "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle", "coverColors"] }]
     </script>
     <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
     <link rel="stylesheet" href="./widget.css" />
 </head>
 
@@ -117,6 +120,7 @@
         </section>
     </main>
 
+    <script src="../../../shared/widget-runtime.js"></script>
     <script src="./brands.js"></script>
     <script src="./widget.js"></script>
 </body>

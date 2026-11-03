@@ -1,4 +1,3 @@
-:root { --x-accent: #e8c477; }
 #widget { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: var(--x-gap); }
 header > div { flex: 1; min-width: 0; }
 #clock { color: var(--x-text); font-size: clamp(30px, calc(var(--layout-unit) * 8), 56px); font-weight: 600; font-variant-numeric: tabular-nums; max-width: 48%; }

@@ -1,0 +1,30 @@
+#widget { display: grid; gap: var(--x-gap); grid-template-rows: auto minmax(0, 1fr) auto; }
+.device { max-width: 55%; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mix { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: calc(var(--x-gap) * 0.9); min-height: 0; }
+.ch { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; justify-items: center; gap: 8px; min-width: 0; min-height: 0; }
+.ico { width: clamp(34px, calc(var(--layout-unit) * 7), 52px); height: clamp(34px, calc(var(--layout-unit) * 7), 52px); padding: 0; border: 0; border-radius: 10px; background: var(--x-panel); color: var(--x-text); font: 700 18px var(--s-font, inherit); display: grid; place-items: center; cursor: pointer; }
+.ico img { width: 70%; height: 70%; object-fit: contain; }
+.fader { position: relative; width: clamp(14px, calc(var(--layout-unit) * 3), 22px); height: 100%; min-height: 60px; border-radius: 99px; background: var(--x-track); touch-action: none; cursor: pointer; }
+/* The touch target is wider than the drawn track. */
+.fader::before { content: ""; position: absolute; inset: 0 -18px; }
+.fill { position: absolute; left: 0; right: 0; bottom: 0; height: var(--v, 0%); border-radius: 99px; background: var(--x-accent); transition: height 0.15s; }
+.knob { position: absolute; left: 50%; bottom: var(--v, 0%); width: 220%; height: 14px; transform: translate(-50%, 50%); border-radius: 7px; background: var(--x-text); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); transition: bottom 0.15s; }
+.lvl { position: absolute; right: -10px; bottom: 0; width: 4px; height: var(--l, 0%); border-radius: 2px; background: color-mix(in srgb, var(--x-accent) 70%, var(--x-text)); transition: height 0.12s linear; }
+.name { max-width: 100%; font-size: var(--x-label-size); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.val { color: var(--x-muted); font-size: calc(var(--x-label-size) * 0.85); font-variant-numeric: tabular-nums; }
+.ch.muted .fill { background: var(--x-dim); }
+.ch.muted .val { color: var(--x-bad); }
+.ch.muted .ico { opacity: 0.55; }
+/* Portrait slots: one row per app, faders lying down. */
+@media (max-aspect-ratio: 1/1) {
+    .mix { grid-auto-flow: row; grid-auto-rows: minmax(0, 1fr); grid-auto-columns: auto; }
+    .ch { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; grid-template-areas: "ico name val" "ico fader fader"; justify-items: stretch; align-items: center; column-gap: 14px; row-gap: 6px; }
+    .ico { grid-area: ico; } .name { grid-area: name; } .val { grid-area: val; }
+    .fader { grid-area: fader; width: 100%; height: clamp(14px, calc(var(--layout-unit) * 3), 22px); min-height: 0; }
+    .fader::before { inset: -14px 0; }
+    .fill { top: 0; bottom: 0; right: auto; width: var(--v, 0%); height: auto; transition: width 0.15s; }
+    .knob { left: var(--v, 0%); bottom: 50%; width: 14px; height: 220%; transform: translate(-50%, 50%); transition: left 0.15s; }
+    .lvl { right: auto; left: 0; bottom: -8px; height: 4px; width: var(--l, 0%); transition: width 0.12s linear; }
+}
+@media (max-height: 380px) { .x-status { display: none; } #widget { grid-template-rows: auto minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .fill, .knob, .lvl { transition: none; } }

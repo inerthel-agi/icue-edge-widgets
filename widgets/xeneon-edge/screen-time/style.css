@@ -1,0 +1,54 @@
+#widget { display: grid; gap: var(--x-gap); grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "top top" "hero apps" "cats cats" "stat stat"; }
+.x-top { grid-area: top; }
+.hero { grid-area: hero; min-width: 0; display: grid; align-content: center; gap: 4px; }
+.apps { grid-area: apps; min-width: 0; display: grid; align-content: center; gap: calc(var(--x-gap) * 0.6); }
+.cats { grid-area: cats; min-width: 0; display: grid; gap: 8px; }
+.hours { grid-area: hours; display: none; gap: 6px; }
+.x-status { grid-area: stat; }
+h1.x-num { margin: 0; font-size: calc(var(--x-hero-size) * 0.9); }
+.delta { margin: 0; color: var(--x-muted); font-size: var(--x-label-size); font-weight: 600; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; font-size: var(--x-label-size); font-weight: 600; }
+.app span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .name { display: flex; align-items: center; gap: 0.55em; min-width: 0; }
+.app .label { min-width: 0; }
+.app .ico { flex: none; width: 1.35em; height: 1.35em; border-radius: 0.25em; object-fit: contain; }
+.app .ini { display: grid; place-items: center; background: var(--x-track); color: var(--x-muted); font-style: normal; font-size: 0.75em; width: 1.8em; height: 1.8em; }
+.app b { font-variant-numeric: tabular-nums; }
+.app .x-bar { grid-column: 1 / -1; height: 6px; }
+.app .x-bar > i { transition: width 0.4s ease; }
+.stack { display: flex; height: clamp(10px, calc(var(--layout-unit) * 2.4), 16px); border-radius: var(--s-bar-r, 99px); overflow: hidden; gap: 2px; background: var(--x-track); }
+.stack i { display: block; height: 100%; background: var(--c); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--x-muted); font-size: calc(var(--x-label-size) * 0.85); font-weight: 600; }
+.legend em { font-style: normal; display: inline-flex; align-items: center; gap: 6px; }
+.legend em::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--c); }
+.c-work { --c: var(--x-accent); }
+.c-web { --c: color-mix(in srgb, var(--x-accent) 65%, var(--x-text)); }
+.c-media { --c: color-mix(in srgb, var(--x-accent) 40%, var(--x-text)); }
+.c-other { --c: color-mix(in srgb, var(--x-text) 30%, transparent); }
+.hours svg { width: 100%; height: clamp(50px, calc(var(--layout-unit) * 12), 90px); display: block; }
+.hours rect { fill: var(--x-accent); opacity: 0.85; }
+.hours rect.z { fill: var(--x-track); opacity: 1; }
+.ax { display: flex; justify-content: space-between; color: var(--x-dim); font-size: calc(var(--x-label-size) * 0.8); }
+/* Short slots: the four busiest apps and the category bar only. */
+@media (max-height: 450px) {
+    .app:nth-child(n + 5), .x-status { display: none; }
+    #widget { grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "top top" "hero apps" "cats cats"; }
+}
+/* Tall and square slots: one column, with the hours of the day. */
+@media (max-aspect-ratio: 3/2) and (min-height: 451px), (max-aspect-ratio: 1/1), (max-width: 760px) {
+    #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr) auto auto; grid-template-areas: "top" "hero" "cats" "apps" "hours" "stat"; }
+    .hours { display: grid; }
+    .hours svg { height: clamp(40px, calc(var(--layout-unit) * 8), 70px); }
+    h1.x-num { font-size: calc(var(--x-hero-size) * 0.58); }
+    .hero { gap: 0; }
+    .apps { align-content: start; overflow: hidden; }
+    .app:nth-child(n + 5) { display: none; }
+}
+@media (max-aspect-ratio: 1/1) and (max-height: 450px) {
+    .hours, .x-status, .legend { display: none; }
+    #widget { grid-template-rows: auto auto auto minmax(0, 1fr); grid-template-areas: "top" "hero" "cats" "apps"; }
+}
+@media (min-height: 1100px) {
+    .app:nth-child(n + 5) { display: grid; }
+}
+.app.cut { display: none !important; }   /* rows that do not fit whole (app.js fitApps) */

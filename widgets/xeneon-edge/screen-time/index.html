@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Screen Time</title>
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#a8d5ba'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle"], "info": "tr('Screen Time counts which application is in front, by name only. It starts when this widget first runs and stays on this PC.')" }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget">
+        <header class="x-top">
+            <p class="x-kicker">Screen time</p>
+            <span id="badge" class="x-badge">Today</span>
+        </header>
+        <section class="hero">
+            <h1 class="x-num"><span id="hh">0</span><small id="hhUnit">h</small> <span id="mm">00</span><small>min</small></h1>
+            <p id="delta" class="delta">Yesterday --</p>
+        </section>
+        <section class="apps" id="apps"></section>
+        <section class="cats">
+            <div class="stack" id="stack"></div>
+            <div class="legend" id="legend"></div>
+        </section>
+        <section class="hours">
+            <svg id="hours" viewBox="0 0 240 40" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="ax"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+        </section>
+        <p id="status" class="x-status">Application names, icons and times only, kept on this PC.</p>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">Companion offline</strong>
+            <span id="overlaySub">Start iCUE Edge Companion.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

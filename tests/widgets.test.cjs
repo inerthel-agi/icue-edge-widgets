@@ -463,3 +463,94 @@ for (const widget of ['weather-now', 'daily-brief']) {
         assert.match(app.get('dataStatus').textContent, /Offline · Updated 5 min ago · Retry at/);
     });
 }
+
+test('ai cost prices tokens per provider and splits today from yesterday', async () => {
+    const wire = { schema: 'ai-usage/1', providers: {
+        claude: { model: { v: 'claude-sonnet-4-6' }, hours: [
+            { start: Date.parse('2026-10-24T09:00:00Z'), input: 1e6, output: 1e5, cacheRead: 0, cacheWrite: 0 },
+            { start: Date.parse('2026-10-23T12:00:00Z'), input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }
+        ], days: [{ start: Date.parse('2026-10-24T00:00:00Z'), input: 1e6, output: 1e5, cacheRead: 0, cacheWrite: 0 }] },
+        codex: { model: { v: 'gpt-5' }, hours: [{ start: Date.parse('2026-10-24T08:00:00Z'), input: 2e6, output: 0, cacheRead: 0, cacheWrite: 0 }], days: [] }
+    } };
+    const app = runtime('ai-cost', { fetch: async () => response(wire) });
+    await flush();
+    const s = app.context.AiCost.summarize(wire, app.now());
+    assert.equal(Math.round(s.today * 100) / 100, 7);         // Claude 1M in + 0.1M out = $4.50, Codex 2M in = $2.50
+    assert.equal(Math.round(s.yesterday * 100) / 100, 3);
+    assert.equal(Math.round(s.month * 100) / 100, 4.5);
+    assert.equal(s.tokensToday, 3.1e6);
+    assert.equal(app.get('overlay').classList.contains('visible'), false);
+    assert.equal(app.get('big').textContent, '$7');
+    // The price class follows the model name, and a class chosen in iCUE wins.
+    assert.equal(app.context.AiCost.tierOf('claude', 'claude-opus-5-5'), 'opus55');
+    assert.equal(app.context.AiCost.tierOf('claude', 'claude-opus-4-1'), 'opus41');
+    assert.equal(app.context.AiCost.tierOf('claude', 'claude-opus-4-7'), 'opus5');
+    assert.equal(app.context.AiCost.tierOf('claude', 'claude-haiku-4-5'), 'haiku45');
+    assert.equal(app.context.AiCost.tierOf('codex', 'gpt-5.5'), 'gpt55');
+    assert.equal(app.context.AiCost.tierOf('codex', 'gpt-5-mini'), 'gpt5mini');
+    const opus = runtime('ai-cost', { fetch: async () => response(wire), aiClaudePrice: 'opus55' });
+    assert.equal(Math.round(opus.context.AiCost.summarize(wire, opus.now()).byProvider.claude * 100) / 100, 6);  // 1M x $4 + 0.1M x $20
+});
+
+test('ai cost keeps the last figures and says offline when the companion stops answering', async () => {
+    const wire = { schema: 'ai-usage/1', providers: { claude: { model: { v: 'claude-sonnet-4-6' }, hours: [{ start: Date.parse('2026-10-24T09:00:00Z'), input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }], days: [] }, codex: { hours: [], days: [] } } };
+    let up = true;
+    const app = runtime('ai-cost', { fetch: async () => { if (!up) throw new Error('down'); return response(wire); } });
+    await flush();
+    up = false;
+    app.runInterval(30000); await flush();
+    assert.equal(app.get('badge').textContent, 'Offline');
+    assert.equal(app.get('big').textContent, '$3');
+    assert.equal(app.get('overlay').classList.contains('visible'), false);
+});
+
+test('screen time shows hours and minutes', () => {
+    const app = runtime('screen-time', { fetch: async () => { throw new Error('down'); } });
+    assert.deepEqual({ ...app.context.ScreenTime.parts(5 * 3600 + 42 * 60) }, { h: 5, m: 42 });
+    assert.equal(app.context.ScreenTime.text(5 * 3600 + 42 * 60), '5 h 42');
+    assert.equal(app.context.ScreenTime.text(600), '10 min');
+});
+
+test('sensor reader picks each role from iCUE ids and names, never a fan or a clock', () => {
+    const window = { location: { search: '' } };
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'shared/sensor-reader.js'), 'utf8'), { window, location: window.location, setInterval() {}, setTimeout() {} });
+    const roles = window.SensorReader.roles;
+    const icue = (pid, type, device, name = '') => ({ id: `vid<1b1c>pid<${pid}>serial<0>index<0>senstype<${type}>sensindex<0>`, name, device, type: '', kind: '', units: type.startsWith('Temp') ? '°C' : '%' });
+    const m = (name, units, device = '') => ({ id: name, name, device, type: '', kind: '', units });
+    // As iCUE writes them: the device name says neither CPU nor GPU.
+    assert.ok(roles.cpuTemp(icue('000002', 'TemperaturePackage', 'Intel Core i9-14900K', 'Package')));
+    assert.ok(roles.cpuLoad(icue('000002', 'Load', 'Intel Core i9-14900K')));
+    assert.ok(roles.gpuTemp(icue('000007', 'Temperature', 'NVIDIA GeForce RTX 4080')));
+    assert.ok(roles.gpuLoad(icue('000007', 'Load', 'NVIDIA GeForce RTX 4080')));
+    assert.ok(roles.vram(icue('000007', 'FrameBufferLoad', 'NVIDIA GeForce RTX 4080')));
+    assert.ok(!roles.gpuLoad(icue('000007', 'MemoryLoad', 'NVIDIA GeForce RTX 4080')));
+    assert.ok(!roles.cpuTemp(icue('000007', 'Temperature', 'NVIDIA GeForce RTX 4080')));
+    // Without senstype: from the names.
+    assert.ok(roles.cpuLoad(m('CPU Total Load', '%')));
+    assert.ok(roles.gpuTemp(m('Hot Spot', '°C', 'AMD Radeon RX 7900')));
+    assert.ok(roles.cpuTemp(m('Tctl', '°C', 'AMD Ryzen 7 7800X3D')));
+    assert.ok(roles.ram(m('Memory Usage', '%')));
+    assert.ok(!roles.cpuLoad(m('CPU Fan', '%')));
+    assert.ok(!roles.gpuLoad(m('GPU Core Clock', 'MHz')));
+});
+
+test('rig pet mood keeps its state near a threshold instead of flickering', () => {
+    const src = fs.readFileSync(path.join(widgetDir('rig-pet'), 'app.js'), 'utf8');
+    const moodFor = vm.runInNewContext(`(${src.match(/function moodFor[\s\S]*?\n    }/)[0]})`);
+    assert.equal(moodFor(69, 40, 'calm'), 'calm');
+    assert.equal(moodFor(70, 40, 'calm'), 'warm');
+    assert.equal(moodFor(68, 40, 'warm'), 'warm');      // stays warm until 66
+    assert.equal(moodFor(65, 40, 'warm'), 'calm');
+    assert.equal(moodFor(80, 40, 'hot'), 'hot');        // stays hot until 78
+    assert.equal(moodFor(77, 40, 'hot'), 'warm');
+    assert.equal(moodFor(51, 10, 'sleepy'), 'sleepy');  // stays asleep until 53
+    assert.equal(moodFor(51, 10, 'calm'), 'calm');
+    assert.equal(moodFor(45, 10, ''), 'sleepy');
+    // Thresholds from the settings, and an easier nap at night.
+    assert.equal(moodFor(62, 40, 'calm', 60, 75), 'warm');
+    assert.equal(moodFor(74, 40, 'warm', 60, 75), 'warm');
+    assert.equal(moodFor(56, 30, 'calm', 70, 82, true), 'sleepy');
+    assert.equal(moodFor(56, 30, 'calm', 70, 82, false), 'calm');
+    const levelFor = vm.runInNewContext(`(${src.match(/const levelFor = (.*);/)[1]})`);
+    assert.deepEqual([0, 39, 40, 360, 1000, 3240].map(levelFor), [1, 1, 2, 4, 6, 10]);
+});

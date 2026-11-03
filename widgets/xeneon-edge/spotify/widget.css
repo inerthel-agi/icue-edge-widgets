@@ -1,8 +1,3 @@
-/* Fonts bundled with the widget (SIL Open Font License 1.1): Space Grotesk (Florian Karsten),
-   IBM Plex Sans (IBM Corp.), JetBrains Mono (JetBrains). Latin subset; other scripts use system fonts. */
-@font-face { font-family: 'Space Grotesk'; src: url("./space-grotesk.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
-@font-face { font-family: 'IBM Plex Sans'; src: url("./ibm-plex-sans.woff2") format("woff2"); font-weight: 100 700; font-display: swap; }
-@font-face { font-family: 'JetBrains Mono'; src: url("./jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
 
 /* ===== Original Spotify Visualizer styles (restored from c5ddb77^:spotify-visualizer/css/widget.css) ===== */
 /* ── Reset ─────────────────────────────────────────────── */
@@ -159,7 +154,7 @@ body {
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at 18% 45%, rgba(29, 185, 84, 0.10), transparent 28%),
+        radial-gradient(circle at 18% 45%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28%),
         linear-gradient(90deg, rgba(0, 0, 0, 0.90), rgba(0, 0, 0, 0.70) 34%, rgba(0, 0, 0, 0.94));
     pointer-events: none;
     transition: background 0.3s ease;
@@ -194,7 +189,7 @@ body {
 
 :root[data-theme="blur"] .lyric-line.active {
     color: #ffffff;
-    text-shadow: 0 0 22px rgba(29, 185, 84, 0.5), 0 1px 6px rgba(0, 0, 0, 0.6);
+    text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 50%, transparent), 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 
 /* ── Widget card ────────────────────────────────────────── */
@@ -269,13 +264,13 @@ body {
     border-radius: 6px;
     overflow: hidden;
     box-shadow: 0 14px 46px rgba(0, 0, 0, 0.58);
-    border: 1px solid rgba(29, 185, 84, 0.22);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
     transition: width var(--tr), height var(--tr), box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
 #widget.is-playing .album-wrap {
-    box-shadow: 0 16px 54px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(29, 185, 84, 0.18);
-    border-color: rgba(29, 185, 84, 0.34);
+    box-shadow: 0 16px 54px rgba(0, 0, 0, 0.62), 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 34%, transparent);
 }
 
 .album-wrap img {
@@ -365,7 +360,7 @@ body {
 .progress-fill {
     height: 100%;
     border-radius: 0;
-    background: linear-gradient(90deg, rgba(29, 185, 84, 0.78), rgba(29, 185, 84, 0.92));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 78%, transparent), color-mix(in srgb, var(--accent) 92%, transparent));
     width: 0%;
     transition: width 1s linear;
     pointer-events: none;
@@ -632,7 +627,7 @@ html.sz-xl .lyric-line.active {
     margin-right: 12px;
     vertical-align: middle;
     background: var(--accent);
-    box-shadow: 0 0 18px rgba(29, 185, 84, 0.48);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 48%, transparent);
 }
 
 .no-lyrics {
@@ -823,12 +818,12 @@ html.sz-m #trackInfo {
 html.sz-m .track-name {
     font-size: 11px;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-1);
 }
 
 html.sz-m .track-artist {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.65);
+    color: var(--text-2);
 }
 
 html.sz-m .track-album {
@@ -1526,7 +1521,7 @@ html.sz-xl .lyrics-ctrl-btn svg {
 .lyrics-ctrl-btn.active {
     background: var(--accent-dim);
     color: var(--accent);
-    border-color: rgba(29, 185, 84, 0.35);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 /* ── Lyrics loading skeleton ── */
@@ -1641,7 +1636,7 @@ html.sz-xl .lyrics-ctrl-btn svg {
 
 :root[data-theme="light"] .lyric-line.active {
     color: #080808;
-    text-shadow: 0 0 18px rgba(29, 185, 84, 0.35);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 /* Lyrics loading bars */
@@ -1654,8 +1649,9 @@ html.sz-xl .lyrics-ctrl-btn svg {
     background: rgba(0, 0, 0, 0.06);
 }
 
+/* No band behind the M controls: it showed as a pale strip under the buttons on the flat Light background. */
 html[data-theme="light"].sz-m .controls {
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.4));
+    background: none;
 }
 
 html[data-theme="light"].sz-m .controls .ctrl-btn {
@@ -1700,7 +1696,7 @@ html.legible.sz-xl .lyric-line.active { font-size: 36px !important; }
 html.legible .state-sub { font-size: 18px !important; }
 
 /* Spotify attribution mark (Simple Icons, CC0), end of the volume row. */
-.sp-logo { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: 10px; color: #1ed760; }
+.sp-logo { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: 10px; color: var(--text-2); }
 .sp-logo svg { width: 100%; height: 100%; fill: currentColor; }
 
 /* ══ Up next, playing device, current lyric line, touch-size controls (2026-09-28) ══
@@ -1804,10 +1800,13 @@ html.legible.sz-l .album-wrap, html.legible.sz-xl .album-wrap { width: 230px !im
 }
 /* S: one compact line at the right of the volume row. */
 @media (max-height: 450px) {
-  html.legible.sz-m .up-next { position: absolute; right: 22px; bottom: 30px; margin: 0; max-width: 270px; }
+  /* Starts after the volume row (and its Spotify mark), same height and centre line, row aligned left. */
+  html.legible.sz-m .up-next { position: absolute; left: 566px !important; right: 22px !important; width: auto !important; padding: 0 !important; bottom: 8px; height: 64px; margin: 0; max-width: none; justify-content: center; align-items: stretch; }
+  html.legible.sz-m .up-next-list { width: 100%; }
+  html.legible.sz-m .up-next-row:first-child { width: 100%; min-height: 64px; }
   html.legible.sz-m .up-next-head { display: none; }
   html.legible.sz-m .up-next-row { padding: 4px 10px; min-width: 0; }
-  html.legible.sz-m .up-next-text { flex-direction: column; gap: 0; }
+  html.legible.sz-m .up-next-text { flex: 1 1 0; flex-direction: column; align-items: stretch; gap: 0; overflow: hidden; }
   html.legible.sz-m .up-next-art { width: 44px; height: 44px; }
   html.legible.sz-m .up-next-title { font-size: 18px; }
   html.legible.sz-m .up-next-artist { font-size: 16px; }
@@ -1820,3 +1819,90 @@ html.legible.sz-l .album-wrap, html.legible.sz-xl .album-wrap { width: 230px !im
 .up-next-row:hover { background: var(--overlay-10); }
 .up-next-row:active { background: var(--accent-dim); transform: scale(0.98); }
 .up-next-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Unified design: same fonts and palette as the other widgets (shared/xeneon-widget.css). */
+:root, :root[data-theme] {
+    --font-h: "Segoe UI Variable", "Segoe UI", sans-serif;
+    --font-b: "Segoe UI Variable", "Segoe UI", sans-serif;
+    --font-m: "Segoe UI Variable", "Segoe UI", sans-serif;
+}
+/* Text, accent and background colours set in iCUE (WidgetRuntime.personalize) apply as on every widget. */
+:root[data-theme="dark"] {
+    --bg: color-mix(in srgb, var(--x-bg, #080a0b) calc(var(--x-bg-opacity, 1) * 100%), transparent);
+    --text-1: var(--x-text, #f2f3ed);
+    --text-2: color-mix(in srgb, var(--text-1) 72%, transparent);
+    --text-3: color-mix(in srgb, var(--text-1) 58%, transparent);
+}
+/* Blur: the text sits on the blurred cover, so it stays light whatever the style's own text colour. */
+:root[data-theme="blur"] { --bg: transparent; --text-1: #ffffff; --text-2: rgba(255, 255, 255, 0.8); --text-3: rgba(255, 255, 255, 0.66); }
+:root[data-theme] {
+    --accent: var(--x-accent, #a8d5ba);
+    --accent-d: color-mix(in srgb, var(--accent) 12%, transparent);
+    --accent-dim: color-mix(in srgb, var(--accent) 20%, transparent);
+    --accent-b: color-mix(in srgb, var(--accent) 28%, transparent);
+    --accent-glow: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Style setting: every style except the default feeds the shared palette into this widget. */
+/* Background and text come from the style only on the dark themes: the Light theme keeps its light
+   background and dark text (a dark style palette there put dark text on black). */
+:root[data-style]:not([data-style="instrument"])[data-theme="dark"] {
+    --bg: var(--x-bg); --text-1: var(--x-text);
+    --text-2: color-mix(in srgb, var(--x-text) 72%, transparent); --text-3: color-mix(in srgb, var(--x-text) 55%, transparent);
+    --surface: color-mix(in srgb, var(--x-text) 6%, transparent); --surface-h: color-mix(in srgb, var(--x-text) 10%, transparent);
+    --border: color-mix(in srgb, var(--x-text) 12%, transparent); --border-h: color-mix(in srgb, var(--x-text) 24%, transparent);
+}
+:root[data-style]:not([data-style="instrument"]) {
+    --accent: var(--x-accent); --accent-d: color-mix(in srgb, var(--x-accent) 14%, transparent); --accent-dim: color-mix(in srgb, var(--x-accent) 22%, transparent);
+    --accent-b: color-mix(in srgb, var(--x-accent) 30%, transparent); --accent-glow: color-mix(in srgb, var(--x-accent) 24%, transparent);
+    --font-h: var(--s-font, "Segoe UI Variable", "Segoe UI", sans-serif); --font-b: var(--s-font, "Segoe UI Variable", "Segoe UI", sans-serif); --font-m: var(--s-label-font, var(--s-font, "Segoe UI Variable", "Segoe UI", sans-serif));
+}
+
+/* Same surface as the other widgets: one flat background from the palette, no grey card, glass,
+   grid or column gradients. The Blur theme keeps its album-art backdrop. */
+:root:not([data-theme="blur"]) #bgBlur { display: none; }
+:root:not([data-theme="blur"]) #widget {
+    background: var(--bg);
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    border: 0; border-radius: 0; box-shadow: none;
+}
+:root:not([data-theme="blur"]) #widget::after { display: none; }
+:root:not([data-theme="blur"]) .col-left,
+:root:not([data-theme="blur"]) .col-right { background: transparent; }
+/* Up next is drawn like the other widgets' cards, so each style shapes it the same way. */
+:root[data-style]:not([data-style="instrument"])[data-theme="dark"] .up-next {
+    background: var(--s-card-bg, transparent);
+    border: var(--s-card-border, 1px solid var(--border));
+    border-radius: var(--s-radius, 0);
+    box-shadow: var(--s-card-shadow, none);
+}
+
+/* L and XL: the cover fills the left column and fades into the background under the title and controls. */
+html.legible:is(.sz-l, .sz-xl) .col-left { position: relative !important; overflow: hidden; justify-content: flex-end !important; }
+html.legible:is(.sz-l, .sz-xl) #albumWrap {
+    position: absolute !important; inset: 0 !important; z-index: 0;
+    width: auto !important; height: auto !important; max-width: none !important; max-height: none !important;
+    border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+}
+html.legible:is(.sz-l, .sz-xl) #albumWrap::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to bottom, transparent 22%, color-mix(in srgb, var(--bg) 72%, transparent) 48%, var(--bg) 66%);
+}
+/* The cover's box is the column: its own wrapper must not be positioned. */
+html.legible:is(.sz-l, .sz-xl) #colLeftInner { position: static !important; }
+html.legible:is(.sz-l, .sz-xl) .col-left > :not(#albumWrap):not(#colLeftInner),
+html.legible:is(.sz-l, .sz-xl) #colLeftInner > :not(#albumWrap) { position: relative; z-index: 1; }
+
+/* Lyrics further from the current line stay readable (contrast about 4:1 or more on every theme). */
+.lyric-line { color: color-mix(in srgb, var(--text-1) 58%, transparent) !important; }
+.lyric-line.near { color: color-mix(in srgb, var(--text-1) 74%, transparent) !important; }
+.lyric-line.active { color: var(--text-1) !important; }
+
+/* Secondary text on the Light theme: darker than the shared kit's, so album and times read (about 4.5:1). */
+html:root[data-theme="light"] { --text-2: rgba(10, 10, 10, 0.72); --text-3: rgba(10, 10, 10, 0.62); }   /* beats widget-polish.css */
+/* Lyric buttons sit on a tint of the text colour: dark on light palettes, light on dark ones. */
+.lyrics-ctrl-bar { background: color-mix(in srgb, var(--text-1) 7%, transparent) !important; }
+/* Text in the accent colour, pulled towards the text colour: an orange or yellow accent stays readable on a
+   light background (and on a light style such as Paper) while a dark theme keeps it bright. */
+:root { --accent-ink: color-mix(in srgb, var(--accent) 52%, var(--text-1)); }
+html.legible .device-line, .mini-lyric, .up-next-head, #lyricsAutoBtn, .lyric-line.active::before { color: var(--accent-ink) !important; }

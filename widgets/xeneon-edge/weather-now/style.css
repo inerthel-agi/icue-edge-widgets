@@ -1,4 +1,3 @@
-:root { --x-accent: #e8c477; }
 #widget { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: var(--x-gap); }
 #place { flex: 1; margin: 0; }
 #condition { max-width: 45%; }

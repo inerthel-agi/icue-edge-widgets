@@ -1,0 +1,193 @@
+/* Rig Pet: the creature on the left (top in portrait), what it feels on the right. */
+#widget { --pet: var(--x-accent); --breath: 3s; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-items: center; gap: var(--x-gap); }
+#widget[data-mood="warm"] { --pet: var(--x-warn); }
+#widget[data-mood="hot"] { --pet: var(--x-bad); }
+.stage { position: relative; height: 100%; min-height: 0; }
+.pet { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pet *, .fx * { transform-box: fill-box; }
+.fx { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.shadow { fill: color-mix(in srgb, var(--x-text) 12%, transparent); transform-origin: center; animation: shadow var(--breath) ease-in-out infinite; }
+.body-wrap { transform-origin: 50% 100%; animation: breathe var(--breath) ease-in-out infinite; }
+.body, .ear { fill: var(--pet); transition: fill 1.2s; }
+.belly { fill: color-mix(in srgb, var(--pet) 55%, #fff); transition: fill 1.2s; }
+.eye { fill: #14161a; }
+.shine { fill: #fff; }
+.eyes { transform-origin: center; animation: blink 5s infinite; }
+.lids, .mouth { fill: none; stroke: #14161a; stroke-width: 4; stroke-linecap: round; }
+.lids { display: none; }
+.cheek { fill: #ff7a8a; opacity: 0.35; }
+.pant { display: none; fill: #b8323e; stroke: #14161a; stroke-width: 3; }
+.sweat { display: none; fill: #7cc8ff; }
+.sweat path { animation: drip 1.6s ease-in infinite; }
+.sweat path + path { animation-delay: 0.7s; }
+.zzz { display: none; fill: var(--x-text); font: 700 18px var(--s-font, "Segoe UI", sans-serif); }
+.zzz text { animation: float 3s ease-in-out infinite; }
+.zzz text + text { animation-delay: 1.2s; font-size: 14px; }
+[data-pet="codex"] .zzz { font-size: 34px; } [data-pet="codex"] .zzz text + text { font-size: 26px; }
+.steam { display: none; fill: none; stroke: color-mix(in srgb, var(--x-text) 50%, transparent); stroke-width: 4; stroke-linecap: round; }
+.steam path { animation: rise 1.8s ease-out infinite; }
+.steam path:nth-child(2) { animation-delay: 0.6s; } .steam path:nth-child(3) { animation-delay: 1.2s; }
+
+[data-mood="sleepy"] .eyes { display: none; }
+[data-mood="sleepy"] .lids, [data-mood="sleepy"] .zzz { display: inline; }
+[data-mood="sleepy"] .bit .mouth { d: path("M94 106q6 3 12 0"); }
+[data-mood="warm"] .sweat { display: inline; }
+[data-mood="warm"] .cheek { opacity: 0.7; }
+[data-mood="warm"] .bit .mouth { d: path("M88 108q12 -4 24 0"); }
+[data-mood="hot"] .sweat, [data-mood="hot"] .steam, [data-mood="hot"] .pant { display: inline; }
+[data-mood="hot"] .mouth { display: none; }
+[data-mood="hot"] .cheek { opacity: 0.9; }
+[data-mood="hot"] .body-wrap { animation: breathe var(--breath) ease-in-out infinite, shake 0.25s linear infinite; }
+
+@keyframes breathe { 50% { transform: scale(1.03, 0.96); } }
+@keyframes shadow { 50% { transform: scaleX(1.06); } }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+@keyframes drip { from { transform: translateY(0); opacity: 1; } to { transform: translateY(30px); opacity: 0; } }
+@keyframes float { 0% { transform: translate(0, 6px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(8px, -12px); opacity: 0; } }
+@keyframes rise { from { transform: translateY(6px); opacity: 0.9; } to { transform: translateY(-16px); opacity: 0; } }
+@keyframes shake { 25% { translate: -1.5px 0; } 75% { translate: 1.5px 0; } }
+
+.card { min-width: 0; }
+.card .x-kicker { margin: 0 0 6px; font-size: clamp(16px, calc(var(--layout-unit) * 4), 34px); }
+.say { margin: 0 0 var(--x-gap); font-size: clamp(26px, calc(var(--layout-unit) * 8), 72px); font-weight: 650; line-height: 1.15; }
+.stats { display: flex; gap: calc(var(--x-gap) * 1.4); margin: 0; }
+.stats div { min-width: 0; }
+.stats dt { color: var(--x-dim); font-size: clamp(14px, calc(var(--layout-unit) * 3.4), 30px); letter-spacing: 0.1em; }
+.stats dd { margin: 2px 0 0; font-size: clamp(22px, calc(var(--layout-unit) * 7), 64px); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* S: smaller words, no figures under them. */
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { .say { font-size: clamp(22px, 7vmin, 32px); margin-bottom: 10px; } .stats dd { font-size: clamp(20px, 6vmin, 30px); } }
+/* Wide slots: a wide yard for the pet to walk about, the words on the right. */
+@media (min-aspect-ratio: 2/1) {
+    #widget { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+    /* The room runs on under the words, which sit on a dark glass panel over it. */
+    #widget .room { right: calc(-100cqw / 1.5 - var(--x-gap)); }
+    #widget .orb { right: 46%; }   /* the sun or moon stays clear of the panel */
+    .card { position: relative; z-index: 1; }
+    #widget:has(.room:not([hidden])) .card { padding: calc(var(--x-gap) * 1.2) calc(var(--x-gap) * 1.5); border-radius: var(--s-radius, 22px);
+        background: color-mix(in srgb, var(--x-bg) 72%, transparent); backdrop-filter: blur(8px); }
+    /* A pixel pet stands tall, its feet on the shadow. */
+    #widget .sprite { inset: auto 0 2cqh; margin: 0 auto; width: calc(90cqh * 192 / 208); height: 90cqh; }
+}
+/* Portrait: pet on top. */
+@media (max-aspect-ratio: 1/1) { #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.2fr) auto; text-align: center; } .stats { justify-content: center; } }
+@media (prefers-reduced-motion: reduce) { .pet *, .fx *, .body-wrap, .shadow { animation: none !important; } }
+
+/* Your own pictures: they take the drawn pet's place; sweat, steam and z's stay on top. */
+.stage { container-type: size; }
+.media { position: absolute; inset: 0; margin: auto; width: min(72cqw, 72cqh); height: min(72cqw, 72cqh); display: none; }
+.media img, .media video { width: 100%; height: 100%; object-fit: contain; border-radius: 12px; }
+[data-pet="custom"] .media { display: block; animation: breathe var(--breath) ease-in-out infinite; transform-origin: 50% 100%; }
+.custom .kind { display: none !important; }
+.custom[data-mood="hot"] .media, .custom[data-mood="hot"] .sprite { animation: breathe var(--breath) ease-in-out infinite, shake 0.25s linear infinite; filter: drop-shadow(0 0 18px color-mix(in srgb, var(--x-bad) 70%, transparent)); }
+.custom[data-mood="warm"] .media, .custom[data-mood="warm"] .sprite { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--x-warn) 50%, transparent)); }
+@media (prefers-reduced-motion: reduce) { .custom .media { animation: none; } }
+
+/* ---------- Mascots: only the chosen one is drawn ---------- */
+.kind { display: none; }
+[data-pet="bit"] .kind.bit, [data-pet="claude"] .kind.claude, [data-pet="ghost"] .kind.ghost, [data-pet="robot"] .kind.robot, [data-pet="slime"] .kind.slime { display: inline; }
+/* Claude: the orange pixel crab of Claude Code, square-cut. */
+.claude .body, .claude .arm, .claude .legs rect { fill: #d97757; shape-rendering: crispEdges; }
+.claude .eye { fill: #1a1a1a; shape-rendering: crispEdges; }
+.claude .lids { stroke: #1a1a1a; stroke-linecap: butt; }
+.claude .pant { fill: #1a1a1a; stroke: none; }
+.claude .legs rect:nth-child(odd) { animation: step calc(var(--breath) / 3) steps(1) infinite; }
+.claude .legs rect:nth-child(even) { animation: step calc(var(--breath) / 3) steps(1) infinite reverse; }
+@keyframes step { 50% { transform: translateY(-4px); } }
+/* Ghost: floats instead of standing. */
+.ghost { animation: hover 3.2s ease-in-out infinite; }
+.ghost .body { fill: color-mix(in srgb, #fff 88%, var(--pet)); }
+.ghost .mouth, .ghost .pant { fill: #14161a; stroke: none; }
+@keyframes hover { 50% { transform: translateY(-8px); } }
+/* Robot: a screen face that glows in the mood colour. */
+.robot .body { fill: #8b94a3; } .robot .leg { fill: #6b7380; } .robot .screen { fill: #0d1116; }
+.robot .antenna { fill: none; stroke: #8b94a3; stroke-width: 5; stroke-linecap: round; }
+.robot .bulb { fill: var(--pet); animation: blinkbulb 1.4s steps(1) infinite; }
+.robot .eye { fill: var(--pet); }
+.robot .lids, .robot .mouth, .robot .pant { stroke: var(--pet); fill: none; }
+@keyframes blinkbulb { 50% { opacity: 0.3; } }
+/* Slime: a wobbling drop in the mood colour. */
+.slime .body { fill: var(--pet); opacity: 0.92; transition: fill 1.2s; }
+.slime .gloss { fill: #fff; opacity: 0.45; }
+.slime { transform-origin: 50% 100%; animation: wobble 2.4s ease-in-out infinite; }
+@keyframes wobble { 25% { transform: scale(1.04, 0.96); } 75% { transform: scale(0.97, 1.03); } }
+/* Codex pet: one frame of the spritesheet at a time, kept pixel-sharp. */
+.sprite { position: absolute; inset: 0; margin: auto; width: min(76cqw, calc(76cqh * 192 / 208)); height: min(calc(76cqw * 208 / 192), 76cqh); display: none; background-repeat: no-repeat; image-rendering: pixelated; }
+[data-pet="codex"] .sprite { display: block; }
+.sprite.flip { scale: -1 1; }
+@media (prefers-reduced-motion: reduce) { .claude .legs rect, .ghost, .slime, .robot .bulb { animation: none; } }
+
+/* ---------- Walking, taps and jumps ---------- */
+.stage { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.walker { position: absolute; inset: 0; will-change: transform; }
+/* Drawn pets face where they walk and bob a little on each step. */
+.facing-left .pet .body-wrap, .facing-left .media { scale: -1 1; }
+.walking .pet .body-wrap { animation: breathe var(--breath) ease-in-out infinite, bob 0.42s ease-in-out infinite; }
+@keyframes bob { 50% { translate: 0 -5px; } }
+.hop .pet .body-wrap, .hop .media { animation: hop 0.55s cubic-bezier(.3, 0, .4, 1) 2; }
+@keyframes hop { 40% { translate: 0 -22px; } 60% { translate: 0 -22px; } }
+.heart { position: absolute; top: 4%; translate: -50% 0; color: #ff6b8a; font-size: clamp(22px, 12cqh, 64px); pointer-events: none; animation: heart 1.2s ease-out forwards; }
+@keyframes heart { from { opacity: 0; transform: translateY(10px) scale(0.6); } 20% { opacity: 1; transform: translateY(0) scale(1.1); } to { opacity: 0; transform: translateY(-50px) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .walking .pet .body-wrap, .hop .pet .body-wrap, .hop .media, .heart { animation: none; } }
+
+/* ---------- The room behind the pet: time of day and weather ---------- */
+.room { position: absolute; inset: 4% 0 10%; border-radius: var(--s-radius, 22px); overflow: hidden; opacity: 0.55; transition: background 2s;
+        background: linear-gradient(180deg, #4d8fcf, #a7cdea); }
+.room[data-sky="dusk"] { background: linear-gradient(180deg, #3b3f78, #e08a5c); }
+.room[data-sky="night"] { background: linear-gradient(180deg, #060a1c, #1d2950); }
+.room[data-wx="cloudy"], .room[data-wx="fog"] { filter: saturate(0.4) brightness(0.85); }
+.room[data-wx="rain"], .room[data-wx="storm"] { filter: saturate(0.3) brightness(0.6); }
+.orb { position: absolute; right: 12%; top: 12%; width: 13cqh; height: 13cqh; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 40px 10px rgba(255, 236, 170, 0.6); }
+.room[data-sky="night"] .orb { background: #e9edff; box-shadow: 0 0 30px 6px rgba(200, 210, 255, 0.35); }
+.room[data-sky="night"]::before { content: ""; position: absolute; inset: 0; background: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 60% 18%, #fff, transparent), radial-gradient(1.5px 1.5px at 80% 40%, #fff, transparent), radial-gradient(1px 1px at 35% 55%, #fff, transparent), radial-gradient(1px 1px at 70% 62%, #fff, transparent); }
+.room:not([data-wx="clear"]) .orb { opacity: 0.25; }
+.cloud { position: absolute; width: 26cqh; height: 9cqh; border-radius: 99px; background: rgba(255, 255, 255, 0.75); filter: blur(3px); animation: drift 60s linear infinite; }
+.cloud.a { top: 14%; left: -30%; } .cloud.b { top: 30%; left: -30%; animation-delay: -30s; width: 18cqh; }
+.room[data-wx="clear"] .cloud { display: none; }
+.room[data-sky="night"] .cloud { background: rgba(120, 130, 160, 0.5); }
+@keyframes drift { to { transform: translateX(170cqw); } }
+.fall { position: absolute; inset: 0; display: none; }
+.fall i { position: absolute; top: -10%; width: 2px; height: 7%; background: rgba(220, 235, 255, 0.7); animation: rain 1s linear infinite; }
+.room[data-wx="rain"] .fall, .room[data-wx="storm"] .fall, .room[data-wx="snow"] .fall { display: block; }
+.room[data-wx="snow"] .fall i { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation-name: snow; animation-duration: 4s !important; }
+.room[data-wx="storm"] { animation: flash 7s infinite; }
+@keyframes rain { to { transform: translate(-2cqw, 120cqh); } }
+@keyframes snow { 50% { translate: 2cqw 0; } to { transform: translateY(120cqh); } }
+@keyframes flash { 0%, 95%, 100% { filter: saturate(0.3) brightness(0.6); } 96% { filter: brightness(2.2); } }
+
+/* ---------- Accessories, needs and today ---------- */
+/* Hats and headphones are drawn for Bit's head; each drawn pet lowers them to its own. Pixel pets: placed frame by frame (app.js). */
+.acc { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; transform-origin: 50% 10%; scale: var(--acc-s, 1); translate: 0 var(--acc-y, 0%); }
+[data-pet="claude"] .acc { --acc-y: 13%; } [data-pet="robot"] .acc { --acc-y: 4%; } [data-pet="slime"] .acc { --acc-y: 9%; --acc-s: 0.95; }
+[data-pet="custom"] .acc { --acc-y: 6%; } [data-pet="ghost"] .acc { --acc-y: -2%; }
+/* Clawd's own sheet already wears headphones while idle. */
+[data-sheet="clawd"] .acc .phones { display: none !important; }
+[data-sheet="patrick"] .acc .hat { display: none !important; }
+.acc .hat, .acc .phones { display: none; }
+.acc[data-hat="bow"] .bow, .acc[data-hat="wizard"] .wizard, .acc[data-hat="crown"] .crown, .acc[data-phones="true"] .phones { display: inline; }
+.acc[data-phones="true"] .hat { display: none; }
+.bow path, .bow circle { fill: #ff6b9a; }
+.wizard path { fill: #5a3fb8; } .wizard .band { fill: #2d1f66; } .wizard .star { fill: #ffd54a; }
+.crown path { fill: #ffcc3a; stroke: #c99400; stroke-width: 2; } .crown .gem { fill: #e8344e; }
+.phones .band { fill: none; stroke: #2a2e36; stroke-width: 10; stroke-linecap: round; } .phones .band-hi { fill: none; stroke: #4a505c; stroke-width: 2.5; stroke-linecap: round; }
+.phones .cup { fill: #2a2e36; stroke: #14161a; stroke-width: 2; } .phones .pad { fill: #4a505c; } .phones .glow { fill: var(--x-accent); }
+[data-activity="music"] .walker { animation: sway 1.2s ease-in-out infinite; }
+@keyframes sway { 25% { rotate: -3deg; } 75% { rotate: 3deg; } }
+[data-activity="game"] .pet .body-wrap { animation: breathe var(--breath) ease-in-out infinite, bob 0.3s ease-in-out infinite; }
+[data-need="tired"] .pet .eyes { display: none; } [data-need="tired"] .pet .lids { display: inline; }
+[data-need="sulk"] .walker { filter: saturate(0.4); }
+.card .x-kicker .lv { margin-left: 10px; padding: 1px 8px; border-radius: 99px; background: var(--x-panel-strong); color: var(--x-text); letter-spacing: 0.04em; }
+.needs { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px 12px; margin-top: var(--x-gap); max-width: 520px;
+         font-size: clamp(13px, calc(var(--layout-unit) * 2.8), 22px); color: var(--x-dim); }
+.bar { height: 8px; border-radius: 99px; background: var(--x-track); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--x-accent); transition: width 0.8s; }
+#energy { background: var(--x-ok); } #joy { background: #ff7a9a; }
+.today { margin: 10px 0 0; color: var(--x-dim); font-size: clamp(13px, calc(var(--layout-unit) * 2.8), 22px); font-variant-numeric: tabular-nums; }
+/* The ball: thrown in an arc, then the pet runs to it. */
+.ball { position: absolute; left: 50%; bottom: 14%; width: 5cqh; height: 5cqh; margin-left: -2.5cqh; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #ff5a5a 45%, #b81f2c); display: none; pointer-events: none; }
+.ball.thrown { display: block; animation: toss 0.75s cubic-bezier(.2, .6, .4, 1) forwards; }
+@keyframes toss { from { transform: translate(var(--from), -30cqh); } 50% { transform: translate(calc((var(--from) + var(--to)) / 2), -45cqh); } to { transform: translate(var(--to), 0); } }
+/* Small slots: no figures for needs and today. */
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { .needs, .today { display: none; } }
+@media (max-aspect-ratio: 1/1) { .needs { margin-inline: auto; } }
+@media (prefers-reduced-motion: reduce) { .cloud, .fall i, .room, [data-activity="music"] .walker { animation: none !important; } }

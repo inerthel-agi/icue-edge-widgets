@@ -1,20 +1,28 @@
 /* Shared instrument palette and sizing for dashboard widgets. */
 :root {
     --layout-unit: 1vmin;
+    /* iCUE personalization: --x-bg, --x-text, --x-accent and --x-bg-opacity are set by WidgetRuntime.personalize(). */
+    --x-bg: #080a0b;
+    --x-text: #f2f3ed;
+    --x-accent: #a8d5ba;
+    --x-bg-opacity: 1;
+    --x-muted: color-mix(in srgb, var(--x-text) 72%, transparent);
+    --x-dim: color-mix(in srgb, var(--x-text) 58%, transparent);
+    --x-line: color-mix(in srgb, var(--x-text) 18%, transparent);
+    --x-track: color-mix(in srgb, var(--x-text) 14%, transparent);
+    --x-panel: color-mix(in srgb, var(--x-text) 6%, transparent);
+    --x-panel-strong: color-mix(in srgb, var(--x-text) 10%, transparent);
+    --x-ok: #7fd49a;
+    --x-warn: #e8c477;
+    --x-bad: #e88a7a;
     --x-pad: clamp(16px, calc(var(--layout-unit) * 4.5), 32px);
     --x-gap: clamp(12px, calc(var(--layout-unit) * 3), 24px);
-    --x-bg: #080a0b;
-    --x-panel: #101416;
-    --x-panel-strong: #171d20;
-    --x-line: #30383c;
-    --x-text: #f2f3ed;
-    --x-muted: #b1b9b8;
-    --x-dim: #9aa5a5;
-    --x-accent: #a8d5ba;
+    --x-hero-size: clamp(72px, calc(var(--layout-unit) * 26), 200px);
     --x-label-size: clamp(18px, calc(var(--layout-unit) * 4.6), 26px);
     --x-control-size: clamp(20px, calc(var(--layout-unit) * 5), 28px);
     --x-touch-size: 60px;
     --x-title-size: clamp(28px, calc(var(--layout-unit) * 7), 48px);
+    --x-value-size: clamp(26px, calc(var(--layout-unit) * 7.5), 52px);
     font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
     font-synthesis: none;
 }
@@ -26,7 +34,7 @@ html, body {
     height: 100%;
     margin: 0;
     overflow: hidden;
-    background: var(--x-bg);
+    background: transparent;
     color: var(--x-text);
 }
 button { font: inherit; touch-action: manipulation; }
@@ -41,7 +49,7 @@ button:active { transform: translateY(1px); }
     height: 100%;
     overflow: hidden;
     padding: var(--x-pad);
-    background: var(--x-bg);
+    background: color-mix(in srgb, var(--x-bg) calc(var(--x-bg-opacity) * 100%), transparent);
 }
 .x-top, .x-row {
     min-width: 0;
@@ -136,7 +144,7 @@ button:active { transform: translateY(1px); }
     padding: var(--x-pad);
     text-align: center;
     border-top: 2px solid var(--x-accent);
-    background: var(--x-bg);
+    background: color-mix(in srgb, var(--x-bg) 96%, transparent);
     z-index: 5;
 }
 .x-overlay.visible { display: grid; }
@@ -150,6 +158,48 @@ button:active { transform: translateY(1px); }
     line-height: 1.4;
     overflow-wrap: anywhere;
 }
+/* Shared anatomy: .x-hero (one dominant value), .x-metrics > .x-m (value + label), .x-bar (progress). */
+.x-hero {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--x-gap) * 1.5);
+}
+.x-num {
+    margin: 0;
+    min-width: 0;
+    font-size: var(--x-hero-size);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.x-num small { margin-left: 0.2em; color: var(--x-muted); font-size: 0.26em; font-weight: 600; letter-spacing: 0; }
+.x-sub { margin: 0; color: var(--x-muted); font-size: var(--x-title-size); font-weight: 600; letter-spacing: -0.01em; }
+.x-metrics {
+    min-width: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: var(--x-gap);
+}
+.x-m {
+    min-width: 0;
+    padding-top: calc(var(--x-gap) * 0.7);
+    border-top: 1px solid var(--x-line);
+    display: grid;
+    gap: 6px;
+    align-content: start;
+}
+.x-m b { font-size: var(--x-value-size); font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.x-bar { width: 100%; height: clamp(6px, calc(var(--layout-unit) * 1.6), 10px); border-radius: 99px; background: var(--x-track); overflow: hidden; }
+.x-bar > i { display: block; height: 100%; border-radius: inherit; background: var(--x-accent); }
+.x-ok { color: var(--x-ok); }
+.x-warn { color: var(--x-warn); }
+.x-bad { color: var(--x-bad); }
 @media (max-aspect-ratio: 1/1) {
     :root { --layout-unit: min(1vw, 4.16px); }
 }

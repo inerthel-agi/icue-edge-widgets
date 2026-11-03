@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Original icon for this project -->
+<svg width="32px" height="32px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>Flip Clock</title>
+    <path fill="#ffffff" fill-rule="evenodd" d="M1.5 3h6v10h-6zM8.5 3h6v10h-6zM1.5 7.6h13v.8h-13z"/>
+</svg>

@@ -41,7 +41,10 @@
     // ---------- iCUE personalization ----------
     function theme() {
         const css = document.documentElement.style;
-        const color = (name, v) => { if (typeof v === "string" && CSS.supports("color", v)) css.setProperty(name, v); };
+        const DEFAULTS = ["#080a0b", "#f2f3ed", "#a8d5ba"]; // the iCUE defaults: not a choice, so the Style palette shows
+        const color = (name, v) => {
+          if (typeof v === "string" && CSS.supports("color", v) && !DEFAULTS.includes(v.trim().toLowerCase())) css.setProperty(name, v); else css.removeProperty(name);
+        };
         color("--x-text", typeof textColor !== "undefined" ? textColor : null);
         color("--accent", typeof accentColor !== "undefined" ? accentColor : null);
         color("--x-bg", typeof backgroundColor !== "undefined" ? backgroundColor : null);
@@ -259,7 +262,9 @@
             rows.push(b);
         };
         if (i < 0) row("♪", -1, "now enter");
-        for (let n = Math.max(0, i - 1); n <= Math.min(lines.length - 1, i + 3); n++) row(lines[n].text, n, n === i ? "now enter" : n < i ? "past" : "next");
+        // ponytail: length thresholds, not a measured fit; tune them if a script (CJK) needs it.
+        const size = text => (text || "").length > 60 ? " longer" : (text || "").length > 38 ? " long" : "";
+        for (let n = Math.max(0, i - 1); n <= Math.min(lines.length - 1, i + 3); n++) row(lines[n].text, n, n === i ? "now enter" + size(lines[n].text) : n < i ? "past" : "next");
         $("lyricList").replaceChildren(...rows);
     }
 
@@ -376,6 +381,7 @@
     let stageView = "viz";
     const queueBlobs = new Map();
     let queueKey = null;
+    let queueMeta = null; // { rev, spotifyRev }: what the companion needs to skip to a row (spotifyRev needs companion 0.1.4+)
 
     function queueImage(url, img) {
         // The preview passes ready-made image URLs; the companion's covers come over the authorised connection.
@@ -404,10 +410,12 @@
         if (!q) {
             stageView = "viz";
             queueKey = null;
+            queueMeta = null;
             stage.dataset.view = "viz";
             tab.hidden = true;
             return;
         }
+        queueMeta = Number.isFinite(q.spotifyRev) ? { rev: q.rev, spotifyRev: q.spotifyRev } : null;
         stage.dataset.view = stageView;
         tab.hidden = false;
         setText(tab, stageView === "viz" ? "Up next" : "Visualiser");
@@ -421,8 +429,9 @@
             if (entry.url) URL.revokeObjectURL(entry.url);
             queueBlobs.delete(url);
         }
-        const rows = q.items.map(item => {
+        const rows = q.items.map((item, index) => {
             const li = document.createElement("li");
+            li.dataset.index = String(index);
             const img = document.createElement("img");
             img.alt = "";
             if (item.art && item.art.url) queueImage(item.art.url, img);
@@ -438,7 +447,19 @@
         $("queue").replaceChildren(...rows);
     }
 
-    $("stage").addEventListener("click", () => {
+    // A tap on an Up next row skips forward to it (Spotify has no jump-to-item, so the companion sends "next" that many
+    // times); it refuses the tap if the queue or the track moved since this list was drawn.
+    function skipTo(index) {
+        if (!queueMeta || !snap || isStale(snap)) return;
+        fetch(ENDPOINT + "/api/spotify/command", {
+            method: "POST", headers: { "Content-Type": "text/plain" }, credentials: "omit", cache: "no-store",
+            body: JSON.stringify({ cmd: "skipTo", value: index, q: queueMeta.rev, rev: queueMeta.spotifyRev })
+        }).catch(() => {});
+    }
+
+    $("stage").addEventListener("click", e => {
+        const row = e.target.closest && e.target.closest("#queue li");
+        if (row && stageView === "queue" && queueMeta) { skipTo(Number(row.dataset.index)); return; }
         if ($("stageTab").hidden) return;
         stageView = stageView === "viz" ? "queue" : "viz";
         if (snap) renderQueue(snap);

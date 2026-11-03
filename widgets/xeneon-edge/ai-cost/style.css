@@ -1,0 +1,35 @@
+#widget { display: grid; gap: var(--x-gap); grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "top top" "hero side" "mets mets" "stat stat"; }
+.x-top { grid-area: top; }
+.hero { grid-area: hero; min-width: 0; display: grid; align-content: center; gap: 4px; }
+.side { grid-area: side; min-width: 0; display: grid; align-content: center; gap: calc(var(--x-gap) * 0.6); }
+.mets { grid-area: mets; }
+.x-status { grid-area: stat; }
+h1.x-num { margin: 0; font-size: calc(var(--x-hero-size) * 0.9); }
+.delta { margin: 0; color: var(--x-muted); font-size: var(--x-label-size); font-weight: 600; }
+.spark { display: block; width: 100%; height: clamp(46px, calc(var(--layout-unit) * 14), 120px); }
+.spark path.l { fill: none; stroke: var(--x-accent); stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.spark path.a { fill: color-mix(in srgb, var(--x-accent) 22%, transparent); }
+.spark line { stroke: var(--x-line); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 4 4; }
+.prov { display: grid; grid-template-columns: 4.5em minmax(0, 1fr) auto; gap: 10px 14px; align-items: center; font-size: var(--x-label-size); font-weight: 600; }
+.prov .x-bar { height: 8px; }
+.prov .x-bar > i { width: 0; transition: width 0.4s ease; }
+.prov b { font-variant-numeric: tabular-nums; }
+.pace { margin: 0; color: var(--x-muted); font-size: var(--x-label-size); font-weight: 600; }
+.pace b { color: var(--x-warn); }
+/* Short slots (840x344, 696x416): hero, trend and three figures; the providers and the footnote step aside. */
+@media (max-height: 450px) {
+    .prov, .x-status { display: none; }
+    #widget { grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "top top" "hero side" "mets mets"; }
+}
+/* Portrait and square slots: one column. */
+@media (max-aspect-ratio: 3/2) and (min-height: 451px), (max-aspect-ratio: 1/1), (max-width: 760px) {
+    #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; grid-template-areas: "top" "hero" "side" "mets" "stat"; }
+    h1.x-num { font-size: calc(var(--x-hero-size) * 0.58); }
+    .hero { gap: 0; }
+    .spark { height: clamp(36px, calc(var(--layout-unit) * 9), 80px); }
+    .side { align-content: start; overflow: hidden; }
+}
+@media (max-aspect-ratio: 1/1) and (max-height: 450px) {
+    .prov, .pace { display: none; }
+    #widget { grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "top" "hero" "side" "mets"; }
+}

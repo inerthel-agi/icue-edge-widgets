@@ -6,6 +6,61 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Added - Network Pulse, System Pulse, Rig Pet, Flip Clock, Rain Window
+- `network-pulse` (needs iCUE Edge Companion): download and upload rate of the hardware adapters, the last minute as a chart, and an optional ping to Cloudflare, Google or Quad9. Units in Mbit/s or MB/s.
+- `system-pulse`: CPU, GPU, RAM and VRAM load rings with temperatures and the last minute, from the iCUE Sensors plugin (`shared/sensor-reader.js` picks the sensors by name).
+- `rig-pet`: a creature that naps when the PC is cool, sweats when it warms up and pants when CPU or GPU passes 82 °C; it breathes faster under load. In wide slots it walks about (running animation, facing its way); a tap makes it wave or hop with a heart; it jumps for joy when the PC cools down. Moods keep a few degrees of margin before changing back (66 / 78 °C), and its lines vary and quote the hotter part, the load and how long the mood has lasted. Energy (drained by heat, restored by cool time) and joy (taps and balls; fades over hours): when one runs low the pet is tired or sulks. Experience and levels unlock a bow (level 4), a wizard hat (level 6) and a crown (level 10); a line shows today's max temperature, calm time, pets and balls; all kept between restarts. It plays when iCUE gives an FPS reading, wears headphones while music plays and watches Claude Code work (both through the companion), and naps more easily at night. The room behind it follows the time of day and the city's weather from Open-Meteo (rain, snow, storm, fog, clouds, stars). Swipe to throw a ball: it runs after it. Settings: personality (calm, energetic, grumpy), warm and hot thresholds, accessory, room weather and city, companion reactions, and a preview mode that plays every state in turn (calm, walking, warm, hot, cooled down, sleepy, music, Claude Code, gaming, tap, ball, tired, sulking, each accessory) every 6 s without changing the pet's real stats. In wide slots the room runs under the words, which sit on a glass panel, and a pixel pet stands taller; sweat, z's and steam follow a pixel pet's head. Same sensors. Mascot setting: Bit, Claude (pixel crab), Ghost, Robot, Slime, the pixel pets Clawd, Grace, Sea Lion, Jennie and Claire (Codex pet sheets drawn by the author) and the community pets Dario, Tom, Patrick, Pepe, Rick, Doge, Mini Elon, Kirby, Clippy, Tux and the anime pets Frieren, Anya, Miku, Luffy, Goku, Gojo, Umaru, Asuka, Doraemon, Elaina, Violet, Bocchi, Luo Xiaohei, Mini Sama, Doro, Guga, Kiki, Usagi and Hachiware (from codex-pet.org, credited in the README), all shipped in the package and animated row by mood: idle, waiting, running, failed), or your own pictures (one picture, GIF or short video per mood; a mood without one uses the calm one).
+- `flip-clock`: flip cards that turn over each minute, or Nixie tubes, or a fluorescent (VFD) panel; 12h / 24h, seconds and date.
+- `rain-window`: the real weather drawn behind a window (rain beads running down the glass, storm flashes, snow, fog, clouds, a clear sky with stars and moon at night), with the time and temperature. Open-Meteo, like `weather-now`.
+
+### Fixed
+- iCUE editor preview: a widget shown in the editor's small frame draws at the real slot size and is scaled down, so the preview matches the screen.
+- `spotify` S: a long artist name in `Up next` stays inside its card.
+- `spotify`: no longer frozen on the last track while Spotify rate-limits the app. With iCUE Edge Companion (unreleased build), the widget follows the Spotify app's Windows session until the wait ends: track, cover, progress, lyrics, play/pause and skips stay live; a line says until when; queue, volume, shuffle and repeat come back afterwards. The companion also reads the Web API far less often when the Spotify app is open on the PC (every 15 s / 30 s, woken at once by each change in the app), to avoid the bans in the first place.
+
+### Added - Stocks (needs iCUE Edge Companion)
+- `stocks`: up to 8 symbols in a market-terminal look (black, amber, orange bar, green / red moves): watchlist with day sparklines and a flash on each move; tall slots add the first symbol's intraday chart against the previous close; wide slots add a ticker tape. Quotes from Yahoo Finance's chart endpoint through the companion (unofficial, no key, at most once a minute per symbol; only the symbols you set are sent). Any Style other than Instrument restyles it.
+
+### Added - Audio Mixer, Agent Activity, Control Deck (need iCUE Edge Companion)
+- `audio-mixer`: a fader and a mute per app playing sound (Windows audio sessions) plus the output device, with live levels and the app icons; touch to set a volume. Portrait slots lay the faders down.
+- `agent-activity`: what Claude Code is doing now (current step, last ten tool calls, tokens per minute, tool calls today). Only the tool name and a short target (file name, the command's own description) leave the logs.
+- `control-deck`: touch keys for a fixed list of actions run by the companion: microphone and sound mute (red when muted), play / pause, next track, screenshot, lock, Calculator, File Explorer, Task Manager, Night light settings. The widget sends an action id, never a command.
+
+### Fixed - readable text in every Style
+- Contrast audit (`previews/contrast-audit`): every widget, size and Style is loaded and any text under 3:1 against what is behind it is listed. 1,995 combinations pass (widgets audited in their empty or offline state; text over images is not measured).
+- Pastel: darker pink accent (#d63f78), so accent-coloured text reads on its pale background.
+- Brutalist and Pastel: badges keep the Style's badge text colour (lime-on-lime badges in Daily Brief, Focus Timer, GitHub Repo Monitor).
+- Habit Rings: the + button text and ISS Horizon's day / night badge are pulled towards the text colour, readable on light Styles.
+- Pump gauges: the idle number is dimmed with opacity instead of a fixed grey, so it stays readable on each design.
+- Spotify: Light theme keeps its light background and dark text with any Style; Blur keeps light text; accent-coloured text, secondary text and lyric buttons readable on every theme; the cover fills the left column in L and XL; the S up-next card no longer covers the Spotify mark; lyrics re-centre when the current line wraps.
+- Now Playing: long current lyric lines step down in size instead of being cut.
+- Screen Time: each application shows its own icon (read by the companion from the executable, kept as a small image; its initial when there is none).
+
+### Added - three widgets that use iCUE Edge Companion
+- `ai-cost`: estimated cost of today's Claude and Codex usage, with a 24 h trend, provider split, yesterday, month so far and pace. The price class (Sonnet, Opus, Haiku, GPT-5, Mini) is a setting; the figure is an estimate, not a bill. Needs the companion's new `days` totals for the month figure.
+- `screen-time`: time per application today, categories and hours of the day. Needs the companion's new Screen Time module (application name and seconds only, kept on this PC; it starts when the widget first asks).
+- `racing-gauge-pump`: racing-style gauge on the pump LCD. The scale follows the sensor: temperature with a redline, speed in rpm with shift lights, percent or any other unit. Seven animated designs (Classic, Race, Munich, Stuttgart, GR, GT-R, Maranello, inspired by motorsport and car dashboards, no brand logos): start-up sweep, spring-driven needle, redline flash, shift lights, segment tach, glow and a one-minute history depending on the design.
+- `fps-gauge-pump`: the same animated designs plus an FPS design, fed by the iCUE FPS sensor. The scale adapts (60 to 600 FPS), with the last minute's average and low. Frame generation: Dynamic by default, which estimates the multiplier from the last minute's average (up to 165 FPS native, then 2×, 3×, 4×) and marks the split as an estimate; or Off, 2×, 3×, 4× set by hand. iCUE does not report whether frame generation is on. Outside a game (iCUE reports -1) the dial is empty and says No game running.
+
+### Added - 12 more styles
+- Aurora, Paper, Brutalist, Synthwave, Abyss, Sunset, Newsprint, Blueprint, Forest, Pastel, Amber and HUD: moods rather than brands, 21 styles in all.
+
+### Added - "Style" setting on every widget
+- Instrument (default), Apple, OpenAI, SpaceX, Nothing, Anthropic, Google, Terminal and Corsair, from `shared/widget-styles.css`. Colours chosen in iCUE (Custom Style) still win. Now Playing keeps its Apple default.
+
+### Added - Now Playing "Style" setting
+- Apple (default), SpaceX, OpenAI, Nothing and Classic. A tap on an Up next row skips to that track (needs the matching companion change).
+
+### Changed - Now Playing, Apple-style skin
+- Borderless rounded cover with shadow, glass controls, white progress and lyric line, blurred distant lyrics, ambient wash of the cover colour.
+- 840 x 696 becomes a poster (cover fills the slot, text on a gradient); 1688 x 696 joins the lyrics-first wide layout with a visualiser column.
+
+### Changed - unified design
+- One shared kit (`shared/xeneon-widget.css`): same dark palette, single default accent `#a8d5ba`, same header / hero / metrics / status anatomy.
+- All 14 widgets now have the "Widget Personalization" group (Text Color, Accent Color, Background Color, Background Transparency), applied by `WidgetRuntime.personalize()`. Background image and glass blur are not included yet.
+- Claude/Codex Usage: same defaults and labels. Spotify: Segoe UI and the shared palette; bundled fonts removed.
+- Pump widgets use the shared tokens. Focus Timer no longer changes accent per mode.
+
 ### Added - 1.3.0 Now Playing extras (need iCUE Edge Companion 0.1.4)
 - Synced lyrics on several lines in tall and ultra-wide formats; a tap on a line jumps there when the player can seek.
 - Album name back under the artist, and a tap on the length switches it to the time left.

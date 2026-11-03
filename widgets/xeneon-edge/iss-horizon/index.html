@@ -11,8 +11,10 @@
             {'key':'day','value':'Day'},
             {'key':'auto','value':'Auto'}
         ]" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
     <script type="application/json" id="x-icue-groups">
-        [{"title":"tr('ISS Horizon')","properties":["issMapStyle"]}]
+        [{"title":"tr('ISS Horizon')","properties":["issMapStyle","widgetStyle"]}]
     </script>
     <meta name="referrer" content="origin" />
     <meta http-equiv="Content-Security-Policy"
@@ -22,6 +24,7 @@
 
     <!-- Xeneon Widget shared tokens & base styles -->
     <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -53,6 +56,15 @@
             --radius-sm:      6px;
 
             --transition:     0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Style setting: every style except the default feeds the shared palette into this widget. */
+        :root[data-style]:not([data-style="instrument"]) {
+            --bg-base: var(--x-bg); --bg-overlay: color-mix(in srgb, var(--x-text) 6%, var(--x-bg));
+            --text-main: var(--x-text); --text-dim: color-mix(in srgb, var(--x-text) 74%, transparent); --text-muted: color-mix(in srgb, var(--x-text) 62%, transparent);
+            --accent-blue: var(--x-accent); --accent-blue-dim: color-mix(in srgb, var(--x-accent) 14%, transparent);
+            --border-subtle: color-mix(in srgb, var(--x-text) 12%, transparent); --border-focus: color-mix(in srgb, var(--x-text) 24%, transparent);
+            --font-ui: var(--s-font, "Segoe UI Variable", "Segoe UI", sans-serif); --font-mono: var(--s-label-font, Consolas, ui-monospace, monospace);
         }
 
         * {
@@ -146,13 +158,13 @@
         }
 
         .solar-badge.is-day {
-            color: #fbbc04;
+            color: color-mix(in srgb, #fbbc04 55%, var(--text-main));
             border-color: rgba(251, 188, 4, 0.3);
             background: rgba(251, 188, 4, 0.1);
         }
 
         .solar-badge.is-night {
-            color: #8ab4f8;
+            color: color-mix(in srgb, #8ab4f8 55%, var(--text-main));
             border-color: rgba(138, 180, 248, 0.3);
             background: rgba(138, 180, 248, 0.1);
         }

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Stocks</title>
+    <meta name="x-icue-property" content="stockSymbols" data-label="tr('Symbols')" data-type="textfield"
+        data-default="'AAPL,NVDA,MSFT,TSLA,CRSR,^GSPC'" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#a8d5ba'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('Stocks')", "properties": ["stockSymbols"], "info": "tr('Up to 8 Yahoo Finance symbols separated by commas, for example AAPL, MC.PA, ^GSPC, EURUSD=X. The first one gets the chart. Quotes can be delayed; not investment advice.')" },
+        { "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="bb">
+        <header class="bar"><span class="fn">WATCH</span><span id="title">EQUITY</span><span class="go">&lt;GO&gt;</span><span class="clock" id="clock"></span></header>
+        <section class="body">
+            <table class="list"><thead><tr><th>Ticker</th><th>Last</th><th class="net">Net chg</th><th>% chg</th><th class="day">Day</th></tr></thead><tbody id="rows"></tbody></table>
+            <section class="focus" id="focus" aria-label="First symbol">
+                <div class="quote"><div class="tk" id="fTk">--</div><div class="nm" id="fNm"></div><div class="px num" id="fPx">--</div><div class="ch num" id="fCh"></div>
+                    <dl><dt>Open</dt><dd id="fO">--</dd><dt>High</dt><dd id="fH">--</dd><dt>Low</dt><dd id="fL">--</dd><dt>Prev close</dt><dd id="fP">--</dd><dt>Volume</dt><dd id="fV">--</dd></dl></div>
+                <svg class="chart" id="chart" viewBox="0 0 500 300" preserveAspectRatio="none" aria-hidden="true"></svg>
+            </section>
+        </section>
+        <section class="tape" id="tape" aria-hidden="true"><div class="roll" id="roll"></div></section>
+        <footer class="foot"><span id="market">MARKET --</span><span id="source">Yahoo Finance</span><span id="updated">Waiting for the companion</span></footer>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">Companion offline</strong>
+            <span id="overlaySub">Start iCUE Edge Companion.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

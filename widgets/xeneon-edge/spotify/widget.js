@@ -6,7 +6,7 @@
     // asks for a token or a Client ID. With ?source=preview inside a frame it renders the preview
     // page's simulated snapshots instead.
     const ENDPOINT = document.body.dataset.endpoint;
-    const STALE_MS = 10000;
+    const STALE_MS = 20000;
     const MAX_ART_BYTES = 4 * 1024 * 1024;
     const $ = id => document.getElementById(id);
     const NS = "http://www.w3.org/2000/svg";
@@ -113,11 +113,18 @@
             el.classList.toggle("active", i === active);
             el.classList.toggle("near", dist > 0 && dist <= 2);
         });
-        if (state.autoScroll && els[active] && state.shownLine !== active) {
-            state.shownLine = active;
+        if (state.autoScroll && els[active]) {
             // Only the lyrics box scrolls: scrollIntoView also moved the whole page up, cutting the cover.
             const box = $("lyricsScroll"), br = box.getBoundingClientRect(), er = els[active].getBoundingClientRect();
-            box.scrollTo({ top: box.scrollTop + er.top - br.top - (box.clientHeight - er.height) / 2, behavior: "smooth" });
+            const off = er.top - br.top - (box.clientHeight - er.height) / 2;
+            const now = Date.now();
+            // A new line is centred at once. The line keeps growing (bigger active font, long lines wrapping)
+            // after it was measured, so it is re-centred whenever it drifts, once the smooth scroll has ended.
+            if (state.shownLine !== active || (Math.abs(off) > 12 && now - (state.scrolledAt || 0) > 700)) {
+                state.shownLine = active;
+                state.scrolledAt = now;
+                box.scrollTo({ top: box.scrollTop + off, behavior: "smooth" });
+            }
         }
     }
 
@@ -197,7 +204,8 @@
 
     // ---------- Render ----------
     function stale(s) {
-        return !s.source.connected || Date.now() - s.source.lastSeen > STALE_MS || !!s.rateLimitedUntil;
+        // While Spotify rate-limits the app, the companion follows the Spotify app itself (source.local): still live.
+        return !s.source.connected || Date.now() - s.source.lastSeen > STALE_MS || (!!s.rateLimitedUntil && !s.source.local);
     }
 
     function progressMs(s) {
@@ -290,7 +298,7 @@
         }
 
         // Shown once when the status changes, not again on every 250 ms render.
-        const status = s.rateLimitedUntil ? "Spotify busy, retrying…" : !s.source.connected ? "Companion reconnecting…"
+        const status = s.rateLimitedUntil && !s.source.local ? "Spotify busy, retrying…" : !s.source.connected ? "Companion reconnecting…"
             : Date.now() - s.source.lastSeen > STALE_MS ? "Data is not up to date" : "";
         if (status && status !== state.lastStatus) toast(status);
         state.lastStatus = status;
@@ -335,7 +343,9 @@
         panel.classList.toggle("ui-hidden", !queue.length);
 
         const d = s.device;
-        $("deviceLine").textContent = d ? `Playing on ${d.name}${d.volume != null ? ` · ${d.volume}%` : ""}` : "";
+        const until = s.rateLimitedUntil ? new Date(s.rateLimitedUntil).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+        $("deviceLine").textContent = s.source.local ? `Spotify asked to wait until ${until}: following the Spotify app (no queue or volume)`
+            : d ? `Playing on ${d.name}${d.volume != null ? ` · ${d.volume}%` : ""}` : "";
 
         const lines = s.lyrics && s.lyrics.state === "ready" ? s.lyrics.lines : [];
         let cur = "";

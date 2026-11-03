@@ -17,6 +17,9 @@
     --chip: clamp(44px, calc(var(--u) * 10), 56px);
     --radius: clamp(8px, calc(var(--u) * 2), 18px);
     --art: min(calc(100vh - 2 * var(--pad)), 42vw);
+    --glass: rgba(255, 255, 255, 0.14);
+    --glass-2: rgba(255, 255, 255, 0.24);
+    --round: clamp(14px, calc(var(--u) * 4), 34px);
 }
 
 /* Panels, lines and secondary text follow the chosen text and background colours, so a custom
@@ -27,6 +30,8 @@
         --x-line: color-mix(in srgb, var(--x-text) 24%, var(--x-bg));
         --x-muted: color-mix(in srgb, var(--x-text) 72%, var(--x-bg));
         --x-dim: color-mix(in srgb, var(--x-text) 55%, var(--x-bg));
+        --glass: color-mix(in srgb, var(--x-text) 14%, transparent);
+        --glass-2: color-mix(in srgb, var(--x-text) 24%, transparent);
     }
 }
 
@@ -57,9 +62,9 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     width: 100%;
     height: 100%;
     overflow: hidden;
-    border: 1px solid var(--x-line);
-    border-radius: var(--radius);
+    border-radius: var(--round);
     background: var(--x-panel);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
 .art-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--art-bg); }
 .art-fallback { position: absolute; inset: 0; display: grid; place-items: center; }
@@ -125,21 +130,22 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 4px 12px;
-    border: 2px solid var(--warn);
+    border: 0;
     border-radius: 999px;
+    background: color-mix(in srgb, var(--warn) 18%, transparent);
     color: var(--warn);
     font-size: var(--f-status);
     font-weight: 700;
     line-height: 1.4;
     white-space: nowrap;
 }
-.pill.demo { border-color: var(--x-dim); color: var(--x-muted); }
+.pill.demo { background: var(--glass); color: var(--x-muted); }
 .player[data-alert] #playState, .player[data-alert] .source-chip .sep { display: none; }
 .meta { grid-area: meta; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(var(--gap) * 0.45); }
 .title, .artist, .album { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .title {
     font-size: var(--f-title);
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1.2;
     padding-bottom: 0.12em;
     letter-spacing: -0.02em;
@@ -169,7 +175,8 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     font-weight: 600;
     line-height: 1.4;
     color: var(--x-muted);
-    opacity: calc(0.85 - var(--d, 1) * 0.2);
+    opacity: calc(0.7 - var(--d, 1) * 0.12);
+    filter: blur(calc(var(--d, 1) * 0.5px));
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -179,15 +186,19 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    font-size: var(--f-artist);
-    font-weight: 700;
+    font-size: var(--now-fs, var(--f-artist));
+    font-weight: 800;
     line-height: 1.3;
-    color: var(--dyn);
+    color: var(--x-text);
     opacity: 1;
+    filter: none;
     white-space: normal;
     overflow-wrap: anywhere;
 }
 .lyric-line.now.enter { animation: lyric-in 0.35s ease; }
+/* Long lines (common in Spanish or Portuguese) step down in size so they fit the clamp instead of being cut. */
+.lyric-line.now.long { font-size: calc(var(--now-fs, var(--f-artist)) * 0.78); }
+.lyric-line.now.longer { font-size: calc(var(--now-fs, var(--f-artist)) * 0.62); }
 @keyframes lyric-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 /* Lyrics take the album's place, and are left out of the short formats. */
 .player[data-lyrics] .album { display: none; }
@@ -198,13 +209,13 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; background: 
     .player[data-lyrics] { --f-title: clamp(28px, calc(var(--u) * 8), 54px); --ctl-main: clamp(88px, calc(var(--u) * 19), 132px); --ctl: clamp(68px, calc(var(--u) * 15), 110px); }
 }
 /* Tall and ultra-wide formats: the surrounding lines and the album come back; what does not fit fades out. */
-@media (min-height: 851px), (min-aspect-ratio: 3/1) {
+@media (min-height: 851px), (min-aspect-ratio: 3/1), (min-aspect-ratio: 3/2) and (min-width: 1400px) and (min-height: 451px) {
     .lyric-line { display: block; }
     .lyric-line.now { display: -webkit-box; }
     .player[data-lyrics] .album { display: block; }
     .lyric-list { -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent); mask-image: linear-gradient(to bottom, #000 78%, transparent); }
 }
-@media (min-aspect-ratio: 3/1) and (max-height: 850px) {
+@media (max-height: 850px) and (min-aspect-ratio: 3/1), (max-height: 850px) and (min-aspect-ratio: 3/2) and (min-width: 1400px) and (min-height: 451px) {
     .lyric-line.now { -webkit-line-clamp: 2; }
     .player[data-lyrics] { --f-title: clamp(32px, calc(var(--u) * 10), 68px); --ctl-main: clamp(88px, calc(var(--u) * 24), 170px); --ctl: clamp(68px, calc(var(--u) * 18.5), 140px); }
 }
@@ -230,17 +241,18 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
 .tools input::-webkit-slider-runnable-track {
     height: 8px;
     border-radius: 4px;
-    background: linear-gradient(to right, var(--dyn) var(--pct), var(--x-line) var(--pct));
+    background: linear-gradient(to right, var(--x-text) var(--pct), var(--glass-2) var(--pct));
 }
 .timeline input::-webkit-slider-thumb,
 .tools input::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 28px;
-    height: 28px;
-    margin-top: -10px;
-    border: 4px solid var(--x-bg);
+    width: 20px;
+    height: 20px;
+    margin-top: -6px;
+    border: 0;
     border-radius: 50%;
     background: var(--x-text);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 .timeline input:disabled { cursor: default; }
 .timeline input:disabled::-webkit-slider-thumb { width: 0; border: 0; }
@@ -264,9 +276,9 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
     display: grid;
     place-items: center;
     padding: 0;
-    border: 2px solid var(--x-line);
+    border: 0;
     border-radius: 50%;
-    background: var(--x-panel);
+    background: var(--glass);
     color: var(--x-text);
     cursor: pointer;
 }
@@ -288,12 +300,12 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
 .empty-sub { max-width: 34ch; color: var(--x-muted); font-size: var(--f-label); font-weight: 600; line-height: 1.4; }
 .empty-action, .sheet-item {
     min-height: 60px;
-    border: 2px solid var(--x-line);
-    background: var(--x-panel);
+    border: 0;
+    background: var(--glass);
     color: var(--x-text);
     cursor: pointer;
 }
-.empty-action { padding: 0 28px; border-color: var(--x-text); border-radius: 30px; font-size: var(--f-label); font-weight: 700; }
+.empty-action { padding: 0 28px; border-radius: 30px; font-size: var(--f-label); font-weight: 700; }
 
 .sheet { z-index: 6; display: flex; flex-direction: column; gap: var(--gap); }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -317,7 +329,7 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
     border-radius: 12px;
     text-align: left;
 }
-.sheet-item[aria-pressed="true"] { border-color: var(--accent); }
+.sheet-item[aria-pressed="true"] { background: var(--glass-2); }
 .sheet-item b, .sheet-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; }
 .sheet-item b { font-size: var(--f-label); }
 .sheet-item span { color: var(--x-muted); font-size: var(--f-status); font-weight: 600; }
@@ -336,20 +348,27 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
     }
 }
 
-/* ---------- Formats: near-square (840x696) ---------- */
+/* ---------- Formats: near-square (840x696) "Poster": the cover fills the slot, text sits on a gradient ---------- */
 @media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 3/2) and (min-height: 451px) {
     :root {
-        --f-title: clamp(32px, calc(var(--u) * 7), 56px);
-        --f-artist: clamp(22px, calc(var(--u) * 5), 34px);
-        --art: min(calc(100vh - 2 * var(--pad) - 44px - var(--ctl-main) - var(--chip) - 4 * var(--gap)), 46vw);
+        --f-title: clamp(40px, calc(var(--u) * 11), 84px);
+        --f-artist: clamp(26px, calc(var(--u) * 5.2), 40px);
     }
-    .player { grid-template-columns: var(--art) minmax(0, 1fr); grid-template-rows: auto auto auto auto; grid-template-areas: "top top" "art meta" "time time" "ctl ctl"; align-content: space-between; }
+    .player { isolation: isolate; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto auto; grid-template-areas: "top" "." "meta" "time" "ctl"; }
+    .player::before { display: none; }
     .player .info { display: contents; }
+    .topline, .meta, .timeline, .controls { position: relative; z-index: 1; }
+    .art-zone { position: absolute; inset: 0; width: auto; aspect-ratio: auto; z-index: 0; }
+    .art-zone::after { display: none; }
+    .art-zone::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, color-mix(in srgb, var(--x-bg) 40%, transparent) 0%, transparent 16%, color-mix(in srgb, var(--x-bg) 72%, transparent) 34%, color-mix(in srgb, var(--x-bg) 94%, transparent) 52%, var(--x-bg) 70%); }
+    .art-frame { border-radius: 0; box-shadow: none; }
+    .art-frame img { object-fit: cover; }
+    .meta { justify-content: flex-end; }
     .controls { justify-content: center; }
 }
 
 /* ---------- Formats: ultra wide (2536x696) ---------- */
-@media (min-aspect-ratio: 3/1) {
+@media (min-aspect-ratio: 3/1), (min-aspect-ratio: 3/2) and (min-width: 1400px) and (min-height: 451px) {
     .info {
         grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
         grid-template-rows: auto 1fr auto;
@@ -382,7 +401,7 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
 .eq { display: none; align-items: flex-end; gap: 3px; height: 0.9em; margin-right: -4px; }
 .player[data-playback="playing"] .eq { display: inline-flex; }
 .player[data-alert] .eq { display: none; }
-.eq i { width: 4px; height: 100%; border-radius: 2px; background: var(--dyn); transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
+.eq i { width: 4px; height: 100%; border-radius: 2px; background: var(--x-text); transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
 .eq i:nth-child(2) { animation-duration: 0.8s; animation-delay: -0.3s; }
 .eq i:nth-child(3) { animation-duration: 1.2s; animation-delay: -0.6s; }
 @keyframes eq { 0%, 100% { transform: scaleY(0.25); } 50% { transform: scaleY(1); } }
@@ -428,17 +447,17 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(100deg, var(--art-color, transparent), transparent 70%);
+    background: radial-gradient(90% 120% at 0% 0%, var(--art-color, transparent), transparent 70%), radial-gradient(80% 110% at 100% 100%, color-mix(in srgb, var(--art-color, transparent) 65%, var(--x-bg)), transparent 70%);
     opacity: 0;
     transition: opacity 0.8s ease;
     pointer-events: none;
 }
-.player[data-cover]::before { opacity: 0.34; }
+.player[data-cover]::before { opacity: 0.6; }
 @media (prefers-reduced-motion: reduce) { .player::before { transition: none; } }
 
 /* ---------- Shuffle, repeat, volume, sleep, visualiser (large formats only) ---------- */
 .ctl.aux { display: none; width: calc(var(--ctl) * 0.72); height: calc(var(--ctl) * 0.72); }
-.ctl.aux[data-on] { background: var(--dyn); border-color: transparent; color: var(--x-bg); }
+.ctl.aux[data-on] { background: var(--x-text); color: var(--x-bg); }
 .ctl.aux .i-rep1 { display: none; }
 .ctl.aux[data-mode="1"] .i-rep { display: none; }
 .ctl.aux[data-mode="1"] .i-rep1 { display: block; }
@@ -449,15 +468,16 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
 .stage[data-view="queue"] .viz { display: none; }
 .stage[data-view="viz"] .queue { display: none; }
 .queue { list-style: none; margin: 0; padding: 0; height: 100%; overflow: hidden; display: flex; flex-direction: column; gap: 8px; -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent); mask-image: linear-gradient(to bottom, #000 80%, transparent); }
-.queue li { flex: none; display: flex; align-items: center; gap: 14px; min-width: 0; }
+.queue li { flex: none; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 6px 10px; margin: 0 -10px; border-radius: 12px; cursor: pointer; transition: background-color 0.15s ease; }
+.queue li:active { background: var(--glass); }
 .queue img { flex: none; width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--x-panel); }
 .queue span { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
 .queue b, .queue i { font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 0.1em; }
 .queue b { font-size: var(--f-status); font-weight: 700; }
 .queue i { font-size: calc(var(--f-status) * 0.85); font-weight: 600; color: var(--x-muted); }
 /* A small tab names what a tap shows next. */
-.stage-tab { position: absolute; top: 0; right: 0; z-index: 1; min-height: 36px; padding: 0 16px; border: 2px solid var(--x-line); border-radius: 18px; background: var(--x-bg); color: var(--x-muted); font: inherit; font-size: calc(var(--f-status) * 0.85); font-weight: 700; pointer-events: none; }
-.viz i { flex: 1; height: 100%; border-radius: 3px; background: var(--dyn); opacity: 0.85; transform-origin: bottom; transform: scaleY(0.03); }
+.stage-tab { position: absolute; top: 0; right: 0; z-index: 1; min-height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: var(--glass); color: var(--x-text); font: inherit; font-size: calc(var(--f-status) * 0.85); font-weight: 700; pointer-events: auto; cursor: pointer; }
+.viz i { flex: 1; height: 100%; border-radius: 99px; background: var(--x-text); opacity: 0.8; transform-origin: bottom; transform: scaleY(0.03); }
 .tools { grid-area: tools; align-items: center; gap: var(--gap); min-width: 0; }
 .tool {
     flex: none;
@@ -466,9 +486,9 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
     align-items: center;
     gap: 10px;
     padding: 0 22px;
-    border: 2px solid var(--x-line);
+    border: 0;
     border-radius: 30px;
-    background: var(--x-panel);
+    background: var(--glass);
     color: var(--x-text);
     font: inherit;
     font-size: var(--f-status);
@@ -477,7 +497,7 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
 }
 .tool.icon { width: 60px; padding: 0; justify-content: center; border-radius: 50%; }
 .tool svg { width: 28px; height: 28px; fill: currentColor; }
-.tool[data-on] { border-color: var(--dyn); color: var(--dyn); }
+.tool[data-on] { background: var(--x-text); color: var(--x-bg); }
 .tool .i-mute { display: none; }
 .tool[data-on] .i-vol { display: none; }
 .tool[data-on] .i-mute { display: block; }
@@ -485,8 +505,8 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
 @media (min-width: 1000px) { .ctl.aux:not([hidden]) { display: grid; } }
 @media (max-aspect-ratio: 1/1) and (min-height: 1200px) { .ctl.aux:not([hidden]) { display: grid; } }
 
-/* Ultra-wide: the empty upper right holds the visualiser; volume and sleep sit under the timeline. */
-@media (min-aspect-ratio: 3/1) {
+/* Wide formats: the empty upper right holds the visualiser; volume and sleep sit under the timeline. */
+@media (min-aspect-ratio: 3/1), (min-aspect-ratio: 3/2) and (min-width: 1400px) and (min-height: 451px) {
     .info { grid-template-rows: auto 1fr auto auto auto; grid-template-areas: "top top" "meta viz" "meta ctl" "meta time" "meta tools"; }
     .stage { display: block; }
     .tools:not([hidden]) { display: flex; }
@@ -499,4 +519,166 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
     .player { grid-template-areas: "art" "top" "meta" "viz" "time" "ctl" "tools"; }
     .stage { display: block; width: 100%; height: clamp(90px, 9vh, 220px); }
     .tools:not([hidden]) { display: flex; width: 100%; }
+}
+
+/* Wide formats (1688x696, 2536x696): the lyrics are the hero, so they get the room and a larger type size. */
+@media (min-aspect-ratio: 3/1), (min-aspect-ratio: 3/2) and (min-width: 1400px) and (min-height: 451px) {
+    .lyric-line { font-size: calc(var(--f-artist) * 0.8); }
+    .lyric-line.now { --now-fs: calc(var(--f-artist) * 1.45); line-height: 1.2; }
+}
+
+/* Large horizontal (1688x696): a narrower cover leaves two equal columns, and the controls shrink to fit the right one. */
+@media (min-aspect-ratio: 3/2) and (max-aspect-ratio: 3/1) and (min-width: 1400px) and (min-height: 451px) {
+    :root { --art: min(calc(100vh - 2 * var(--pad)), 34vw); }
+    .player, .player[data-lyrics] { --ctl: clamp(60px, calc(var(--u) * 9.5), 100px); --ctl-main: clamp(80px, calc(var(--u) * 13.5), 140px); }
+    .info { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: calc(var(--gap) * 2); }
+    .controls { gap: calc(var(--gap) * 0.6); }
+    .player, .player[data-lyrics] { --f-title: clamp(30px, calc(var(--u) * 7.5), 54px); }
+    .title { -webkit-line-clamp: 1; }
+}
+
+/* Title, artist and album never shrink: the lyrics, which sit below them, give way (and fade) instead of cutting a line in half. */
+.title, .artist, .album, .lyric-line { flex: none; }
+
+/* Wide formats: the player row can never grow past the screen, so the cover stays centred instead of sliding down and
+   the stage (visualiser or queue) gives way when the column is too tall. */
+@media (min-aspect-ratio: 3/1), (min-aspect-ratio: 3/2) and (min-width: 1400px) and (min-height: 451px) {
+    .player { grid-template-rows: minmax(0, 1fr); }
+    .info { min-height: 0; overflow: hidden; }
+    .stage { min-height: 0; overflow: hidden; }
+}
+
+/* ======================================================================================================
+   Styles (iCUE setting "Style"; Apple is the default look above). Colours set in the iCUE personalization
+   still win, because the widget writes them inline on <html>.
+   ====================================================================================================== */
+
+/* ---------- SpaceX: black, white only, telemetry ---------- */
+:root[data-style="spacex"] { --x-bg: #000; --x-text: #fff; --x-accent: #fff; --glass: transparent; --glass-2: rgba(255, 255, 255, 0.45); --round: 0px; }
+:root[data-style="spacex"] .player::before, :root[data-style="spacex"] .art-zone::after { display: none; }
+:root[data-style="spacex"] .art-frame { box-shadow: none; }
+:root[data-style="spacex"] .source-chip { font-family: Consolas, "Cascadia Mono", monospace; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; }
+:root[data-style="spacex"] .title { font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; font-size: calc(var(--f-title) * 0.8); line-height: 1.15; }
+:root[data-style="spacex"] .artist { font-weight: 400; text-transform: uppercase; letter-spacing: 0.2em; font-size: calc(var(--f-artist) * 0.7); }
+:root[data-style="spacex"] .album { text-transform: uppercase; letter-spacing: 0.16em; font-size: calc(var(--f-label) * 0.85); }
+:root[data-style="spacex"] .time { font-family: Consolas, "Cascadia Mono", monospace; letter-spacing: 0.1em; font-weight: 400; }
+:root[data-style="spacex"] .lyric-line { font-weight: 300; }
+:root[data-style="spacex"] .lyric-line.now { font-weight: 500; }
+:root[data-style="spacex"] .timeline input::-webkit-slider-runnable-track, :root[data-style="spacex"] .tools input::-webkit-slider-runnable-track { height: 2px; border-radius: 0; }
+:root[data-style="spacex"] .timeline input::-webkit-slider-thumb, :root[data-style="spacex"] .tools input::-webkit-slider-thumb { width: 4px; height: 22px; margin-top: -10px; border-radius: 0; box-shadow: none; }
+:root[data-style="spacex"] .ctl, :root[data-style="spacex"] .tool, :root[data-style="spacex"] .stage-tab { border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 0; background: transparent; }
+:root[data-style="spacex"] .ctl.primary { background: #fff; color: #000; border-color: #fff; }
+:root[data-style="spacex"] .ctl.aux[data-on], :root[data-style="spacex"] .tool[data-on] { background: #fff; color: #000; }
+:root[data-style="spacex"] .pill { border-radius: 0; }
+:root[data-style="spacex"] .viz i { border-radius: 0; opacity: 0.75; }
+:root[data-style="spacex"] .queue li { border-radius: 0; }
+
+/* ---------- OpenAI: quiet, flat, one green signal ---------- */
+:root[data-style="openai"] { --x-bg: #0d0d0d; --x-text: #ececec; --x-accent: #10a37f; --glass: #2a2a2a; --glass-2: rgba(236, 236, 236, 0.16); --round: clamp(12px, calc(var(--u) * 3), 24px); }
+:root[data-style="openai"] .player::before, :root[data-style="openai"] .art-zone::after { display: none; }
+:root[data-style="openai"] .art-frame { box-shadow: none; }
+:root[data-style="openai"] .title { font-weight: 600; }
+:root[data-style="openai"] .artist { font-weight: 400; }
+:root[data-style="openai"] .lyric-line.now { font-weight: 600; }
+:root[data-style="openai"] .timeline input::-webkit-slider-runnable-track, :root[data-style="openai"] .tools input::-webkit-slider-runnable-track { height: 4px; }
+:root[data-style="openai"] .timeline input::-webkit-slider-thumb, :root[data-style="openai"] .tools input::-webkit-slider-thumb { box-shadow: none; }
+:root[data-style="openai"] .eq i, :root[data-style="openai"] .viz i { background: var(--x-accent); }
+:root[data-style="openai"] .state-dot { background: var(--x-accent); }
+
+/* ---------- Nothing: dot matrix, black, one red dot ---------- */
+:root[data-style="nothing"] { --x-bg: #000; --x-text: #f5f5f5; --x-accent: #d71921; --glass: transparent; --glass-2: rgba(245, 245, 245, 0.3); --round: 50%; }
+:root[data-style="nothing"] .player { font-family: "Cascadia Mono", Consolas, monospace; }
+:root[data-style="nothing"] .player::before, :root[data-style="nothing"] .art-zone::after { display: none; }
+:root[data-style="nothing"] .art-frame { box-shadow: none; }
+:root[data-style="nothing"] .art-frame img { object-fit: cover; filter: grayscale(1) contrast(1.15); }
+:root[data-style="nothing"] .source-chip { font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+:root[data-style="nothing"] .title { font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; font-size: calc(var(--f-title) * 0.8); }
+:root[data-style="nothing"] .artist { text-transform: uppercase; letter-spacing: 0.1em; font-size: calc(var(--f-artist) * 0.72); }
+:root[data-style="nothing"] .album { text-transform: uppercase; font-size: calc(var(--f-label) * 0.85); }
+:root[data-style="nothing"] .lyric-line { text-transform: uppercase; letter-spacing: 0.03em; }
+:root[data-style="nothing"] .timeline input::-webkit-slider-runnable-track, :root[data-style="nothing"] .tools input::-webkit-slider-runnable-track {
+    height: 10px;
+    border-radius: 0;
+    background: radial-gradient(circle, #f5f5f5 2.6px, transparent 3px) 0 50% / 12px 10px repeat-x;
+    -webkit-mask-image: linear-gradient(to right, #000 var(--pct), rgba(0, 0, 0, 0.3) var(--pct));
+    mask-image: linear-gradient(to right, #000 var(--pct), rgba(0, 0, 0, 0.3) var(--pct));
+}
+:root[data-style="nothing"] .timeline input::-webkit-slider-thumb, :root[data-style="nothing"] .tools input::-webkit-slider-thumb { background: var(--x-accent); box-shadow: none; }
+:root[data-style="nothing"] .ctl, :root[data-style="nothing"] .tool, :root[data-style="nothing"] .stage-tab { border: 2px solid #f5f5f5; background: transparent; }
+:root[data-style="nothing"] .ctl.primary { background: var(--x-accent); border-color: var(--x-accent); color: #fff; }
+:root[data-style="nothing"] .ctl.aux[data-on], :root[data-style="nothing"] .tool[data-on] { background: #f5f5f5; color: #000; }
+:root[data-style="nothing"] .state-dot { background: var(--x-accent); }
+:root[data-style="nothing"] .eq i { background: var(--x-accent); border-radius: 50%; }
+:root[data-style="nothing"] .viz i { border-radius: 50%; }
+
+/* ---------- Instrument (the previous look): bordered, cover colour in the accents ---------- */
+:root[data-style="instrument"] { --glass: color-mix(in srgb, var(--x-text) 8%, transparent); --round: var(--radius); }
+:root[data-style="instrument"] .art-frame { border: 1px solid var(--x-line); box-shadow: none; }
+:root[data-style="instrument"] .player[data-cover]::before { opacity: 0.34; }
+:root[data-style="instrument"] .lyric-line.now { color: var(--dyn); }
+:root[data-style="instrument"] .timeline input::-webkit-slider-runnable-track, :root[data-style="instrument"] .tools input::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--dyn) var(--pct), var(--x-line) var(--pct)); }
+:root[data-style="instrument"] .ctl, :root[data-style="instrument"] .tool { border: 2px solid var(--x-line); }
+:root[data-style="instrument"] .eq i, :root[data-style="instrument"] .viz i { background: var(--dyn); }
+
+/* The poster format (cover fills the slot) keeps a square, flat cover in every style. */
+@media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 3/2) and (min-height: 451px) {
+    :root[data-style] .art-frame { border-radius: 0; border: 0; box-shadow: none; }
+}
+
+/* ---------- Anthropic: warm, serif title ---------- */
+:root[data-style="anthropic"] { --glass: rgba(250, 249, 245, 0.1); --round: clamp(12px, calc(var(--u) * 3), 26px); }
+:root[data-style="anthropic"] .player::before, :root[data-style="anthropic"] .art-zone::after { display: none; }
+:root[data-style="anthropic"] .art-frame { box-shadow: none; }
+:root[data-style="anthropic"] .title { font-family: "Tiempos Headline", Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -0.01em; }
+:root[data-style="anthropic"] .lyric-line.now { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
+:root[data-style="anthropic"] .state-dot, :root[data-style="anthropic"] .eq i, :root[data-style="anthropic"] .viz i { background: var(--x-accent); }
+
+/* ---------- Google: tonal, very rounded ---------- */
+:root[data-style="google"] { --glass: #2d2f31; --glass-2: rgba(227, 227, 227, 0.2); --round: clamp(20px, calc(var(--u) * 5), 40px); }
+:root[data-style="google"] .player::before, :root[data-style="google"] .art-zone::after { display: none; }
+:root[data-style="google"] .art-frame { box-shadow: none; }
+:root[data-style="google"] .title { font-family: "Google Sans", "Segoe UI Variable Display", "Segoe UI", sans-serif; font-weight: 500; }
+:root[data-style="google"] .ctl.primary { background: var(--x-accent); color: #062e6f; border-radius: 28%; }
+:root[data-style="google"] .eq i, :root[data-style="google"] .viz i { background: var(--x-accent); }
+:root[data-style="google"] .timeline input::-webkit-slider-runnable-track, :root[data-style="google"] .tools input::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--x-accent) var(--pct), #444746 var(--pct)); height: 10px; border-radius: 5px; }
+
+/* ---------- Terminal: green phosphor, monospace ---------- */
+:root[data-style="terminal"] { --glass: transparent; --glass-2: rgba(57, 255, 20, 0.35); --round: 0px; }
+:root[data-style="terminal"] .player { font-family: Consolas, "Cascadia Mono", monospace; }
+:root[data-style="terminal"] .player::before, :root[data-style="terminal"] .art-zone::after { display: none; }
+:root[data-style="terminal"] .art-frame { box-shadow: none; border: 1px solid var(--x-accent); }
+:root[data-style="terminal"] .art-frame img { filter: grayscale(1) sepia(1) hue-rotate(60deg) saturate(2.4); }
+:root[data-style="terminal"] .source-chip, :root[data-style="terminal"] .time { text-transform: uppercase; letter-spacing: 0.1em; }
+:root[data-style="terminal"] .title { font-weight: 400; text-transform: uppercase; text-shadow: 0 0 12px rgba(57, 255, 20, 0.45); }
+:root[data-style="terminal"] .ctl, :root[data-style="terminal"] .tool, :root[data-style="terminal"] .stage-tab { border: 1px solid var(--x-accent); border-radius: 0; background: transparent; }
+:root[data-style="terminal"] .ctl.primary { background: var(--x-accent); color: #021002; }
+:root[data-style="terminal"] .eq i, :root[data-style="terminal"] .viz i, :root[data-style="terminal"] .state-dot { background: var(--x-accent); border-radius: 0; }
+:root[data-style="terminal"] .timeline input::-webkit-slider-runnable-track, :root[data-style="terminal"] .tools input::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--x-accent) var(--pct), rgba(57, 255, 20, 0.18) var(--pct)); height: 12px; border-radius: 0; }
+
+/* ---------- Corsair: black and yellow, sharp ---------- */
+:root[data-style="corsair"] { --glass: #1c1c1c; --glass-2: rgba(255, 255, 255, 0.25); --round: 0px; }
+:root[data-style="corsair"] .player::before, :root[data-style="corsair"] .art-zone::after { display: none; }
+:root[data-style="corsair"] .art-frame { box-shadow: none; border-bottom: 4px solid var(--x-accent); }
+:root[data-style="corsair"] .title { font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
+:root[data-style="corsair"] .source-chip { text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; }
+:root[data-style="corsair"] .ctl, :root[data-style="corsair"] .tool, :root[data-style="corsair"] .stage-tab { border-radius: 0; }
+:root[data-style="corsair"] .ctl.primary { background: var(--x-accent); color: #000; }
+:root[data-style="corsair"] .eq i, :root[data-style="corsair"] .viz i, :root[data-style="corsair"] .state-dot { background: var(--x-accent); border-radius: 0; }
+:root[data-style="corsair"] .timeline input::-webkit-slider-runnable-track, :root[data-style="corsair"] .tools input::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--x-accent) var(--pct), #2a2a2a var(--pct)); border-radius: 0; }
+
+@media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 3/2) and (min-height: 451px) {
+    :root[data-style] .art-frame { border-radius: 0; border: 0; box-shadow: none; }
+}
+
+/* ---------- Art-direction styles: roundness and glass come from the shared --s-* tokens ---------- */
+:root[data-style="aurora"], :root[data-style="paper"], :root[data-style="brutalist"], :root[data-style="synthwave"], :root[data-style="abyss"], :root[data-style="sunset"], :root[data-style="newsprint"], :root[data-style="blueprint"], :root[data-style="forest"], :root[data-style="pastel"], :root[data-style="amber"], :root[data-style="hud"] { --round: var(--s-radius, 22px); --glass: color-mix(in srgb, var(--x-text) 14%, transparent); --glass-2: color-mix(in srgb, var(--x-text) 26%, transparent); }
+:root[data-style="aurora"] .player::before, :root[data-style="paper"] .player::before, :root[data-style="brutalist"] .player::before, :root[data-style="synthwave"] .player::before, :root[data-style="abyss"] .player::before, :root[data-style="sunset"] .player::before, :root[data-style="newsprint"] .player::before, :root[data-style="blueprint"] .player::before, :root[data-style="forest"] .player::before, :root[data-style="pastel"] .player::before, :root[data-style="amber"] .player::before, :root[data-style="hud"] .player::before { background: var(--s-bg-img, none); background-size: var(--s-bg-size, auto); opacity: 1; }
+:root[data-style="aurora"] .art-zone::after, :root[data-style="paper"] .art-zone::after, :root[data-style="brutalist"] .art-zone::after, :root[data-style="synthwave"] .art-zone::after, :root[data-style="abyss"] .art-zone::after, :root[data-style="sunset"] .art-zone::after, :root[data-style="newsprint"] .art-zone::after, :root[data-style="blueprint"] .art-zone::after, :root[data-style="forest"] .art-zone::after, :root[data-style="pastel"] .art-zone::after, :root[data-style="amber"] .art-zone::after, :root[data-style="hud"] .art-zone::after { display: none; }
+:root[data-style="aurora"] .art-frame, :root[data-style="paper"] .art-frame, :root[data-style="brutalist"] .art-frame, :root[data-style="synthwave"] .art-frame, :root[data-style="abyss"] .art-frame, :root[data-style="sunset"] .art-frame, :root[data-style="newsprint"] .art-frame, :root[data-style="blueprint"] .art-frame, :root[data-style="forest"] .art-frame, :root[data-style="pastel"] .art-frame, :root[data-style="amber"] .art-frame, :root[data-style="hud"] .art-frame { box-shadow: var(--s-card-shadow, none); }
+:root[data-style="aurora"] .player[data-cover]::before, :root[data-style="paper"] .player[data-cover]::before, :root[data-style="brutalist"] .player[data-cover]::before, :root[data-style="synthwave"] .player[data-cover]::before, :root[data-style="abyss"] .player[data-cover]::before, :root[data-style="sunset"] .player[data-cover]::before, :root[data-style="newsprint"] .player[data-cover]::before, :root[data-style="blueprint"] .player[data-cover]::before, :root[data-style="forest"] .player[data-cover]::before, :root[data-style="pastel"] .player[data-cover]::before, :root[data-style="amber"] .player[data-cover]::before, :root[data-style="hud"] .player[data-cover]::before { opacity: 1; }
+:root[data-style="aurora"] .eq i, :root[data-style="aurora"] .viz i, :root[data-style="paper"] .eq i, :root[data-style="paper"] .viz i, :root[data-style="brutalist"] .eq i, :root[data-style="brutalist"] .viz i, :root[data-style="synthwave"] .eq i, :root[data-style="synthwave"] .viz i, :root[data-style="abyss"] .eq i, :root[data-style="abyss"] .viz i, :root[data-style="sunset"] .eq i, :root[data-style="sunset"] .viz i, :root[data-style="newsprint"] .eq i, :root[data-style="newsprint"] .viz i, :root[data-style="blueprint"] .eq i, :root[data-style="blueprint"] .viz i, :root[data-style="forest"] .eq i, :root[data-style="forest"] .viz i, :root[data-style="pastel"] .eq i, :root[data-style="pastel"] .viz i, :root[data-style="amber"] .eq i, :root[data-style="amber"] .viz i, :root[data-style="hud"] .eq i, :root[data-style="hud"] .viz i { background: var(--x-accent); }
+:root[data-style="aurora"] .title, :root[data-style="paper"] .title, :root[data-style="brutalist"] .title, :root[data-style="synthwave"] .title, :root[data-style="abyss"] .title, :root[data-style="sunset"] .title, :root[data-style="newsprint"] .title, :root[data-style="blueprint"] .title, :root[data-style="forest"] .title, :root[data-style="pastel"] .title, :root[data-style="amber"] .title, :root[data-style="hud"] .title { font-family: var(--s-num-font, inherit); font-weight: var(--s-num-w, 800); text-transform: var(--s-case, none); }
+:root[data-style="aurora"] .ctl, :root[data-style="aurora"] .tool, :root[data-style="paper"] .ctl, :root[data-style="paper"] .tool, :root[data-style="brutalist"] .ctl, :root[data-style="brutalist"] .tool, :root[data-style="synthwave"] .ctl, :root[data-style="synthwave"] .tool, :root[data-style="abyss"] .ctl, :root[data-style="abyss"] .tool, :root[data-style="sunset"] .ctl, :root[data-style="sunset"] .tool, :root[data-style="newsprint"] .ctl, :root[data-style="newsprint"] .tool, :root[data-style="blueprint"] .ctl, :root[data-style="blueprint"] .tool, :root[data-style="forest"] .ctl, :root[data-style="forest"] .tool, :root[data-style="pastel"] .ctl, :root[data-style="pastel"] .tool, :root[data-style="amber"] .ctl, :root[data-style="amber"] .tool, :root[data-style="hud"] .ctl, :root[data-style="hud"] .tool { border-radius: min(var(--s-radius, 50%), 50%); }
+@media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 3/2) and (min-height: 451px) {
+    :root[data-style] .art-frame { border-radius: 0; border: 0; box-shadow: none; }
 }

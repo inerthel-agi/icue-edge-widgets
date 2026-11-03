@@ -1,0 +1,38 @@
+/* System Pulse: four rings (CPU, GPU, RAM, VRAM), each with its last minute underneath. */
+#widget { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--x-gap); }
+.x-top .x-kicker, .x-top .x-status { margin: 0; }
+.gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--x-gap); min-height: 0; }
+.g { --ring: min(100%, 52vh); position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr); justify-items: center; align-content: center; gap: 6px; min-width: 0; min-height: 0; padding: calc(var(--x-gap) * 0.6); border-radius: var(--s-radius, 16px); background: var(--x-panel); }
+.ring { grid-row: 1; grid-column: 1; width: var(--ring); max-width: 100%; aspect-ratio: 1; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 9; }
+.track { stroke: var(--x-track); }
+.arc { stroke: var(--x-accent); stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+.g[data-heat="warn"] .arc { stroke: var(--x-warn); } .g[data-heat="bad"] .arc { stroke: var(--x-bad); }
+.val { grid-row: 1; grid-column: 1; align-self: center; margin: 0; font-variant-numeric: tabular-nums; line-height: 1; }
+.val b { font-size: clamp(30px, calc(var(--ring-px, 1vmin) * 1), 96px); font-size: clamp(30px, 11vmin, 104px); font-weight: 700; }
+.val small { font-size: 0.42em; color: var(--x-muted); margin-left: 2px; font-size: clamp(14px, 4vmin, 40px); }
+.txt { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+.lbl { margin: 0; font-size: var(--x-label-size); font-weight: 700; letter-spacing: 0.1em; color: var(--x-accent); }
+.tmp { margin: 0; font-size: var(--x-label-size); color: var(--x-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.g[data-heat="warn"] .tmp { color: var(--x-warn); } .g[data-heat="bad"] .tmp { color: var(--x-bad); }
+.spark { width: 100%; height: 100%; min-height: 0; max-height: 90px; align-self: end; }
+.spark .line { fill: none; stroke: var(--x-accent); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.spark .area { fill: color-mix(in srgb, var(--x-accent) 16%, transparent); }
+.g.missing { opacity: 0.5; }
+.g.missing .val small { visibility: hidden; }
+
+/* S (840 x 344): no line, ring and label only. */
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { .spark { display: none; } .g { grid-template-rows: auto auto; padding: 8px; } .x-top .x-status { display: none; } .val b { font-size: clamp(26px, 9vmin, 60px); } }
+/* M (840 x 696) and squarer: two by two. */
+@media (min-height: 451px) and (max-aspect-ratio: 3/2) and (min-aspect-ratio: 1/1) { .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); } .g { --ring: min(100%, 24vh); } }
+/* Portrait: one row per gauge, ring on the left, its minute on the right. */
+@media (max-aspect-ratio: 1/1) {
+    .gauges { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+    .g { --ring: min(30vw, 100%); grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: var(--x-gap); }
+    .ring, .val { grid-row: 1 / 3; justify-self: center; }
+    .ring { height: min(30vw, 100%); width: auto; max-height: 18vh; }
+    .val b { font-size: clamp(26px, 7vmin, 72px); }
+    .txt { grid-column: 2; grid-row: 1; }
+    .spark { grid-column: 2; grid-row: 2; max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) { .arc { transition: none; } }

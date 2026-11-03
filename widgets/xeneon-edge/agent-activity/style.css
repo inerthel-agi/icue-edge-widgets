@@ -1,0 +1,25 @@
+#widget { display: grid; gap: var(--x-gap); grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "top top" "now feed" "stat stat"; }
+.x-top { grid-area: top; }
+.now { grid-area: now; min-width: 0; display: grid; align-content: center; gap: 8px; }
+.feed { grid-area: feed; min-width: 0; min-height: 0; margin: 0; padding: 0; list-style: none; display: grid; align-content: start; gap: 6px; overflow: hidden; font-size: var(--x-label-size); }
+.x-status { grid-area: stat; }
+.state { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--x-muted); font-size: var(--x-label-size); font-weight: 600; }
+.pulse { width: 12px; height: 12px; border-radius: 50%; background: var(--x-dim); }
+#widget[data-state="active"] .pulse { background: var(--x-ok, #6fe08f); animation: pulse 1.4s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--x-ok, #6fe08f) 60%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+.step { margin: 0; font-size: calc(var(--x-hero-size) * 0.42); font-weight: 700; line-height: 1.1; font-family: var(--s-font, inherit); }
+.target { margin: 0; color: var(--x-accent); font: 600 calc(var(--x-label-size) * 1.05) Consolas, "Cascadia Mono", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.3em; }
+.meter { display: flex; flex-wrap: wrap; gap: 6px 22px; color: var(--x-muted); font-size: var(--x-label-size); }
+.meter b { color: var(--x-text); font-size: calc(var(--x-label-size) * 1.2); }
+.feed li { display: grid; grid-template-columns: 4.2em 6.5em minmax(0, 1fr); gap: 8px; color: var(--x-muted); }
+.feed li.new { animation: feedin 0.35s ease; }
+.feed li b { color: var(--x-text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed li em { font-style: normal; font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed li.empty { display: block; color: var(--x-dim); }
+@keyframes feedin { from { opacity: 0; transform: translateY(-6px); } }
+/* Short slots: no footer line. Tall and portrait slots: one column, the feed under the current step. */
+@media (max-height: 380px) { .x-status { display: none; } #widget { grid-template-rows: auto minmax(0, 1fr); } }
+@media (max-aspect-ratio: 1/1), (max-width: 720px) {
+    #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "top" "now" "feed" "stat"; }
+}
+@media (prefers-reduced-motion: reduce) { .pulse, .feed li { animation: none !important; } }

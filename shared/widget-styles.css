@@ -1,0 +1,156 @@
+/* Widget styles: one palette-and-shape layer for every widget, chosen with the iCUE "Style" setting.
+   WidgetRuntime.personalize() writes the choice as data-style on <html>; no attribute = the default "Instrument" look.
+   Each style is only a set of --s-* shape tokens and --x-* colours; the rules below read them, so a new style is one block.
+   Colours chosen in iCUE (Custom Style) are written inline on <html> and still win over the style palette. */
+
+/* ---------- Shape rules, shared by every style ---------- */
+/* Derived colours are recomputed where the style sets the palette, so they follow it. */
+[data-style] { --x-muted: color-mix(in srgb, var(--x-text) 72%, transparent); --x-dim: color-mix(in srgb, var(--x-text) 58%, transparent); --x-line: color-mix(in srgb, var(--x-text) 18%, transparent); --x-track: color-mix(in srgb, var(--x-text) 14%, transparent); --x-panel: color-mix(in srgb, var(--x-text) 6%, transparent); --x-panel-strong: color-mix(in srgb, var(--x-text) 10%, transparent); }
+/* Cards take room, so the hero and the card values are a little smaller than in the default look. */
+[data-style]:not([data-style="instrument"]) { --x-hero-size: clamp(64px, calc(var(--layout-unit) * 21), 170px); --x-value-size: clamp(24px, calc(var(--layout-unit) * 6.2), 44px); }
+[data-style] .x-widget { font-family: var(--s-font, "Segoe UI Variable", "Segoe UI", sans-serif); background: var(--s-bg-img, none), color-mix(in srgb, var(--x-bg) calc(var(--x-bg-opacity) * 100%), transparent); background-size: var(--s-bg-size, auto); }
+[data-style] .x-kicker { color: var(--s-kicker, var(--x-accent)); text-transform: var(--s-case, uppercase); letter-spacing: var(--s-track, 0.1em); font-weight: var(--s-kw, 600); font-family: var(--s-label-font, inherit); }
+[data-style] .x-badge { border: var(--s-badge-border, 0); border-left: var(--s-badge-left, 2px solid var(--x-accent)); border-radius: var(--s-pill, 0); background: var(--s-badge-bg, transparent); color: var(--s-badge-text, var(--x-muted)); padding: var(--s-badge-pad, 6px 0 6px 12px); font-family: var(--s-label-font, inherit); text-transform: var(--s-badge-case, none); letter-spacing: var(--s-badge-track, 0); }
+[data-style] .x-card, [data-style] .x-m { border: var(--s-card-border, 0); border-top: var(--s-card-top, 1px solid var(--x-line)); border-radius: var(--s-radius, 0); background: var(--s-card-bg, transparent); padding: var(--s-card-pad, 12px 0 0); box-shadow: var(--s-card-shadow, none); clip-path: var(--s-clip, none); }
+[data-style] .x-label { color: var(--s-label, var(--x-muted)); text-transform: var(--s-label-case, none); letter-spacing: var(--s-label-track, 0); font-family: var(--s-label-font, inherit); }
+[data-style] .x-num, [data-style] .x-value, [data-style] .x-title, [data-style] .x-m b { font-weight: var(--s-num-w, 600); font-family: var(--s-num-font, inherit); letter-spacing: var(--s-num-track, -0.03em); }
+[data-style] .x-num, [data-style] .x-value { text-shadow: var(--s-glow, none); }
+[data-style] .x-sub { font-family: var(--s-num-font, inherit); }
+[data-style] .x-bar { height: var(--s-bar-h, 8px); border-radius: var(--s-bar-r, 99px); background: var(--s-bar-track, var(--x-track)); }
+[data-style] .x-bar > i { border-radius: var(--s-bar-r, 99px); background: var(--s-bar-fill, var(--x-accent)); }
+[data-style] .x-status { font-family: var(--s-label-font, inherit); }
+[data-style] .x-overlay { border-top: var(--s-overlay-line, 2px solid var(--x-accent)); border-radius: var(--s-radius, 0); }
+
+/* ---------- Apple: ambient glow, glass cards, white-on-black ---------- */
+[data-style="apple"] { --x-bg: #0b0b0f; --x-text: #f5f5f7; --x-accent: #0a84ff; --s-font: "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-bg-img: radial-gradient(90% 70% at 0% 0%, rgba(10, 132, 255, 0.28), transparent 70%), radial-gradient(80% 80% at 100% 100%, rgba(191, 90, 242, 0.22), transparent 70%);
+  --s-case: none; --s-track: 0; --s-kicker: var(--x-muted); --s-kw: 600; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: rgba(255, 255, 255, 0.14); --s-badge-text: var(--x-text); --s-badge-pad: 6px 14px;
+  --s-radius: 22px; --s-card-top: 0; --s-card-bg: rgba(255, 255, 255, 0.09); --s-card-pad: 9px 14px; --s-num-w: 700; --s-bar-h: 8px; --s-bar-track: rgba(255, 255, 255, 0.22); --s-bar-fill: #fff; --s-overlay-line: 0; }
+
+/* ---------- OpenAI: quiet, flat, one green signal ---------- */
+[data-style="openai"] { --x-bg: #0d0d0d; --x-text: #ececec; --x-accent: #10a37f; --s-font: "Söhne", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --s-case: none; --s-track: 0; --s-kicker: var(--x-muted); --s-kw: 500; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: #2a2a2a; --s-badge-pad: 6px 14px;
+  --s-radius: 14px; --s-card-top: 0; --s-card-bg: #171717; --s-card-border: 1px solid #2a2a2a; --s-card-pad: 9px 14px; --s-num-w: 600; --s-bar-h: 4px; --s-bar-track: #2f2f2f; --s-bar-fill: #ececec; --s-overlay-line: 0; }
+
+/* ---------- SpaceX: black, white only, telemetry ---------- */
+[data-style="spacex"] { --x-bg: #000; --x-text: #fff; --x-accent: #fff; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif; --s-label-font: Consolas, "Cascadia Mono", monospace;
+  --s-case: uppercase; --s-track: 0.3em; --s-kw: 500; --s-kicker: #fff; --s-pill: 0; --s-badge-left: 0; --s-badge-border: 1px solid rgba(255, 255, 255, 0.5); --s-badge-pad: 6px 12px; --s-badge-case: uppercase; --s-badge-track: 0.18em; --s-badge-text: #fff;
+  --s-radius: 0; --s-card-top: 1px solid rgba(255, 255, 255, 0.45); --s-label-case: uppercase; --s-label-track: 0.16em; --s-num-w: 300; --s-num-track: -0.02em; --s-bar-h: 2px; --s-bar-r: 0; --s-bar-track: rgba(255, 255, 255, 0.25); --s-bar-fill: #fff; --s-overlay-line: 1px solid #fff; }
+
+/* ---------- Nothing: dot matrix, black, one red dot ---------- */
+[data-style="nothing"] { --x-bg: #000; --x-text: #f5f5f5; --x-accent: #d71921; --s-font: "Cascadia Mono", Consolas, monospace; --s-label-font: "Cascadia Mono", Consolas, monospace;
+  --s-case: uppercase; --s-track: 0.12em; --s-kw: 700; --s-kicker: #f5f5f5; --s-pill: 99px; --s-badge-left: 0; --s-badge-border: 2px solid #f5f5f5; --s-badge-pad: 4px 14px; --s-badge-case: uppercase; --s-badge-track: 0.08em; --s-badge-text: #f5f5f5;
+  --s-radius: 24px; --s-card-top: 0; --s-card-border: 2px solid #f5f5f5; --s-card-pad: 8px 14px; --s-label-case: uppercase; --s-label-track: 0.08em; --s-num-w: 700; --s-num-track: 0;
+  --s-bar-h: 10px; --s-bar-r: 0; --s-bar-track: radial-gradient(circle, rgba(245, 245, 245, 0.3) 2.2px, transparent 2.7px) 0 50% / 12px 10px repeat-x; --s-bar-fill: radial-gradient(circle, #f5f5f5 2.6px, transparent 3px) 0 50% / 12px 10px repeat-x; --s-overlay-line: 2px solid #d71921; }
+[data-style="nothing"] .x-bar { background: var(--s-bar-track); }
+[data-style="nothing"] .x-bar > i { background: var(--s-bar-fill); }
+
+/* ---------- Anthropic: warm, serif headlines, clay accent ---------- */
+[data-style="anthropic"] { --x-bg: #262624; --x-text: #faf9f5; --x-accent: #d97757; --s-font: "Segoe UI Variable Text", "Segoe UI", sans-serif; --s-num-font: "Tiempos Headline", Georgia, "Times New Roman", serif;
+  --s-case: none; --s-track: 0.01em; --s-kw: 600; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: rgba(217, 119, 87, 0.2); --s-badge-text: #f0b8a4; --s-badge-pad: 6px 14px;
+  --s-radius: 16px; --s-card-top: 0; --s-card-bg: #30302e; --s-card-border: 1px solid #3d3d3a; --s-card-pad: 9px 14px; --s-num-w: 500; --s-num-track: -0.02em; --s-bar-h: 8px; --s-bar-track: #3d3d3a; --s-bar-fill: #d97757; --s-overlay-line: 0; }
+
+/* ---------- Google: Material You, tonal surfaces, rounded ---------- */
+[data-style="google"] { --x-bg: #131314; --x-text: #e3e3e3; --x-accent: #8ab4f8; --s-font: "Google Sans", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-case: none; --s-track: 0; --s-kw: 500; --s-kicker: #a8c7fa; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: #004a77; --s-badge-text: #c2e7ff; --s-badge-pad: 6px 16px;
+  --s-radius: 28px; --s-card-top: 0; --s-card-bg: #1e1f20; --s-card-pad: 10px 18px; --s-num-w: 400; --s-num-track: -0.03em; --s-bar-h: 10px; --s-bar-track: #444746; --s-bar-fill: #a8c7fa; --s-overlay-line: 0; }
+
+/* ---------- Terminal: green phosphor, monospace, brackets ---------- */
+[data-style="terminal"] { --x-bg: #050a05; --x-text: #b8f5b8; --x-accent: #39ff14; --s-font: Consolas, "Cascadia Mono", monospace; --s-label-font: Consolas, "Cascadia Mono", monospace;
+  --s-case: uppercase; --s-track: 0.14em; --s-kw: 700; --s-pill: 0; --s-badge-left: 0; --s-badge-border: 1px solid #39ff14; --s-badge-pad: 4px 10px; --s-badge-case: uppercase; --s-badge-track: 0.1em; --s-badge-text: #39ff14;
+  --s-radius: 0; --s-card-top: 0; --s-card-border: 1px dashed rgba(57, 255, 20, 0.5); --s-card-pad: 7px 12px; --s-num-w: 400; --s-num-track: 0; --s-bar-h: 12px; --s-bar-r: 0; --s-bar-track: rgba(57, 255, 20, 0.15); --s-bar-fill: #39ff14; --s-overlay-line: 1px solid #39ff14; }
+[data-style="terminal"] .x-kicker::before { content: "> "; }
+[data-style="terminal"] .x-num, [data-style="terminal"] .x-value { text-shadow: 0 0 12px rgba(57, 255, 20, 0.45); }
+
+/* ---------- Corsair: black, yellow, sharp and bold ---------- */
+[data-style="corsair"] { --x-bg: #0a0a0a; --x-text: #fff; --x-accent: #ffd100; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-case: uppercase; --s-track: 0.14em; --s-kw: 800; --s-pill: 0; --s-badge-left: 4px solid #ffd100; --s-badge-pad: 4px 0 4px 12px; --s-badge-case: uppercase; --s-badge-track: 0.08em; --s-badge-text: #fff;
+  --s-radius: 0; --s-card-top: 0; --s-card-border: 0; --s-card-bg: #161616; --s-card-pad: 8px 14px; --s-card-shadow: inset 4px 0 0 #ffd100; --s-label-case: uppercase; --s-label-track: 0.1em; --s-num-w: 800; --s-num-track: -0.03em; --s-bar-h: 8px; --s-bar-r: 0; --s-bar-track: #2a2a2a; --s-bar-fill: #ffd100; --s-overlay-line: 4px solid #ffd100; }
+
+/* ====================================================================================================
+   Art-direction styles: moods rather than brands. Same tokens as above.
+   ==================================================================================================== */
+
+/* ---------- Aurora: deep navy with drifting teal, violet and pink light, glass cards ---------- */
+[data-style="aurora"] { --x-bg: #070b1a; --x-text: #eaf0ff; --x-accent: #7cf0d4; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-bg-img: radial-gradient(70% 60% at 12% 8%, rgba(94, 92, 255, 0.5), transparent 70%), radial-gradient(60% 60% at 92% 18%, rgba(0, 214, 180, 0.3), transparent 70%), radial-gradient(70% 70% at 70% 105%, rgba(255, 92, 160, 0.28), transparent 70%);
+  --s-case: none; --s-track: 0; --s-kicker: var(--x-muted); --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: rgba(255, 255, 255, 0.12); --s-badge-text: var(--x-text); --s-badge-pad: 6px 14px;
+  --s-radius: 20px; --s-card-top: 0; --s-card-bg: rgba(255, 255, 255, 0.07); --s-card-border: 1px solid rgba(255, 255, 255, 0.14); --s-card-pad: 9px 14px; --s-num-w: 700; --s-bar-h: 8px; --s-bar-track: rgba(255, 255, 255, 0.16); --s-bar-fill: linear-gradient(90deg, #7cf0d4, #8f8cff); --s-overlay-line: 0; --s-glow: 0 0 28px rgba(124, 240, 212, 0.35); }
+
+/* ---------- Paper: warm cream, ink, terracotta, serif numbers ---------- */
+[data-style="paper"] { --x-bg: #f3ecdc; --x-text: #2b241c; --x-accent: #c4572e; --s-font: "Segoe UI Variable Text", "Segoe UI", sans-serif; --s-num-font: Georgia, "Times New Roman", serif;
+  --s-case: none; --s-track: 0.01em; --s-kw: 700; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: rgba(196, 87, 46, 0.14); --s-badge-text: #8e3a1a; --s-badge-pad: 6px 14px;
+  --s-radius: 14px; --s-card-top: 0; --s-card-bg: rgba(255, 255, 255, 0.5); --s-card-border: 1px solid rgba(43, 36, 28, 0.16); --s-card-shadow: 0 2px 0 rgba(43, 36, 28, 0.1); --s-card-pad: 9px 14px; --s-num-w: 700; --s-num-track: -0.02em;
+  --s-bar-h: 8px; --s-bar-track: rgba(43, 36, 28, 0.14); --s-bar-fill: #c4572e; --s-overlay-line: 0; }
+
+/* ---------- Brutalist: heavy type, thick outlines, hard lime shadow ---------- */
+[data-style="brutalist"] { --x-bg: #0c0c0c; --x-text: #fff; --x-accent: #c6f432; --s-font: "Segoe UI Black", "Arial Black", "Segoe UI", sans-serif;
+  --s-case: uppercase; --s-track: 0.04em; --s-kw: 900; --s-kicker: #c6f432; --s-pill: 0; --s-badge-left: 0; --s-badge-bg: #c6f432; --s-badge-text: #000; --s-badge-pad: 4px 12px; --s-badge-case: uppercase;
+  --s-radius: 0; --s-card-top: 0; --s-card-border: 3px solid #fff; --s-card-shadow: 6px 6px 0 #c6f432; --s-card-pad: 6px 12px; --s-label-case: uppercase; --s-label-track: 0.04em; --s-num-w: 900; --s-num-track: -0.04em;
+  --s-bar-h: 14px; --s-bar-r: 0; --s-bar-track: #333; --s-bar-fill: #c6f432; --s-overlay-line: 4px solid #c6f432; }
+
+/* ---------- Synthwave: night purple, neon pink and cyan, glow ---------- */
+[data-style="synthwave"] { --x-bg: #12062a; --x-text: #ffeafd; --x-accent: #ff3ea5; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-bg-img: linear-gradient(180deg, transparent 55%, rgba(255, 62, 165, 0.28)), repeating-linear-gradient(90deg, rgba(0, 229, 255, 0.1) 0 1px, transparent 1px 36px), repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.08) 0 1px, transparent 1px 36px);
+  --s-case: uppercase; --s-track: 0.18em; --s-kw: 700; --s-kicker: #00e5ff; --s-pill: 0; --s-badge-left: 0; --s-badge-border: 1px solid #ff3ea5; --s-badge-text: #ffeafd; --s-badge-pad: 4px 12px; --s-badge-case: uppercase; --s-badge-track: 0.1em;
+  --s-radius: 4px; --s-card-top: 0; --s-card-bg: rgba(255, 62, 165, 0.08); --s-card-border: 1px solid rgba(0, 229, 255, 0.5); --s-card-shadow: 0 0 18px rgba(0, 229, 255, 0.22); --s-card-pad: 8px 14px; --s-num-w: 800; --s-num-track: -0.02em;
+  --s-bar-h: 8px; --s-bar-r: 0; --s-bar-track: rgba(0, 229, 255, 0.18); --s-bar-fill: linear-gradient(90deg, #ff3ea5, #00e5ff); --s-overlay-line: 1px solid #ff3ea5; --s-glow: 0 0 22px rgba(255, 62, 165, 0.7); }
+
+/* ---------- Abyss: deep teal, bioluminescent cyan ---------- */
+[data-style="abyss"] { --x-bg: #031a1e; --x-text: #d8fbff; --x-accent: #2de2e6; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-bg-img: radial-gradient(80% 60% at 50% 115%, rgba(45, 226, 230, 0.3), transparent 70%), radial-gradient(40% 40% at 0% 0%, rgba(45, 226, 230, 0.12), transparent 70%);
+  --s-case: none; --s-track: 0.04em; --s-kicker: #7ef3f6; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: rgba(45, 226, 230, 0.14); --s-badge-text: #9ff7f9; --s-badge-pad: 6px 14px;
+  --s-radius: 18px; --s-card-top: 0; --s-card-bg: rgba(45, 226, 230, 0.07); --s-card-border: 1px solid rgba(45, 226, 230, 0.26); --s-card-pad: 9px 14px; --s-num-w: 600; --s-bar-h: 8px; --s-bar-track: rgba(45, 226, 230, 0.16); --s-bar-fill: #2de2e6; --s-overlay-line: 0; --s-glow: 0 0 24px rgba(45, 226, 230, 0.4); }
+
+/* ---------- Sunset: warm orange into magenta ---------- */
+[data-style="sunset"] { --x-bg: #1a0b14; --x-text: #fff1e8; --x-accent: #ff8a4c; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-bg-img: linear-gradient(160deg, rgba(255, 138, 76, 0.4), rgba(190, 40, 120, 0.32) 55%, transparent 90%);
+  --s-case: none; --s-track: 0; --s-kicker: #ffc09a; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: rgba(255, 255, 255, 0.14); --s-badge-text: #fff1e8; --s-badge-pad: 6px 14px;
+  --s-radius: 22px; --s-card-top: 0; --s-card-bg: rgba(255, 255, 255, 0.08); --s-card-border: 1px solid rgba(255, 193, 150, 0.22); --s-card-pad: 9px 14px; --s-num-w: 700; --s-bar-h: 9px; --s-bar-track: rgba(255, 255, 255, 0.16); --s-bar-fill: linear-gradient(90deg, #ffb04c, #ff4c8a); --s-overlay-line: 0; }
+
+/* ---------- Newsprint: black on newsprint, serif, rules and one red ---------- */
+[data-style="newsprint"] { --x-bg: #f4f1ea; --x-text: #111; --x-accent: #d3202b; --s-font: Georgia, "Times New Roman", serif; --s-label-font: "Segoe UI", sans-serif;
+  --s-case: uppercase; --s-track: 0.2em; --s-kw: 700; --s-kicker: #d3202b; --s-pill: 0; --s-badge-left: 0; --s-badge-border: 1px solid #111; --s-badge-text: #111; --s-badge-pad: 3px 10px; --s-badge-case: uppercase; --s-badge-track: 0.12em;
+  --s-radius: 0; --s-card-top: 2px solid #111; --s-card-pad: 8px 0 0; --s-label-case: uppercase; --s-label-track: 0.1em; --s-num-w: 700; --s-num-track: -0.03em;
+  --s-bar-h: 6px; --s-bar-r: 0; --s-bar-track: rgba(17, 17, 17, 0.15); --s-bar-fill: #111; --s-overlay-line: 3px double #111; }
+
+/* ---------- Blueprint: cyanotype paper, white drafting lines, monospace ---------- */
+[data-style="blueprint"] { --x-bg: #0b3a8f; --x-text: #e8f1ff; --x-accent: #ffe27a; --s-font: Consolas, "Cascadia Mono", monospace; --s-label-font: Consolas, "Cascadia Mono", monospace;
+  --s-bg-img: linear-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px); --s-bg-size: 32px 32px, 32px 32px;
+  --s-case: uppercase; --s-track: 0.14em; --s-kw: 700; --s-kicker: #ffe27a; --s-pill: 0; --s-badge-left: 0; --s-badge-border: 1px dashed rgba(255, 255, 255, 0.7); --s-badge-pad: 4px 10px; --s-badge-case: uppercase; --s-badge-track: 0.08em; --s-badge-text: #e8f1ff;
+  --s-radius: 0; --s-card-top: 0; --s-card-border: 1px dashed rgba(255, 255, 255, 0.6); --s-card-pad: 8px 12px; --s-num-w: 400; --s-num-track: 0; --s-bar-h: 8px; --s-bar-r: 0; --s-bar-track: rgba(255, 255, 255, 0.2); --s-bar-fill: #ffe27a; --s-overlay-line: 1px dashed #fff; }
+
+/* ---------- Forest: deep green, sand and moss ---------- */
+[data-style="forest"] { --x-bg: #0d1a12; --x-text: #eaf2e3; --x-accent: #b6d36b; --s-font: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --s-bg-img: radial-gradient(70% 60% at 100% 0%, rgba(182, 211, 107, 0.16), transparent 70%);
+  --s-case: none; --s-track: 0.02em; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: rgba(182, 211, 107, 0.16); --s-badge-text: #d4e8a0; --s-badge-pad: 6px 14px;
+  --s-radius: 16px; --s-card-top: 0; --s-card-bg: rgba(182, 211, 107, 0.07); --s-card-border: 1px solid rgba(182, 211, 107, 0.2); --s-card-pad: 9px 14px; --s-num-w: 600; --s-bar-h: 8px; --s-bar-track: rgba(182, 211, 107, 0.16); --s-bar-fill: #b6d36b; --s-overlay-line: 0; }
+
+/* ---------- Pastel: soft candy colours, round and friendly (light) ---------- */
+[data-style="pastel"] { --x-bg: #fdf0f3; --x-text: #3b2f4a; --x-accent: #d63f78; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --s-case: none; --s-track: 0; --s-kw: 700; --s-pill: 99px; --s-badge-left: 0; --s-badge-bg: #ffd6e4; --s-badge-text: #b0346a; --s-badge-pad: 6px 16px;
+  --s-radius: 26px; --s-card-top: 0; --s-card-bg: #fff; --s-card-shadow: 0 8px 22px rgba(255, 122, 168, 0.2); --s-card-pad: 10px 16px; --s-num-w: 800; --s-bar-h: 12px; --s-bar-track: rgba(59, 47, 74, 0.1); --s-bar-fill: linear-gradient(90deg, #ff7aa8, #ffb86b); --s-overlay-line: 0; }
+
+/* ---------- Amber: old amber CRT, phosphor glow ---------- */
+[data-style="amber"] { --x-bg: #140b00; --x-text: #ffb000; --x-accent: #ffb000; --s-font: Consolas, "Cascadia Mono", monospace; --s-label-font: Consolas, "Cascadia Mono", monospace;
+  --s-case: uppercase; --s-track: 0.16em; --s-kw: 700; --s-pill: 0; --s-badge-left: 0; --s-badge-border: 1px solid #ffb000; --s-badge-pad: 4px 10px; --s-badge-case: uppercase; --s-badge-text: #ffb000;
+  --s-radius: 0; --s-card-top: 0; --s-card-border: 1px solid rgba(255, 176, 0, 0.5); --s-card-pad: 7px 12px; --s-num-w: 400; --s-num-track: 0; --s-bar-h: 12px; --s-bar-r: 0; --s-bar-track: rgba(255, 176, 0, 0.16); --s-bar-fill: #ffb000; --s-overlay-line: 1px solid #ffb000; --s-glow: 0 0 14px rgba(255, 176, 0, 0.55); }
+
+/* ---------- HUD: sci-fi cockpit, cyan, clipped corners ---------- */
+[data-style="hud"] { --x-bg: #04121a; --x-text: #cfefff; --x-accent: #00e5ff; --s-font: "Segoe UI Variable Display", "Segoe UI", sans-serif; --s-label-font: Consolas, "Cascadia Mono", monospace;
+  --s-bg-img: linear-gradient(180deg, rgba(0, 229, 255, 0.06), transparent 40%), repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.04) 0 1px, transparent 1px 4px);
+  --s-case: uppercase; --s-track: 0.2em; --s-kw: 600; --s-pill: 0; --s-badge-left: 0; --s-badge-border: 1px solid #00e5ff; --s-badge-pad: 4px 12px; --s-badge-case: uppercase; --s-badge-track: 0.14em; --s-badge-text: #00e5ff;
+  --s-radius: 0; --s-card-top: 0; --s-card-bg: rgba(0, 229, 255, 0.07); --s-card-border: 1px solid rgba(0, 229, 255, 0.45); --s-card-pad: 8px 14px; --s-clip: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); --s-label-case: uppercase; --s-label-track: 0.14em;
+  --s-num-w: 300; --s-num-track: 0.02em; --s-bar-h: 6px; --s-bar-r: 0; --s-bar-track: rgba(0, 229, 255, 0.18); --s-bar-fill: #00e5ff; --s-overlay-line: 1px solid #00e5ff; --s-glow: 0 0 18px rgba(0, 229, 255, 0.5); }
+
+/* ---------- Bloomberg: market terminal, black, amber figures, orange header badge, monospace ---------- */
+[data-style="bloomberg"] { --x-bg: #000; --x-text: #ffa028; --x-accent: #fb8b1e; --s-font: Consolas, "Cascadia Mono", "Lucida Console", monospace; --s-label-font: Consolas, "Cascadia Mono", monospace;
+  --s-case: uppercase; --s-track: 0.06em; --s-kw: 700; --s-pill: 0; --s-badge-left: 0; --s-badge-bg: #fb8b1e; --s-badge-text: #000; --s-badge-pad: 3px 10px; --s-badge-case: uppercase; --s-badge-track: 0.04em;
+  --s-radius: 0; --s-card-top: 0; --s-card-border: 0; --s-card-bg: #0b0b0b; --s-card-shadow: inset 0 -1px 0 #2b2b2b; --s-card-pad: 6px 12px; --s-label-case: uppercase; --s-label-track: 0.04em;
+  --s-num-w: 400; --s-num-track: 0; --s-bar-h: 8px; --s-bar-r: 0; --s-bar-track: #1c1c1c; --s-bar-fill: #fb8b1e; --s-overlay-line: 2px solid #fb8b1e; }
+[data-style="bloomberg"] .x-kicker { color: #fb8b1e; }
+[data-style="bloomberg"] .x-num, [data-style="bloomberg"] .x-value { color: #fff; }
+
+/* Styles whose badge is a solid colour block: the badge text colour wins over a widget's own badge colour
+   (a widget giving its badge the accent or text colour put lime on lime in Brutalist). */
+[data-style="brutalist"] .x-badge, [data-style="pastel"] .x-badge, [data-style="bloomberg"] .x-badge { color: var(--s-badge-text) !important; }

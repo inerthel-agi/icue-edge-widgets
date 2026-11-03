@@ -15,10 +15,22 @@
         data-default="15" data-min="10" data-max="45" data-step="1" />
     <meta name="x-icue-property" content="focusCycles" data-label="tr('Cycles')" data-type="slider"
         data-default="4" data-min="2" data-max="8" data-step="1" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#a8d5ba'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
     <script type="application/json" id="x-icue-groups">
-        [{ "title": "tr('Focus Timer')", "properties": ["focusWork","focusBreak","focusLong","focusCycles"] }]
+        [{ "title": "tr('Focus Timer')", "properties": ["focusWork","focusBreak","focusLong","focusCycles"] },
+        { "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle"] }]
     </script>
     <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
     <link rel="stylesheet" href="./style.css" />
 </head>
 

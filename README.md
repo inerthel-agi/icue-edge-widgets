@@ -28,8 +28,8 @@ In iCUE, open the device's Widgets section, choose the add/import control, and s
 
 | Device folder | Packages |
 | --- | --- |
-| `dist/icuewidgets/xeneon-edge/` | `iss-horizon`, `weather-now`, `github-repo-monitor`, `world-clock`, `focus-timer`, `daily-brief`, `countdowns`, `habit-rings`, `claude-usage`, `codex-usage`, `now-playing`, `spotify` |
-| `dist/icuewidgets/corsair-watercooling/` | `windows-media-pump`, `cooling-sensor-pump` |
+| `dist/icuewidgets/xeneon-edge/` | `iss-horizon`, `weather-now`, `github-repo-monitor`, `world-clock`, `focus-timer`, `daily-brief`, `countdowns`, `habit-rings`, `claude-usage`, `codex-usage`, `ai-cost`, `screen-time`, `agent-activity`, `audio-mixer`, `control-deck`, `stocks`, `network-pulse`, `system-pulse`, `rig-pet`, `flip-clock`, `rain-window`, `now-playing`, `spotify` |
+| `dist/icuewidgets/corsair-watercooling/` | `windows-media-pump`, `cooling-sensor-pump`, `racing-gauge-pump`, `fps-gauge-pump` |
 
 Each package name has the `.icuewidget` extension. The widget UI is in English.
 
@@ -55,11 +55,18 @@ Spotify (advanced option), 1688 × 696, with synced lyrics and `Up next` (tap a 
 
 <img src="icons/companion.png" width="64" height="64" alt="iCUE Edge Companion logo" />
 
-Five widgets read their data from [iCUE Edge Companion](https://github.com/inerthel-agi/icue-edge-companion), a Windows tray application that must run on the same computer. Download it from its [releases page](https://github.com/inerthel-agi/icue-edge-companion/releases). The other nine work on their own.
+Twelve widgets read their data from [iCUE Edge Companion](https://github.com/inerthel-agi/icue-edge-companion), a Windows tray application that must run on the same computer. Download it from its [releases page](https://github.com/inerthel-agi/icue-edge-companion/releases). The other fifteen work on their own; `system-pulse` and `rig-pet` read the iCUE Sensors plugin and `rain-window` reads Open-Meteo.
 
 | Widget | Without the companion |
 | --- | --- |
 | `claude-usage`, `codex-usage` | No data. The widget shows `iCUE Edge Companion is unreachable. Retrying automatically.` |
+| `ai-cost` | `Companion offline` until it answers; then it keeps the last figures and says `Offline`. The dollar figure is an estimate from token counts and the price class chosen in iCUE, not a bill |
+| `audio-mixer` | `Companion offline`; with it, one fader and mute per app playing sound and one for the output device (tap an icon to mute) |
+| `agent-activity` | `Companion offline`, or `Claude Code not detected`; shows tool and file names only, never prompts or file contents |
+| `stocks` | `Companion offline` until it answers, then the last quotes with a note; quotes come from Yahoo Finance (unofficial, can be delayed), only the symbols you set are sent |
+| `network-pulse` | `Companion offline`; with it, the adapters' byte counters (no traffic is read) and one ping every 3 s at most to the resolver chosen in iCUE (`Off` sends none) |
+| `control-deck` | `Companion offline`; ten fixed actions, a red key is a muted microphone or sound |
+| `screen-time` | `Companion offline`. Counting starts when the widget first asks the companion (application names and times only, kept on this PC) and needs a companion with Screen Time |
 | `spotify` | No data. The widget shows `Companion not running`. Spotify Premium is connected in the companion, never in iCUE |
 | `now-playing` | After 8 s, title and artist only from the iCUE Media plugin, labelled `Native mode` |
 | `windows-media-pump` | Same fallback: title and artist only, no artwork or progress |
@@ -125,7 +132,7 @@ Packaging options:
 | --- | --- | --- | --- |
 | `-CliPath` | string | Automatic discovery | Select the installed Widget CLI |
 | `-Version` | string | Contents of `VERSION` | Set a stable `x.y.z` package version for this build |
-| `VERSION` | text file | `1.2.1` | Shared version for all fourteen packages |
+| `VERSION` | text file | `1.2.1` | Shared version for all twenty-two packages |
 
 The builder stages files in a unique `icuewidget-build/` directory. It checks the HTML head, property groups, local asset references, CLI validation, and archive contents before replacing the output directory. A failed promotion restores the previous output when the destination is available. Previous packages remain in `icuewidget-build/previous-*`; this folder is ignored by Git. Concurrent builds are rejected while the packaging lock is held.
 
@@ -147,3 +154,41 @@ Saved timer state, habit counts, and ISS settings/cache are stored under iCUE's 
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE). External map services and libraries retain their own terms and attribution requirements.
+
+The `rig-pet` mascot Jennie (`widgets/xeneon-edge/rig-pet/pet-jennie.webp`) is unofficial, non-commercial fan art drawn by the author. It has no affiliation with the person it depicts and is not endorsed by her or her agency.
+
+The `rig-pet` mascot Claire (`widgets/xeneon-edge/rig-pet/pet-claire.webp`) is unofficial, non-commercial fan art of Claire Redfield from Capcom's Resident Evil series, made by the author. Resident Evil and its characters belong to Capcom.
+
+The following `rig-pet` mascots are community Codex pets from [codex-pet.org](https://codex-pet.org/). The site states no license for them. Each is unofficial fan art of the subject named below, with no affiliation or endorsement. Characters, names and trademarks belong to their owners. They are included for non-commercial use and will be removed on request from the creator or the rights holder.
+
+| Mascot | File in `widgets/xeneon-edge/rig-pet/` | Creator | Depicts |
+|---|---|---|---|
+| [Dario](https://codex-pet.org/pets/dario/) | `pet-dario.webp` | `user-6bb09cf5` | Dario Amodei (Anthropic CEO) |
+| [Tom](https://codex-pet.org/pets/tom/) | `pet-tom.webp` | `antony` | Tom (Tom and Jerry) |
+| [Patrick](https://codex-pet.org/pets/palantir-patrick/) | `pet-patrick.webp` | `jb` | Patrick Star (SpongeBob SquarePants) |
+| [Pepe](https://codex-pet.org/pets/apupepe/) | `pet-pepe.webp` | `kegashin` | Pepe the Frog |
+| [Rick](https://codex-pet.org/pets/rick/) | `pet-rick.webp` | `kidolata` | Rick Sanchez (Rick and Morty) |
+| [Doge](https://codex-pet.org/pets/doge/) | `pet-doge.webp` | `seymour` | the Doge meme |
+| [Mini Elon](https://codex-pet.org/pets/mini-elon/) | `pet-elon.webp` | `nico` | Elon Musk |
+| [Kirby](https://codex-pet.org/pets/kirby/) | `pet-kirby.webp` | `kirby_king` | Kirby (Nintendo) |
+| [Clippy](https://codex-pet.org/pets/clippit/) | `pet-clippy.webp` | `Dimava` | Clippy (Microsoft Office) |
+| [Tux](https://codex-pet.org/pets/tuxterm/) | `pet-tux.webp` | `chochou` | Tux, the Linux mascot (Larry Ewing) |
+| [Frieren](https://codex-pet.org/pets/frieren/) | `pet-frieren.webp` | `rudoduro` | Frieren (Frieren: Beyond Journey's End) |
+| [Anya](https://codex-pet.org/pets/anya/) | `pet-anya.webp` | `Delk` | Anya Forger (Spy x Family) |
+| [Miku](https://codex-pet.org/pets/miku/) | `pet-miku.webp` | `tune` | Hatsune Miku (Crypton Future Media) |
+| [Luffy](https://codex-pet.org/pets/luffy-gear-5/) | `pet-luffy.webp` | `jordsshmords1` | Monkey D. Luffy (One Piece) |
+| [Goku](https://codex-pet.org/pets/goku/) | `pet-goku.webp` | `hackminit` | Son Goku (Dragon Ball) |
+| [Gojo](https://codex-pet.org/pets/gojo/) | `pet-gojo.webp` | `lilokhalikfa` | Satoru Gojo (Jujutsu Kaisen) |
+| [Umaru](https://codex-pet.org/pets/umaru/) | `pet-umaru.webp` | `yc` | Umaru Doma (Himouto! Umaru-chan) |
+| [Asuka](https://codex-pet.org/pets/asuka/) | `pet-asuka.webp` | `maxg24` | Asuka Langley Soryu (Neon Genesis Evangelion) |
+| [Doraemon](https://codex-pet.org/pets/doraemon/) | `pet-doraemon.webp` | `xueshi` | Doraemon (Fujiko F. Fujio) |
+| [Elaina](https://codex-pet.org/pets/elaina/) | `pet-elaina.webp` | `Nyakku Shigure` | Elaina (Wandering Witch) |
+| [Violet](https://codex-pet.org/pets/violet/) | `pet-violet.webp` | `Lazenca` | Violet Evergarden (Kyoto Animation) |
+| [Bocchi](https://codex-pet.org/pets/bocchi/) | `pet-bocchi.webp` | `tune` | Hitori Gotoh (Bocchi the Rock!) |
+| [Luo Xiaohei](https://codex-pet.org/pets/luo-xiaohei/) | `pet-xiaohei.webp` | `2003pro` | Luo Xiaohei (The Legend of Luo Xiaohei) |
+| [Mini Sama](https://codex-pet.org/pets/mini-sama/) | `pet-sama.webp` | `NotOnKetamine` | Sam Altman (OpenAI CEO) |
+| [Doro](https://codex-pet.org/pets/doro/) | `pet-doro.webp` | `chochou` | Doro (fan character from Goddess of Victory: NIKKE) |
+| [Guga](https://codex-pet.org/pets/guga/) | `pet-guga.webp` | `CIRCUS` | Guga, a penguin-hoodie girl meme character |
+| [Kiki](https://codex-pet.org/pets/kiki/) | `pet-kiki.webp` | `Hessian` | Kiki and Jiji (Kiki's Delivery Service, Studio Ghibli) |
+| [Usagi](https://codex-pet.org/pets/usagi/) | `pet-usagi.webp` | `Kenn` | Usagi (Chiikawa, Nagano) |
+| [Hachiware](https://codex-pet.org/pets/xiaoba/) | `pet-hachiware.webp` | `Leo` | Hachiware (Chiikawa, Nagano) |

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>AI Cost</title>
+    <meta name="x-icue-property" content="aiClaudePrice" data-label="tr('Claude price')" data-type="combobox"
+        data-default="'auto'" data-values="[{'key':'auto','value':'Automatic (from the current model)'},{'key':'fable','value':'Fable 5.x ($10 / $50)'},{'key':'opus55','value':'Opus 5.5 ($4 / $20)'},{'key':'opus5','value':'Opus 4.5 to 5 ($5 / $25)'},{'key':'opus41','value':'Opus 4 / 4.1 ($15 / $75)'},{'key':'sonnet55','value':'Sonnet 5.x ($2 / $10)'},{'key':'sonnet46','value':'Sonnet 4.x ($3 / $15)'},{'key':'haiku55','value':'Haiku 5.5 ($0.10 / $0.50)'},{'key':'haiku45','value':'Haiku 4.5 ($1 / $5)'}]" />
+    <meta name="x-icue-property" content="aiCodexPrice" data-label="tr('Codex price')" data-type="combobox"
+        data-default="'auto'" data-values="[{'key':'auto','value':'Automatic (from the current model)'},{'key':'gpt56sol','value':'GPT-5.6 Sol ($4 / $20)'},{'key':'gpt56terra','value':'GPT-5.6 Terra ($2 / $12)'},{'key':'gpt56luna','value':'GPT-5.6 Luna ($0.20 / $1.20)'},{'key':'gpt55','value':'GPT-5.5 ($5 / $30)'},{'key':'gpt54','value':'GPT-5.4 ($2.50 / $15)'},{'key':'gpt53codex','value':'GPT-5.3 Codex ($1.75 / $14)'},{'key':'gpt5','value':'GPT-5 ($1.25 / $10)'},{'key':'gpt5mini','value':'GPT-5 mini ($0.25 / $2)'}]" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#a8d5ba'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
+    <script type="application/json" id="x-icue-groups">
+        [{ "title": "tr('AI Cost')", "properties": ["aiClaudePrice", "aiCodexPrice"], "info": "tr('Estimate from token counts and the prices chosen here, not a bill.')" },
+        { "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle"] }]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget">
+        <header class="x-top">
+            <p class="x-kicker">AI cost</p>
+            <span id="badge" class="x-badge">Estimate</span>
+        </header>
+        <section class="hero">
+            <h1 class="x-num"><span id="big">$0</span><small id="cents">.00</small></h1>
+            <p id="sub" class="delta">today</p>
+        </section>
+        <section class="side">
+            <svg id="spark" class="spark" viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true">
+                <line x1="0" y1="20" x2="240" y2="20" />
+                <path class="a" id="sparkArea" d="" />
+                <path class="l" id="sparkLine" d="" />
+            </svg>
+            <div class="prov" id="claudeRow"><span>Claude</span><div class="x-bar"><i id="claudeBar"></i></div><b id="claudeCost">--</b></div>
+            <div class="prov" id="codexRow"><span>Codex</span><div class="x-bar"><i id="codexBar"></i></div><b id="codexCost">--</b></div>
+            <p id="pace" class="pace"></p>
+        </section>
+        <section class="x-metrics mets">
+            <article class="x-m"><b id="mYesterday" class="x-value">--</b><small class="x-label">Yesterday</small></article>
+            <article class="x-m"><b id="mMonth" class="x-value">--</b><small class="x-label">Month so far</small></article>
+            <article class="x-m"><b id="mTokens" class="x-value">--</b><small class="x-label">Tokens today</small></article>
+        </section>
+        <p id="status" class="x-status">Estimate from token counts and the prices chosen in iCUE.</p>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">Companion offline</strong>
+            <span id="overlaySub">Start iCUE Edge Companion.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

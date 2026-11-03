@@ -1,0 +1,34 @@
+/* Network Pulse: download and upload figures over a one-minute chart. */
+#widget { --down: var(--x-accent); --up: color-mix(in srgb, var(--x-accent) 35%, var(--x-warn)); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: calc(var(--x-gap) * 0.7); }
+.x-top .x-kicker { margin: 0; }
+.ping { margin: 0; font-variant-numeric: tabular-nums; }
+.ping.ok { color: var(--x-ok); } .ping.warn { color: var(--x-warn); } .ping.bad { color: var(--x-bad); }
+.rates { display: flex; gap: calc(var(--x-gap) * 2); min-width: 0; }
+.rate { display: flex; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rate b { font-size: clamp(40px, calc(var(--layout-unit) * 16), 150px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.rate small { font-size: clamp(16px, calc(var(--layout-unit) * 4.4), 40px); color: var(--x-muted); }
+.arrow { font-size: clamp(26px, calc(var(--layout-unit) * 9), 90px); font-weight: 700; line-height: 1; }
+.rate.down .arrow { color: var(--down); } .rate.up .arrow { color: var(--up); }
+.chart { width: 100%; height: 100%; min-height: 0; overflow: visible; }
+.chart .line { fill: none; stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.chart .line.down { stroke: var(--down); } .chart .line.up { stroke: var(--up); }
+.chart .area.down { fill: color-mix(in srgb, var(--down) 22%, transparent); } .chart .area.up { fill: color-mix(in srgb, var(--up) 18%, transparent); }
+.x-status { margin: 0; }
+
+/* S: figures only, a thin chart behind them. */
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) {
+    #widget { grid-template-rows: auto minmax(0, 1fr); }
+    .rates { grid-row: 2; align-self: center; z-index: 1; }
+    .chart { grid-row: 2; opacity: 0.5; }
+    .x-status { display: none; }
+    .rate b { font-size: clamp(40px, 15vmin, 72px); }
+}
+/* Wide slots: figures on the left, chart on the right. */
+@media (min-aspect-ratio: 2/1) and (min-height: 451px) {
+    #widget { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; column-gap: calc(var(--x-gap) * 2); }
+    .x-top, .x-status { grid-column: 1 / -1; }
+    .rates { flex-direction: column; justify-content: center; gap: var(--x-gap); }
+    .chart { grid-column: 2; grid-row: 2; }
+}
+/* Portrait: figures stacked. */
+@media (max-aspect-ratio: 1/1) { .rates { flex-direction: column; gap: 6px; } }
