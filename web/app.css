@@ -158,3 +158,74 @@ html.theme-fade, html.theme-fade * { transition: background-color .35s, color .3
   .card:hover { transform: none; }
   .nav-ind { transition: none; }
 }
+  .brand strong { display: flex; align-items: center; gap: 8px; }
+  .mark-logo { width: 22px; height: 22px; flex: none; color: var(--text, currentColor); }
+
+/* History arrows, next to the window buttons above the page. */
+.histnav { position: fixed; top: 0; z-index: 12; display: flex; gap: 2px; align-items: center; height: 32px; padding-left: 8px; left: var(--side-w, 208px); }
+.histnav button { display: grid; place-items: center; width: 30px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); }
+.histnav button:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.histnav button:disabled { opacity: .35; }
+.crumb { display: flex; gap: 6px; align-items: center; margin: 0 0 4px; color: var(--faint); font-size: 12px; }
+.crumb button { padding: 0; border: 0; background: none; color: var(--muted); font: inherit; cursor: pointer; } .crumb button:hover { color: var(--text); }
+/* Widget logos: the widget's own icon, drawn in its colour on a tint of it. */
+.wico { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: color-mix(in srgb, var(--c) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent); }
+.wico i { width: 20px; height: 20px; background: var(--c); -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
+.wico.sm { width: 20px; height: 20px; border-radius: 6px; } .wico.sm i { width: 12px; height: 12px; }
+:root[data-theme="light"] .wico i { background: color-mix(in srgb, var(--c) 70%, #000); }
+.tagc { margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: var(--hover); color: var(--muted); font-size: 11px; font-weight: 500; }
+.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 6px 0 16px; }
+.summary div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.summary b { display: block; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; } .summary small { color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.filters button { padding: 4px 12px; border: 1px solid var(--line); border-radius: 99px; background: transparent; color: var(--muted); font-size: 12px; }
+.filters button[aria-pressed="true"] { border-color: var(--text); background: var(--text); color: var(--bg); }
+.cost-hero { display: flex; align-items: baseline; gap: 10px; margin: 6px 0 4px; } .cost-hero b { font-size: 44px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cost-hero small { color: var(--muted); }
+.bars24 { display: block; width: 100%; height: 64px; } .bars24 rect { fill: var(--live); } .bars24 rect.z { fill: var(--track); }
+
+/* Widget logos: one rule per icon (the window's style-src 'self' blocks inline style attributes). */
+.wico[data-icon="audio-mixer"] { --c: #a8d5ba; --m: url(icons/audio-mixer.svg); }
+.wico[data-icon="agent-activity"] { --c: #e0a98c; --m: url(icons/agent-activity.svg); }
+.wico[data-icon="control-deck"] { --c: #a8d5ba; --m: url(icons/control-deck.svg); }
+.wico[data-icon="stocks"] { --c: #ffa028; --m: url(icons/stocks.svg); }
+.wico[data-icon="network-pulse"] { --c: #7cc8ff; --m: url(icons/network-pulse.svg); }
+.wico[data-icon="system-pulse"] { --c: #a8d5ba; --m: url(icons/system-pulse.svg); }
+.wico[data-icon="rig-pet"] { --c: #ffb84d; --m: url(icons/rig-pet.svg); }
+.wico[data-icon="flip-clock"] { --c: #f7f8fb; --m: url(icons/flip-clock.svg); }
+.wico[data-icon="rain-window"] { --c: #7cc8ff; --m: url(icons/rain-window.svg); }
+.wico[data-icon="claude"] { --c: #e0a98c; --m: url(icons/claude.svg); }
+.wico[data-icon="openai"] { --c: #9cc8ec; --m: url(icons/openai.svg); }
+.wico[data-icon="ai-cost"] { --c: #a8d5ba; --m: url(icons/ai-cost.svg); }
+.wico[data-icon="screen-time"] { --c: #a8d5ba; --m: url(icons/screen-time.svg); }
+.wico[data-icon="now-playing"] { --c: #a8d5ba; --m: url(icons/now-playing.svg); }
+.wico[data-icon="spotify"] { --c: #1ed760; --m: url(icons/spotify.svg); }
+.wico[data-icon="weather-now"] { --c: #ffb84d; --m: url(icons/weather-now.svg); }
+.wico[data-icon="daily-brief"] { --c: #00c8ff; --m: url(icons/daily-brief.svg); }
+.wico[data-icon="world-clock"] { --c: #f7f8fb; --m: url(icons/world-clock.svg); }
+.wico[data-icon="focus-timer"] { --c: #ff6b6b; --m: url(icons/focus-timer.svg); }
+.wico[data-icon="countdowns"] { --c: #ffb84d; --m: url(icons/countdowns.svg); }
+.wico[data-icon="habit-rings"] { --c: #1db954; --m: url(icons/habit-rings.svg); }
+.wico[data-icon="github-repo-monitor"] { --c: #a678ff; --m: url(icons/github-repo-monitor.svg); }
+.wico[data-icon="iss-horizon"] { --c: #00c8ff; --m: url(icons/iss-horizon.svg); }
+.wico[data-icon="windows-media-pump"] { --c: #1db954; --m: url(icons/windows-media-pump.svg); }
+.wico[data-icon="cooling-sensor-pump"] { --c: #00c8ff; --m: url(icons/cooling-sensor-pump.svg); }
+.wico[data-icon="racing-gauge-pump"] { --c: #00c8ff; --m: url(icons/racing-gauge-pump.svg); }
+.wico[data-icon="fps-gauge-pump"] { --c: #7cf29a; --m: url(icons/fps-gauge-pump.svg); }
+.chart-group { padding: 12px 14px; }
+/* Top strip: the window buttons and history arrows sit on their own band; the page scrolls under nothing. */
+.content { margin-top: 32px; padding-top: 8px; }
+/* Now Playing card: bigger cover, the line being sung, playback buttons, progress in the live colour. */
+.np-art { width: 84px; height: 84px; border-radius: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.np-text { flex: 1; }
+.np-line { margin: 2px 0 0; color: var(--live); font-size: 14px; font-style: italic; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-ctl { display: flex; gap: 6px; flex: none; }
+.np-btn { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--text); }
+.np-btn:hover:not(:disabled) { background: var(--hover); }
+.np-btn:disabled { opacity: .35; }
+.np-btn svg { width: 15px; height: 15px; fill: currentColor; }
+.np-ctl .np-btn:nth-child(2) { width: 40px; height: 40px; border: 0; background: var(--text); color: var(--bg); }
+.np-bar > i { background: var(--live) !important; }
+/* Screen time: each application's own icon. */
+.app-ico { flex: none; width: 28px; height: 28px; border-radius: 6px; object-fit: contain; }
+.app-ico.letter { display: grid; place-items: center; background: var(--hover); color: var(--muted); font-size: 13px; font-weight: 600; }

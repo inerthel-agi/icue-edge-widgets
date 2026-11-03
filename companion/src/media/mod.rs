@@ -10,7 +10,7 @@ use std::sync::{Arc, Condvar, LazyLock, Mutex, MutexGuard};
 #[cfg(windows)]
 mod gsmtc;
 #[cfg(windows)]
-mod volume;
+pub mod volume;
 pub mod viz;
 pub mod relay;
 
@@ -335,6 +335,25 @@ pub fn apply(observed: Vec<Observed>, current_app: Option<String>, now: u64) {
     let mut changed = merge(&mut st, observed, current_app, now);
     changed |= st.error.take().is_some();
     st.last_seen = now;
+    // The Spotify app's session (the playing one if there are several) feeds the Spotify widget too.
+    let spotify = st.sessions.iter().filter(|s| app_name(&s.app_id) == "Spotify").max_by_key(|s| s.playback == Playback::Playing);
+    crate::spotify::set_local(
+        spotify.map(|s| crate::spotify::Local {
+            session_id: s.id.clone(),
+            rev: s.rev,
+            title: s.meta.title.clone(),
+            artist: s.meta.artist.clone(),
+            album: s.meta.album.clone(),
+            playing: s.playback == Playback::Playing,
+            position_ms: s.timeline.map_or(0, |t| t.position_ms),
+            duration_ms: s.timeline.and_then(|t| t.duration_ms).unwrap_or(0),
+            updated_at: s.timeline.map_or(now, |t| t.updated_at),
+            caps: (s.caps.play_pause, s.caps.next, s.caps.prev),
+            art: s.art.as_ref().map(|a| (a.mime, Arc::clone(&a.bytes))),
+            lyrics: s.lyrics.clone().unwrap_or_default(),
+        }),
+        now,
+    );
     if changed || now >= st.published_at + HEARTBEAT_MS {
         st.publish(now);
     }
@@ -375,7 +394,8 @@ pub fn run_lyrics() {
             target
         };
         let Some((id, rev, album, (title, artist, secs))) = job else { continue };
-        let found = crate::spotify::api::lyrics_for(&title, &artist, &album, secs);
+        let current = || lock().sessions.iter().any(|s| s.id == id && s.rev == rev);
+        let found = crate::spotify::api::lyrics_for(&title, &artist, &album, secs, &current);
         let mut st = lock();
         // A newer revision of the track started meanwhile: this answer is for the old one.
         if let Some(s) = st.sessions.iter_mut().find(|s| s.id == id && s.rev == rev) {

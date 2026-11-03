@@ -142,6 +142,7 @@ async fn app_info(app: AppHandle) -> serde_json::Value {
     json!({
         "version": app.package_info().version.to_string(),
         "autostart": autostart,
+        "renewClaudeToken": st.saved.renew_claude_token,
         "serverError": st.server_error,
         "port": http::PORT,
         "pumpRelay": media::relay::status(),
@@ -177,9 +178,43 @@ async fn media_state(known: Option<String>) -> serde_json::Value {
     snap
 }
 
+/// Play / pause, previous and next from the Overview's Now Playing card; validated like a widget's command.
+#[tauri::command]
+async fn media_command(body: serde_json::Value) -> Result<bool, String> {
+    let target = media::resolve(&media::lock(), &body, icue_edge_companion::util::now_ms()).map_err(|(_, e)| e.to_string())?;
+    media::execute(&target)
+}
+
+/// The Screen Time page: today's figures, without switching collection on.
+#[tauri::command]
+async fn screentime_state() -> serde_json::Value {
+    icue_edge_companion::screentime::snapshot_now()
+}
+
+/// The Screen Time page's Start button: the same switch the widget's first request flips.
+#[tauri::command]
+async fn screentime_enable() -> serde_json::Value {
+    icue_edge_companion::screentime::enable();
+    icue_edge_companion::screentime::snapshot_now()
+}
+
 #[tauri::command]
 async fn set_paused(app: AppHandle, paused: bool) {
     update(&shared_of(&app), |st| st.paused = paused);
+}
+
+/// Turning it on retries the limits at once, so an expired sign-in is renewed right away.
+#[tauri::command]
+async fn set_renew_claude_token(app: AppHandle, enabled: bool) {
+    let shared = shared_of(&app);
+    update(&shared, |st| {
+        st.saved.renew_claude_token = enabled;
+        if enabled {
+            st.claude.next_quota_try = 0;
+            st.claude.quota_backoff = 0;
+        }
+    });
+    let _ = store::save(&shared);
 }
 
 #[tauri::command]
@@ -237,6 +272,7 @@ async fn open_link(link: String) -> Result<(), String> {
     let url = match link.as_str() {
         "repo" => "https://github.com/inerthel-agi/icue-edge-widgets/",
         "profile" => "https://github.com/inerthel-agi",
+        "packages" => "https://github.com/inerthel-agi/icue-edge-widgets/tree/main/dist/icuewidgets",
         _ => return Err("unknown link".into()),
     };
     hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).args(["url.dll,FileProtocolHandler", url]).spawn().map(|_| ()).map_err(|e| e.to_string())
@@ -391,6 +427,10 @@ fn main() {
             media_state,
             set_paused,
             set_autostart,
+            set_renew_claude_token,
+            screentime_state,
+            media_command,
+            screentime_enable,
             clear_history,
             open_main,
             open_link,
@@ -413,6 +453,7 @@ fn main() {
                 std::thread::Builder::new().name(name.into()).spawn(move || job(s))?;
             }
             std::thread::Builder::new().name("media".into()).spawn(media::run)?;
+            std::thread::Builder::new().name("screentime".into()).spawn(icue_edge_companion::screentime::run)?;
             std::thread::Builder::new().name("media-relay".into()).spawn(media::relay::run)?;
             std::thread::Builder::new().name("media-lyrics".into()).spawn(media::run_lyrics)?;
             std::thread::Builder::new().name("media-viz".into()).spawn(media::viz::run)?;

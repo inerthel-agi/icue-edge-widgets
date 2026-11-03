@@ -11,6 +11,8 @@
     quit: '<path d="M18.4 6.6a9 9 0 1 1-12.8 0"/><path d="M12 2v10"/>',
   };
   const icon = (k) => '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + I[k] + "</svg>";
+  // The e-strip mark (companion/icons/mark.svg), in the theme's text colour.
+  const MARK = '<svg class="mark-logo" aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><g transform="translate(-6.0 0)"><path d="M150.9 178.9A72 72 0 1 1 170.8 141.0L145.2 136.3A46 46 0 1 0 132.5 160.5Z"/><rect x="48" y="115.0" width="192" height="26" rx="13.0"/></g></svg>';
   let lastHtml = "";
 
   function prov(p, paused) {
@@ -19,7 +21,8 @@
     if (!t) body = '<p class="err">' + esc(p.limitsError || p.reason || "No limits reported.") + "</p>";
     else body = '<div class="fig"><b>' + t.pct + '%</b><span>' + esc(t.name.toLowerCase()) + " " + t.word + "</span></div>" +
       U.limitBar(t, paused || t.stale ? "off" : "") +
-      '<div class="meta"><span>Resets ' + esc(U.resetText(t.resetAt).split(" · ")[0]) + "</span><span>" + U.big(p.tokens.total) + " tokens today</span></div>";
+      '<div class="meta"><span>Resets ' + esc(U.resetText(t.resetAt).split(" · ")[0]) + "</span><span>" + U.big(p.tokens.total) + " tokens today</span></div>" +
+      (t.stale && p.reason ? '<p class="err note">Reading from ' + esc(U.ago(t.at)) + ": " + esc(p.reason) + "</p>" : "");
     return '<div class="prov"><div class="prov-top"><span class="mark sm ' + p.id + '">' + p.letter + "</span><strong>" + esc(p.name) +
       '</strong><span class="pill ' + (p.state === "idle" ? "" : p.state) + '">' + esc(p.stateText) + "</span></div>" + body + "</div>";
   }
@@ -27,11 +30,11 @@
   function render() {
     const v = U.view;
     let html;
-    if (!v) html = '<header class="header"><div><strong>iCUE Edge Companion</strong><small>' + esc(U.link.message || "Loading…") + "</small></div></header>";
+    if (!v) html = '<header class="header">' + MARK + '<div><strong>iCUE Edge Companion</strong><small>' + esc(U.link.message || "Loading…") + "</small></div></header>";
     else {
-      const problem = [v.claude, v.codex].some((p) => p.state === "danger");
-      const sub = v.paused ? "Collection paused" : problem ? "Something needs attention · open the dashboard" : "Up to date";
-      html = '<header class="header"><div><strong>iCUE Edge Companion</strong><small>' + esc(sub) + "</small></div></header>" +
+      const problem = [v.claude, v.codex].find((p) => p.state === "danger" || p.state === "warn");
+      const sub = v.paused ? "Collection paused" : problem ? problem.name + ": check needed · open the dashboard" : "Up to date";
+      html = '<header class="header">' + MARK + '<div><strong>iCUE Edge Companion</strong><small>' + esc(sub) + "</small></div></header>" +
         '<div class="usage">' + prov(v.claude, v.paused) + prov(v.codex, v.paused) + "</div>" +
         '<div class="separator"></div>' +
         '<button type="button" class="item" data-act="open">' + icon("open") + '<span class="label">Open dashboard</span></button>' +

@@ -125,6 +125,9 @@ pub struct Saved {
     pub widget_token: String,
     pub claude: ProviderSaved,
     pub codex: ProviderSaved,
+    /// Opt-in: renew an expired Claude Code sign-in and write it back to its credentials file.
+    #[serde(default)]
+    pub renew_claude_token: bool,
 }
 
 #[derive(Default)]
@@ -139,6 +142,10 @@ pub struct Runtime {
     /// Apps open right now ("Desktop", "CLI"), from the process list.
     pub running: Vec<&'static str>,
     pub events: VecDeque<(u64, String)>,
+    /// Agent Activity widget: the latest tool calls (time, tool, short target), newest last; Claude only.
+    pub activity: VecDeque<(u64, String, String)>,
+    /// Tokens counted per message over the last 15 minutes (time, tokens), for tokens per minute.
+    pub recent_tokens: VecDeque<(u64, u64)>,
 }
 
 impl Runtime {
@@ -314,7 +321,8 @@ fn provider_wire(m: &Meta, saved: &ProviderSaved, rt: &Runtime, paused: bool, no
     } else if let Some(err) = &rt.read_error {
         ("error", err.clone())
     } else if let Some((s, reason, _)) = &rt.quota_error {
-        (if s == "error" { "error" } else { "stale" }, reason.clone())
+        // With an earlier reading the data is only old ("Check"); "Error" is for when there never was one.
+        (if s == "error" && saved.quota.observed_at == 0 { "error" } else { "stale" }, reason.clone())
     } else if last_event + ACTIVE_MS > now {
         ("available", "Collection active".to_string())
     } else if !open.is_empty() {
@@ -339,6 +347,20 @@ fn provider_wire(m: &Meta, saved: &ProviderSaved, rt: &Runtime, paused: bool, no
     for label in &rt.running {
         clients.entry(label).or_default().0 = true;
     }
+
+    // Daily sums (UTC days) of the last 35 days, for the AI Cost widget's month figure.
+    let mut daily: BTreeMap<u64, Tok> = BTreeMap::new();
+    for (h, t) in saved.hours.range(hour_of(now.saturating_sub(35 * DAY))..) {
+        daily.entry(h - h % DAY).or_default().add(t);
+    }
+    let days: Vec<Value> = daily
+        .iter()
+        .map(|(d, t)| {
+            let mut v = t.wire();
+            v["start"] = json!(d);
+            v
+        })
+        .collect();
 
     let (qstate, qreason) = quota_state(&saved.quota, &rt.quota_error, now);
     let quotas: Vec<Value> = saved
@@ -387,6 +409,7 @@ fn provider_wire(m: &Meta, saved: &ProviderSaved, rt: &Runtime, paused: bool, no
         "quotaError": rt.quota_error.as_ref().map(|(s, r, at)| json!({ "state": s, "reason": r, "at": at })),
         "credits": saved.quota.credits,
         "hours": hours,
+        "days": days,
         "sessions": sessions.iter().map(|s| json!({
             "id": s.id, "client": s.client, "model": s.model, "active": s.last_event + ACTIVE_MS > now,
             "startedAt": s.started, "lastEventAt": s.last_event, "tokens": s.tokens.wire(),
@@ -475,6 +498,23 @@ pub mod tests {
         });
         let text = snapshot(&lock(&shared)).to_string();
         assert!(text.contains(r#""v":"claude-opus-5-5""#), "{text}");
+    }
+
+    #[test]
+    fn expired_token_with_an_earlier_reading_is_check_not_error() {
+        let shared = load_for_test();
+        let now = now_ms();
+        let quota_error = || Some(("error".to_string(), "Claude sign-in expired".to_string(), now));
+        update(&shared, |st| {
+            st.claude.detected = true;
+            st.claude.quota_error = quota_error();
+        });
+        assert!(snapshot(&lock(&shared)).to_string().contains(r#""status":{"label":"Claude sign-in expired","state":"error"}"#));
+        update(&shared, |st| {
+            st.saved.claude.set_quota(QuotaSet { quotas: vec![Quota { id: "seven_day".into(), used: 21.0, ..Default::default() }], observed_at: now - 5 * 3600_000, ..Default::default() });
+            st.claude.quota_error = quota_error();
+        });
+        assert!(snapshot(&lock(&shared)).to_string().contains(r#""status":{"label":"Claude sign-in expired","state":"stale"}"#));
     }
 
     #[test]

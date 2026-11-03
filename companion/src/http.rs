@@ -38,6 +38,27 @@ pub fn feed_streams(feed: Feed) -> usize {
     FEEDS[feed as usize].load(Ordering::SeqCst)
 }
 
+/// Endpoints that widgets poll instead of holding a stream (AI Cost, Screen Time).
+#[derive(Clone, Copy)]
+pub enum Poll {
+    Usage,
+    ScreenTime,
+    Mixer,
+    Agent,
+    Deck,
+    Stocks,
+    Net,
+}
+static POLLED_AT: [std::sync::atomic::AtomicU64; 7] = [const { std::sync::atomic::AtomicU64::new(0) }; 7];
+fn polled(p: Poll) {
+    POLLED_AT[p as usize].store(crate::util::now_ms(), Ordering::SeqCst);
+}
+
+/// True when a widget asked for this endpoint in the last 90 s (they poll every 15 to 30 s).
+pub fn polled_recently(poll: Poll) -> bool {
+    POLLED_AT[poll as usize].load(Ordering::SeqCst) + 90_000 > crate::util::now_ms()
+}
+
 
 pub struct Request {
     pub method: String,
@@ -271,7 +292,47 @@ fn handle(mut stream: TcpStream, shared: Shared) {
     }
     headers.push(("Content-Type", "application/json".into()));
     match (req.method.as_str(), req.path.as_str()) {
+        // Screen Time widget: asking for its data is what switches collection on (see screentime.rs).
+        ("GET", "/api/screentime/state") => {
+            crate::screentime::enable();
+            POLLED_AT[Poll::ScreenTime as usize].store(crate::util::now_ms(), Ordering::SeqCst);
+            respond(&mut stream, 200, &headers, crate::screentime::snapshot_now().to_string().as_bytes());
+        }
+        // Audio Mixer, Agent Activity and Control Deck widgets.
+        ("GET", "/api/mixer/state") => {
+            polled(Poll::Mixer);
+            respond(&mut stream, 200, &headers, crate::mixer::snapshot().to_string().as_bytes());
+        }
+        ("POST", "/api/mixer/command") => match req.json().ok_or((400, "bad_request")).and_then(|b| crate::mixer::command(&b)) {
+            Ok(()) => respond(&mut stream, 200, &headers, b"{\"ok\":true}"),
+            Err((code, error)) => respond(&mut stream, code, &headers, format!("{{\"error\":\"{error}\"}}").as_bytes()),
+        },
+        ("GET", "/api/agent/state") => {
+            polled(Poll::Agent);
+            let body = crate::usage::claude::agent_snapshot(&lock(&shared), now_ms()).to_string();
+            respond(&mut stream, 200, &headers, body.as_bytes());
+        }
+        // Stocks widget: ?s=AAPL,NVDA (checked and capped in stocks.rs; only those symbols are sent to Yahoo).
+        ("GET", "/api/stocks/state") => {
+            polled(Poll::Stocks);
+            let body = crate::stocks::snapshot(&crate::spotify::auth::percent_decode(req.param("s").unwrap_or(""))).to_string();
+            respond(&mut stream, 200, &headers, body.as_bytes());
+        }
+        // Network Pulse widget: ?ping=cloudflare|google|quad9|off (any other value pings nothing).
+        ("GET", "/api/net/state") => {
+            polled(Poll::Net);
+            respond(&mut stream, 200, &headers, crate::net::snapshot(req.param("ping").unwrap_or("off")).to_string().as_bytes());
+        }
+        ("GET", "/api/deck/state") => {
+            polled(Poll::Deck);
+            respond(&mut stream, 200, &headers, crate::deck::snapshot().to_string().as_bytes());
+        }
+        ("POST", "/api/deck/run") => match req.json().as_ref().and_then(|b| b["id"].as_str().map(str::to_string)).ok_or((400, "bad_request")).and_then(|id| crate::deck::run(&id)) {
+            Ok(()) => respond(&mut stream, 200, &headers, b"{\"ok\":true}"),
+            Err((code, error)) => respond(&mut stream, code, &headers, format!("{{\"error\":\"{error}\"}}").as_bytes()),
+        },
         ("GET", "/api/usage/state") => {
+            POLLED_AT[Poll::Usage as usize].store(crate::util::now_ms(), Ordering::SeqCst);
             let body = snapshot(&lock(&shared)).to_string();
             respond(&mut stream, 200, &headers, body.as_bytes());
         }
@@ -370,6 +431,15 @@ fn handle(mut stream: TcpStream, shared: Shared) {
                     respond(&mut stream, 200, &headers, &bytes);
                 }
                 None => respond(&mut stream, 404, &headers, b"{\"error\":\"no_artwork\"}"),
+            }
+        }
+        ("POST", "/api/spotify/command") if req.json().is_some_and(|b| spotify::local_command(&spotify::lock(), &b).is_some()) => {
+            // Spotify rate-limits the app: the command goes to the Spotify app through Windows instead.
+            let body = req.json().and_then(|b| spotify::local_command(&spotify::lock(), &b)).unwrap_or_default();
+            match media::resolve(&media::lock(), &body, now_ms()).map(|t| media::execute(&t)) {
+                Ok(Ok(accepted)) => respond(&mut stream, 200, &headers, format!("{{\"ok\":{accepted}}}").as_bytes()),
+                Ok(Err(_)) => respond(&mut stream, 503, &headers, b"{\"error\":\"player_unreachable\"}"),
+                Err((code, error)) => respond(&mut stream, code, &headers, format!("{{\"error\":\"{error}\"}}").as_bytes()),
             }
         }
         ("POST", "/api/spotify/command") => {

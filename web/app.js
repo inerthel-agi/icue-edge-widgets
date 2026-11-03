@@ -1,4 +1,4 @@
-// Companion window (design v2): sidebar, five pages, status footer.
+// Companion window (design v2): sidebar, seven pages, back / forward history, status footer.
 (function () {
   "use strict";
   const U = window.Usage, esc = U.esc;
@@ -11,6 +11,10 @@
   let spClientId = "";
   let renderedPage = null;
   let enterPending = true;
+  let screen = null;          // Screen Time snapshot (screentime/1)
+  let widgetFilter = "all";
+  const hist = { back: [], fwd: [] };
+  const TITLES = { overview: "Overview", claude: "Claude", codex: "Codex", aicost: "AI cost", screentime: "Screen time", spotify: "Spotify", widgets: "Widgets", settings: "Settings" };
   const still = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   const ICON_ALERT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
@@ -58,15 +62,29 @@
     else if (!s) body = '<p class="muted">Nothing playing. Start playback in any app shown in the Windows media flyout.</p>';
     else {
       const t = s.timeline;
-      let prog = "";
+      let prog = "", pos = null;
       if (t && t.duration) {
-        const pos = Math.min(t.duration, t.position + (s.playback === "playing" ? Math.max(0, Date.now() - t.updatedAt) / 1000 : 0));
-        prog = '<div class="np-prog">' + bar(Math.round(pos / t.duration * 100)) + '<div class="np-times"><span>' + fmtTime(pos) + "</span><span>" + fmtTime(t.duration) + "</span></div></div>";
+        pos = Math.min(t.duration, t.position + (s.playback === "playing" ? Math.max(0, Date.now() - t.updatedAt) / 1000 : 0));
+        prog = '<div class="np-prog"><div class="bar np-bar"><i data-w="' + Math.round(pos / t.duration * 100) + '"></i></div><div class="np-times"><span>' + fmtTime(pos) +
+          "</span><span>−" + fmtTime(t.duration - pos) + "</span></div></div>";
       }
+      // The line being sung, when synced lyrics are ready (same source as the widget).
+      const lines = s.lyrics && s.lyrics.state === "ready" ? s.lyrics.lines : null;
+      let line = "";
+      if (lines && pos !== null) { for (const l of lines) { if (l.timeMs <= pos * 1000 + 250) line = l.text; else break; } }
+      const c = s.caps || {}, btn = (cmd, label, icon, on) => '<button type="button" class="np-btn" data-act="np" data-cmd="' + cmd + '" aria-label="' + label + '"' + (on ? "" : " disabled") + ">" + icon + "</button>";
+      const ctl = '<div class="np-ctl">' +
+        btn("prev", "Previous", '<svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>', c.prev) +
+        btn("playPause", s.playback === "playing" ? "Pause" : "Play", s.playback === "playing" ? '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>', c.playPause) +
+        btn("next", "Next", '<svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>', c.next) + "</div>";
       body = '<div class="np"><div class="np-art">' + (s.art ? '<img src="' + esc(s.art.url) + '" alt="">' : NOTE) + "</div>" +
-        '<div class="np-text"><b>' + esc(s.title || "Untitled") + "</b><span>" + esc(s.artist || "") + "</span><small>" + esc(s.app.name) + "</small></div></div>" + prog;
+        '<div class="np-text"><b>' + esc(s.title || "Untitled") + "</b><span>" + esc(s.artist || "") + "</span><small>" + esc(s.album || s.app.name) + "</small></div>" + ctl + "</div>" +
+        (line ? '<p class="np-line">' + esc(line) + "</p>" : "") + prog;
     }
-    return '<div class="card"><div class="card-head"><span class="mark media">' + NOTE + "</span><div><strong>Now Playing</strong><small>Windows media · " +
+    // The player's own mark when it is Spotify; a note for any other app.
+    const spotifyApp = s && /spotify/i.test(s.app.name);
+    return '<div class="card"><div class="card-head"><span class="mark ' + (spotifyApp ? "spotify" : "media") + '">' + (spotifyApp ? U.LOGO.spotify : NOTE) + "</span><div><strong>Now Playing</strong><small>" +
+      (s ? esc(s.app.name) + " · " : "Windows media · ") +
       players + (players === 1 ? " player" : " players") + '</small></div><span class="pill ' + state[1] + '">' + state[0] + "</span></div>" + body +
       '<div class="card-foot"><span>Shown on Now Playing and Windows Media Pump</span></div></div>';
   }
@@ -155,30 +173,82 @@
   }
 
   // ---------- widgets & settings (need app_info) ----------
+  const wicon = (w, cls) => '<span class="wico' + (cls ? " " + cls : "") + '" data-icon="' + esc(w.icon) + '"><i></i></span>';
+
   function widgets() {
     const i = info || {};
     const list = i.widgets || [];
-    const n = list.filter((w) => w.live).length;
-    const state = (w) => w.live ? ["Connected", "live"] : w.placed ? ["Placed · not connected", "warn"] : w.installed ? ["Installed · not placed", ""] : ["Not installed", ""];
+    const state = (w) => w.live ? ["Connected", "live"] : w.placed ? [w.companion ? "Placed · not connected" : "Placed", w.companion ? "warn" : "live"] : w.installed ? ["Installed · not placed", ""] : ["Not installed", ""];
+    const shown = list.filter((w) => widgetFilter === "installed" ? w.installed : widgetFilter === "companion" ? w.companion : true);
     const row = (w) => {
       const [label, cls] = state(w);
-      return '<div class="row"><div class="row-text"><span>' + esc(w.name) + "</span><small>" + esc(w.screen) +
-        (w.screen === "Pump LCD" ? " · artwork sent through files: the pump renderer cannot open a connection" : "") +
-        '</small></div><span class="pill ' + cls + '">' + label + "</span></div>";
+      return '<div class="row">' + wicon(w) + '<div class="row-text"><span>' + esc(w.name) + (w.companion ? '<span class="tagc">companion</span>' : "") + "</span><small>" + esc(w.desc) +
+        " · " + (w.screen === "Pump LCD" ? "480 × 480" : "S · M · L · XL") + '</small></div><span class="pill ' + cls + '">' + label + "</span></div>";
     };
-    const group = (screen) => list.filter((w) => w.screen === screen).map(row).join("") || '<div class="empty">No widget for this screen.</div>';
-    return '<div class="page"><h1>Widgets</h1><p class="sub">Widgets for your XENEON EDGE and your pump LCD (waterblock screen), in iCUE.</p>' +
+    const group = (screenName) => {
+      const ws = shown.filter((w) => w.screen === screenName);
+      const live = ws.filter((w) => w.live).length;
+      return '<div class="group-title">' + esc(screenName) + "<small>" + (live ? live + " connected" : ws.length + " shown") + '</small></div><div class="group">' +
+        (ws.map(row).join("") || '<div class="empty">No widget here with this filter.</div>') + "</div>";
+    };
+    const f = (id, label) => '<button type="button" data-act="wfilter" data-f="' + id + '" aria-pressed="' + (widgetFilter === id) + '">' + label + "</button>";
+    return '<div class="page"><h1>Widgets</h1><p class="sub">Every iCUE Edge widget, where it is, and whether it is talking to the companion.</p>' +
       (i.serverError ? alert(i.serverError + ". Widgets cannot connect.", "page-alert") : "") +
-      '<div class="group-title">XENEON EDGE<small>' + n + " connected in total · iCUE is recognised automatically, no token needed</small></div>" +
-      '<div class="group">' + group("XENEON EDGE") + "</div>" +
-      '<div class="group-title">Pump LCD</div><div class="group">' + group("Pump LCD") + "</div>" +
+      '<div class="summary"><div><b>' + list.filter((w) => w.live).length + "</b><small>connected now</small></div><div><b>" + list.filter((w) => w.installed).length +
+      "</b><small>installed in iCUE</small></div><div><b>" + list.length + "</b><small>available</small></div></div>" +
+      '<div class="filters" role="group" aria-label="Filter">' + f("all", "All") + f("installed", "Installed") + f("companion", "Use the companion") + "</div>" +
+      group("XENEON EDGE") + group("Pump LCD") +
       '<div class="group-title">Install a widget</div><div class="group">' +
-      '<div class="row"><span class="step">1</span><div class="row-text"><span>Import the .icuewidget package in iCUE</span><small>xeneon-edge folder for the XENEON EDGE, corsair-watercooling folder for the pump</small></div></div>' +
+      '<div class="row"><span class="step">1</span><div class="row-text"><span>Import the .icuewidget package in iCUE</span><small>xeneon-edge folder for the XENEON EDGE, corsair-watercooling folder for the pump</small></div><button type="button" class="btn" data-act="link" data-link="packages">Packages</button></div>' +
       '<div class="row"><span class="step">2</span><div class="row-text"><span>Place it on the screen</span><small>XENEON EDGE → Widgets, or the pump LCD screen settings</small></div></div>' +
-      '<div class="row"><span class="step">3</span><div class="row-text"><span>Keep iCUE Edge Companion running</span><small>It stays quietly in the notification area</small></div></div></div>' +
-      '<p class="hint">Read from the iCUE files (installed widgets, XENEON EDGE layout, pump profiles); nothing there is changed.</p></div>';
+      '<div class="row"><span class="step">3</span><div class="row-text"><span>Keep iCUE Edge Companion running</span><small>Only the widgets tagged companion need it; it stays in the notification area</small></div></div></div>' +
+      '<p class="hint">Read from the iCUE files (installed widgets, XENEON EDGE layout, pump profiles); nothing there is changed. Widgets without the companion can only show installed and placed.</p></div>';
   }
 
+  // ---------- AI cost (estimate from token counts) ----------
+  function aiCost() {
+    const wire = U.wire;
+    if (!wire) return '<p class="waiting">Loading…</p>';
+    const C = window.Costs, s = C.summarize(wire), m = C.money;
+    const max = Math.max(...s.series, 0.0001);
+    const bars = s.series.map((v, i) => '<rect class="' + (v ? "" : "z") + '" x="' + (i * 10 + 1) + '" y="' + (62 - Math.max(2, v / max * 60)).toFixed(1) + '" width="8" height="' + Math.max(2, v / max * 60).toFixed(1) + '" rx="2"/>').join("");
+    const per = s.providers.map((p) => '<div class="row"><span class="mark sm ' + p.id + '">' + (U.LOGO[p.id] || "") + '</span><div class="row-text"><span>' + esc(p.name) + "</span><small>" +
+      esc(p.model || "No model seen yet") + " · priced as " + esc(p.tier) + " ($" + p.price[0] + " / $" + p.price[1] + " per million tokens)</small></div>" +
+      '<div class="row-text row-right"><span class="num">' + m(p.today) + "</span><small>" + U.big(p.tokens) + " tokens</small></div></div>").join("");
+    return '<div class="page"><h1>AI cost</h1><p class="sub">What today’s Claude and Codex tokens would cost at public API prices.</p>' +
+      '<div class="cost-hero"><b>' + m(s.today) + "</b><small>today · " + U.big(s.tokensToday) + " tokens</small></div>" +
+      '<svg class="bars24" viewBox="0 0 240 64" preserveAspectRatio="none" aria-label="Cost per hour, last 24 hours">' + bars + "</svg>" +
+      '<div class="summary"><div><b>' + m(s.yesterday) + "</b><small>yesterday</small></div><div><b>" + (s.month === null ? "--" : m(s.month)) + "</b><small>month so far</small></div><div><b>" +
+      (s.pace === null ? "--" : m(s.pace)) + "</b><small>pace for the month</small></div></div>" +
+      '<div class="group-title">By provider</div><div class="group">' + per + "</div>" +
+      '<p class="hint">An estimate, not a bill: subscriptions (Pro, Max, Plus) are not billed per token. The price follows the model last seen; long-context surcharges are not counted. Prices checked 3 Nov 2026.</p></div>';
+  }
+
+  // ---------- Screen Time ----------
+  const dur = (secs) => { const h = Math.floor(secs / 3600), mn = Math.round(secs % 3600 / 60); return h ? h + " h " + String(mn).padStart(2, "0") + " min" : mn + " min"; };
+  function screenTime() {
+    const st = screen;
+    if (!st) return '<p class="waiting">Loading…</p>';
+    if (!st.enabled) return '<div class="page"><h1>Screen time</h1><p class="sub">Time per application, on this computer only.</p><div class="group">' +
+      '<div class="row"><div class="row-text"><span>Not counting yet</span><small>It starts when you press Start or when the Screen Time widget first runs. Only application names and seconds are kept, never window titles or what you type; idle time and the lock screen do not count.</small></div>' +
+      '<button type="button" class="btn" data-act="st-start">Start</button></div></div></div>';
+    const top = Math.max(1, ...st.apps.map((a) => a.secs));
+    // The app's own icon (read by the companion); its initial when the executable has none.
+    const appIcon = (a) => a.icon && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(a.icon) ? '<img class="app-ico" src="' + a.icon + '" alt="">' : '<span class="app-ico letter" aria-hidden="true">' + esc((a.name || "?").charAt(0).toUpperCase()) + "</span>";
+    const apps = st.apps.length ? st.apps.map((a) => '<div class="row">' + appIcon(a) + '<div class="row-text"><span>' + esc(a.name) + "</span><small>" + esc(a.cat) + '</small></div><div class="limit-right">' +
+      '<div class="bar"><i data-w="' + Math.round(a.secs / top * 100) + '"></i></div><b>' + dur(a.secs) + "</b></div></div>").join("") : '<div class="empty">Nothing counted yet today.</div>';
+    const wmax = Math.max(1, ...st.week.map((d) => d.secs));
+    const week = st.week.map((d, i) => '<rect class="' + (d.secs ? "" : "z") + '" x="' + (i * 34 + 2) + '" y="' + (62 - Math.max(2, d.secs / wmax * 60)).toFixed(1) + '" width="30" height="' + Math.max(2, d.secs / wmax * 60).toFixed(1) + '" rx="3"/>').join("");
+    return '<div class="page"><h1>Screen time</h1><p class="sub">Time per application, on this computer only.</p>' +
+      '<div class="cost-hero"><b>' + dur(st.todaySecs) + "</b><small>today · yesterday " + (st.yesterdaySecs ? dur(st.yesterdaySecs) : "no data") + "</small></div>" +
+      '<div class="group-title">Applications today</div><div class="group">' + apps + "</div>" +
+      '<div class="group-title">Last 7 days</div><div class="group chart-group"><svg class="bars24" viewBox="0 0 240 64" preserveAspectRatio="none" aria-label="Time per day, last 7 days">' + week + "</svg></div>" +
+      '<p class="hint">Kept in %LOCALAPPDATA%\\icue-edge-companion\\screentime.json, 35 days at most, never sent anywhere. To stop and erase: quit the companion and delete that file and screentime-icons.json (the app icons).</p></div>';
+  }
+  async function loadScreen(start) {
+    try { screen = await U.invoke(start ? "screentime_enable" : "screentime_state"); } catch (_) { screen = null; }
+    if (page === "screentime") render();
+  }
 
   function settings(v) {
     const i = info || {};
@@ -193,7 +263,8 @@
       '<div class="row"><div class="row-text"><span>Start with Windows</span><small>iCUE Edge Companion opens in the notification area</small></div>' + sw(i.autostart, "autostart", "Start with Windows") + "</div></div>" +
       '<div class="group-title">Collection</div><div class="group">' +
       '<div class="row"><div class="row-text"><span>Collect data</span><small>Turn off to pause everything</small></div>' + sw(!v.paused, "collect", "Collect data") + "</div>" +
-      '<div class="row"><div class="row-text"><span>Refresh limits now</span><small>At most once every 30 seconds</small></div><button type="button" class="btn" data-act="refresh">Refresh</button></div></div>' +
+      '<div class="row"><div class="row-text"><span>Refresh limits now</span><small>At most once every 30 seconds</small></div><button type="button" class="btn" data-act="refresh">Refresh</button></div>' +
+      '<div class="row"><div class="row-text"><span>Renew the Claude sign-in</span><small>When Claude Code has not renewed it, the companion does and rewrites ~/.claude/.credentials.json</small></div>' + sw(i.renewClaudeToken, "renew", "Renew the Claude sign-in") + "</div></div>" +
       '<div class="group-title">Data</div><div class="group">' +
       '<div class="row"><div class="row-text"><span>Stored history</span><small>90 days, on this computer only. Nothing is sent elsewhere.</small></div></div>' +
       '<div class="row"><div class="row-text"><span>Clear history</span><small>Ongoing sessions will not be counted again</small></div><button type="button" class="btn danger" data-act="clear">Clear…</button></div></div>' +
@@ -287,9 +358,14 @@
     if (!v) html = '<p class="waiting">' + esc(U.link.message || "Loading…") + "</p>";
     else if (page === "claude" || page === "codex") html = providerPage(v[page]);
     else if (page === "widgets") html = widgets();
+    else if (page === "aicost") html = aiCost();
+    else if (page === "screentime") html = screenTime();
     else if (page === "spotify") html = spotifyPage(sp);
     else if (page === "settings") html = settings(v);
     else html = overview(v);
+    // Where you are, one click from the Overview.
+    if (page !== "overview" && html.startsWith('<div class="page">'))
+      html = '<div class="page"><p class="crumb"><button type="button" data-page="overview">Overview</button><span aria-hidden="true">›</span><span>' + TITLES[page] + "</span></p>" + html.slice(18);
     // Re-render only on change so scrolling, focus and open sections stay put.
     if (html !== lastHtml) {
       const focused = document.activeElement && content.contains(document.activeElement) ? document.activeElement.dataset.act || document.activeElement.dataset.go : null;
@@ -376,7 +452,13 @@
     render();
   }
 
-  function go(next) {
+  function go(next, how) {
+    if (how === "back") { if (!hist.back.length) return; hist.fwd.push(page); next = hist.back.pop(); }
+    else if (how === "fwd") { if (!hist.fwd.length) return; hist.back.push(page); next = hist.fwd.pop(); }
+    else if (!TITLES[next]) return;
+    else if (next !== page) { hist.back.push(page); hist.fwd.length = 0; if (hist.back.length > 50) hist.back.shift(); }
+    document.getElementById("navBack").disabled = !hist.back.length;
+    document.getElementById("navFwd").disabled = !hist.fwd.length;
     page = next;
     document.querySelectorAll(".nav").forEach((n) => n.setAttribute("aria-current", n.dataset.page === page ? "page" : "false"));
     lastHtml = "";
@@ -386,6 +468,7 @@
     content.scrollTop = 0;
     if (page === "widgets" || page === "settings") loadInfo();
     if (page === "spotify") loadSpotify();
+    if (page === "screentime") loadScreen();
     if (page === "overview") { loadMedia(); loadInfo(); }
   }
 
@@ -405,6 +488,8 @@
       const w = window.__TAURI__.window.getCurrentWindow();
       return win.dataset.win === "minimize" ? w.minimize() : win.dataset.win === "maximize" ? w.toggleMaximize() : w.close();
     }
+    if (e.target.closest("#navBack")) return go(null, "back");
+    if (e.target.closest("#navFwd")) return go(null, "fwd");
     const nav = e.target.closest("[data-page]"); if (nav) return go(nav.dataset.page);
     const to = e.target.closest("[data-go]"); if (to) return go(to.dataset.go);
     if (e.target.closest("#refresh")) {
@@ -425,6 +510,9 @@
       case "autostart":
         await U.invoke("set_autostart", { enabled: act.getAttribute("aria-checked") !== "true" });
         return loadInfo();
+      case "renew":
+        await U.invoke("set_renew_claude_token", { enabled: act.getAttribute("aria-checked") !== "true" });
+        return loadInfo();
       case "collect":
         return U.invoke("set_paused", { paused: act.getAttribute("aria-checked") === "true" });
       case "refresh": return flash(act, (await U.refresh()) ? "Requested" : "In 30 s");
@@ -432,6 +520,14 @@
         if (!confirm("Clear usage history? Today's totals restart from zero; nothing is counted again.")) return;
         await U.invoke("clear_history");
         return flash(act, "Cleared");
+      case "wfilter": widgetFilter = act.dataset.f; return render();
+      case "np": {
+        const s = media && media.session;
+        if (!s) return;
+        try { await U.invoke("media_command", { body: { cmd: act.dataset.cmd, sessionId: s.id, rev: s.rev } }); } catch (_) { flash(act, "!"); }
+        return setTimeout(loadMedia, 350);
+      }
+      case "st-start": return loadScreen(true);
       case "link":
         try { await U.invoke("open_link", { link: act.dataset.link }); } catch (_) { flash(act, "Unavailable"); }
         return;
@@ -452,6 +548,12 @@
         return loadSpotify();
     }
   });
+  // Back and forward: Alt+arrows, and the mouse's side buttons.
+  document.addEventListener("keydown", (e) => {
+    if (e.altKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { e.preventDefault(); go(null, e.key === "ArrowLeft" ? "back" : "fwd"); }
+  });
+  document.addEventListener("mouseup", (e) => { if (e.button === 3 || e.button === 4) { e.preventDefault(); go(null, e.button === 3 ? "back" : "fwd"); } });
+
   // Typing a Client ID only toggles the button: the page is not re-rendered under the caret.
   content.addEventListener("input", (e) => {
     if (e.target.id !== "sp-client-id") return;
@@ -476,5 +578,6 @@
   // Connected widget count and autostart can change outside this window.
   setInterval(() => { if (page === "widgets" || page === "settings" || page === "overview") loadInfo(); }, 5000);
   setInterval(() => { if (page === "overview") loadMedia(); }, 2000);
+  setInterval(() => { if (page === "screentime") loadScreen(); }, 15000);
   loadMedia();
 })();

@@ -81,9 +81,109 @@ fn parse_line(line: &str) -> Option<Usage> {
     })
 }
 
+/// One tool call from a Claude Code log line, reduced to what the Agent Activity widget shows: the tool,
+/// and a short target (a file's name, the command's own description), never the prompt or file contents.
+#[derive(Debug, PartialEq)]
+pub struct Activity {
+    pub at: u64,
+    pub tool: String,
+    pub target: String,
+}
+
+pub fn parse_activity(line: &str) -> Vec<Activity> {
+    if !line.contains("\"tool_use\"") || !line.contains("\"assistant\"") {
+        return Vec::new();
+    }
+    let Ok(v) = serde_json::from_str::<Value>(line) else { return Vec::new() };
+    if v.get("type").and_then(Value::as_str) != Some("assistant") || v.get("isSidechain").and_then(Value::as_bool) == Some(true) {
+        return Vec::new();
+    }
+    let at = v.get("timestamp").and_then(Value::as_str).and_then(parse_iso_ms).unwrap_or(0);
+    let short = |s: &str| -> String { s.chars().take(60).collect() };
+    let base = |p: &str| short(p.rsplit(['/', '\\']).next().unwrap_or(p));
+    v.pointer("/message/content")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter(|c| c.get("type").and_then(Value::as_str) == Some("tool_use"))
+        .filter_map(|c| {
+            let tool = c.get("name").and_then(Value::as_str)?.to_string();
+            let input = c.get("input").cloned().unwrap_or(Value::Null);
+            let s = |k: &str| input.get(k).and_then(Value::as_str);
+            let target = match tool.as_str() {
+                "Read" | "Edit" | "Write" | "MultiEdit" | "NotebookEdit" => s("file_path").or(s("notebook_path")).map(base),
+                "Bash" | "PowerShell" | "Task" | "Agent" => s("description").map(short),
+                "WebFetch" => s("url").and_then(|u| u.split('/').nth(2)).map(short),
+                "Skill" => s("skill").map(short),
+                "Glob" | "Grep" => s("path").map(base),
+                _ => None,
+            }
+            .unwrap_or_default();
+            Some(Activity { at, tool, target })
+        })
+        .collect()
+}
+
+/// What the tool is doing, in a few words.
+pub fn verb(tool: &str) -> String {
+    match tool {
+        "Read" => "Reading".into(),
+        "Edit" | "Write" | "MultiEdit" | "NotebookEdit" => "Editing".into(),
+        "Bash" | "PowerShell" => "Running".into(),
+        "Grep" | "Glob" => "Searching".into(),
+        "WebFetch" | "WebSearch" => "Browsing".into(),
+        "Task" | "Agent" => "Delegating".into(),
+        "TodoWrite" => "Planning".into(),
+        "Skill" => "Using a skill".into(),
+        t if t.starts_with("mcp__") => "Using a connector".into(),
+        t => format!("Using {t}"),
+    }
+}
+
+fn apply_activity(shared: &Shared, acts: Vec<Activity>) {
+    if acts.is_empty() {
+        return;
+    }
+    update(shared, |st| {
+        for a in acts {
+            st.claude.activity.push_back((a.at, a.tool, a.target));
+        }
+        while st.claude.activity.len() > 300 {
+            st.claude.activity.pop_front();
+        }
+    });
+}
+
+/// The `agent/1` snapshot for the Agent Activity widget.
+pub fn agent_snapshot(st: &crate::usage::store::Store, now: u64) -> Value {
+    let rt = &st.claude;
+    let midnight = now - now % DAY; // UTC day start: good enough for a "today" counter
+    let last = rt.activity.back();
+    let session = st.saved.claude.sessions.values().filter(|s| s.client != "SDK").max_by_key(|s| s.last_event);
+    let active = session.is_some_and(|s| s.last_event + 2 * MIN > now);
+    let tokens5: u64 = rt.recent_tokens.iter().filter(|(t, _)| *t + 5 * MIN > now).map(|(_, n)| n).sum();
+    serde_json::json!({
+        "schema": "agent/1",
+        "provider": "claude",
+        "name": "Claude Code",
+        "detected": rt.detected,
+        "active": active,
+        "since": session.filter(|_| active).map(|s| s.started),
+        "lastEventAt": session.map(|s| s.last_event),
+        "model": session.map(|s| s.model.clone()),
+        "step": last.filter(|(t, ..)| t + 10 * MIN > now).map(|(t, tool, target)| serde_json::json!({ "at": t, "tool": tool, "verb": verb(tool), "target": target })),
+        "recent": rt.activity.iter().rev().filter(|(t, ..)| t + 30 * MIN > now).take(10).map(|(t, tool, target)| serde_json::json!({ "at": t, "tool": tool, "target": target })).collect::<Vec<_>>(),
+        "toolsToday": rt.activity.iter().filter(|(t, ..)| *t >= midnight).count(),
+        "tokensPerMin": tokens5 / 5,
+    })
+}
+
 fn apply(shared: &Shared, path_key: &str, usages: Vec<Usage>, offset: u64) {
     update(shared, |st| {
         let now = now_ms();
+        while st.claude.recent_tokens.front().is_some_and(|(t, _)| t + 15 * MIN < now) {
+            st.claude.recent_tokens.pop_front();
+        }
         let salt = st.saved.salt.clone();
         let file = st.saved.claude.files.entry(path_key.to_string()).or_default();
         file.offset = offset;
@@ -95,6 +195,9 @@ fn apply(shared: &Shared, path_key: &str, usages: Vec<Usage>, offset: u64) {
             counted.1 = now;
             if !growth.is_zero() {
                 st.saved.claude.hours.entry(hour_of(u.ts)).or_default().add(&growth);
+                if u.ts + 15 * MIN > now {
+                    st.claude.recent_tokens.push_back((u.ts, growth.input + growth.output + growth.cache_read + growth.cache_write));
+                }
             }
             if u.session.is_empty() {
                 continue;
@@ -196,6 +299,7 @@ pub fn run(shared: Shared) {
                 match tail.read_lines() {
                     Ok(lines) if !lines.is_empty() => {
                         let usages = lines.iter().filter_map(|l| parse_line(l)).collect();
+                        apply_activity(&shared, lines.iter().flat_map(|l| parse_activity(l)).filter(|a| a.at + DAY > now).collect());
                         drop(lines);
                         apply(&shared, key, usages, tail.offset);
                     }
@@ -225,23 +329,79 @@ pub fn run(shared: Shared) {
 
 enum FetchError {
     NoToken(&'static str),
+    Expired,
+    RenewFailed,
     Denied,
     RateLimited(u64),
     Network,
     Parse,
 }
 
-fn read_oauth_access_token() -> Result<String, FetchError> {
-    let raw = read_limited(std::fs::File::open(claude_dir().join(".credentials.json")).map_err(|_| FetchError::NoToken("Claude token not found"))?, 1024 * 1024)
+fn credentials_path() -> PathBuf {
+    claude_dir().join(".credentials.json")
+}
+
+fn read_credentials() -> Result<Value, FetchError> {
+    let raw = read_limited(std::fs::File::open(credentials_path()).map_err(|_| FetchError::NoToken("Claude token not found"))?, 1024 * 1024)
         .map_err(|_| FetchError::NoToken("Credentials file unreadable"))?;
     let raw = std::str::from_utf8(&raw).map_err(|_| FetchError::NoToken("Credentials file unreadable"))?;
-    let value: Value = serde_json::from_str(raw.trim_start_matches('\u{feff}')).map_err(|_| FetchError::NoToken("Credentials file unreadable"))?;
+    serde_json::from_str(raw.trim_start_matches('\u{feff}')).map_err(|_| FetchError::NoToken("Credentials file unreadable"))
+}
+
+fn read_oauth_access_token() -> Result<String, FetchError> {
+    let value = read_credentials()?;
     let oauth = value.get("claudeAiOauth").ok_or(FetchError::NoToken("No Claude Code sign-in"))?;
     let token = oauth.get("accessToken").and_then(Value::as_str).ok_or(FetchError::NoToken("No Claude Code sign-in"))?;
     if oauth.get("expiresAt").and_then(Value::as_u64).is_some_and(|exp| exp < now_ms()) {
-        return Err(FetchError::NoToken("Token expired: use Claude Code to renew it"));
+        return Err(FetchError::Expired);
     }
     Ok(token.to_string())
+}
+
+// Claude Code's own OAuth client and token endpoint (as in claude-rpc): the token belongs to it.
+const OAUTH_TOKEN_URL: &str = "https://platform.claude.com/v1/oauth/token";
+const OAUTH_CLIENT_ID: &str = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
+
+/// Claude Code renews its ~8 h token only while the CLI runs, so a day in Desktop leaves it expired.
+/// Renews it the way Claude Code does and writes it back: a used refresh token stops working,
+/// so Claude Code must get the new one. Only called once the token has expired or was refused.
+fn renew_token() -> Result<String, FetchError> {
+    let oauth = read_credentials()?.get("claudeAiOauth").cloned().ok_or(FetchError::NoToken("No Claude Code sign-in"))?;
+    let used = oauth.get("refreshToken").and_then(Value::as_str).ok_or(FetchError::NoToken("No Claude Code sign-in"))?.to_string();
+    let mut body = serde_json::json!({ "grant_type": "refresh_token", "refresh_token": used, "client_id": OAUTH_CLIENT_ID });
+    let scopes: Vec<&str> = oauth.get("scopes").and_then(Value::as_array).into_iter().flatten().filter_map(Value::as_str).collect();
+    if !scopes.is_empty() {
+        body["scope"] = scopes.join(" ").into();
+    }
+    let response = match ureq::post(OAUTH_TOKEN_URL).timeout(Duration::from_secs(10)).set("User-Agent", "icue-edge-companion").send_json(body) {
+        Ok(r) => r,
+        Err(ureq::Error::Status(429, _)) => return Err(FetchError::RateLimited(10 * MIN)),
+        Err(ureq::Error::Status(..)) => return Err(FetchError::RenewFailed),
+        Err(_) => return Err(FetchError::Network),
+    };
+    let response: Value = serde_json::from_slice(&read_limited(response.into_reader(), 64 * 1024).map_err(|_| FetchError::RenewFailed)?).map_err(|_| FetchError::RenewFailed)?;
+    // Re-read right before writing: Claude Code may have renewed it meanwhile.
+    let mut credentials = read_credentials()?;
+    let token = apply_renewed(&mut credentials, &response, &used, now_ms()).ok_or(FetchError::RenewFailed)?;
+    let bytes = serde_json::to_vec(&credentials).map_err(|_| FetchError::RenewFailed)?;
+    crate::util::atomic_write(&credentials_path(), &bytes).map_err(|_| FetchError::RenewFailed)?;
+    Ok(token)
+}
+
+/// Stores a renewal in the credentials, keeping every other field.
+/// Skipped when the stored refresh token changed since the request was sent.
+fn apply_renewed(credentials: &mut Value, response: &Value, used: &str, now: u64) -> Option<String> {
+    let access = response.get("access_token")?.as_str()?;
+    let expires_in = response.get("expires_in")?.as_u64()?;
+    let oauth = credentials.get_mut("claudeAiOauth")?.as_object_mut()?;
+    if oauth.get("refreshToken").and_then(Value::as_str) != Some(used) {
+        return None;
+    }
+    let refresh = response.get("refresh_token").and_then(Value::as_str).unwrap_or(used);
+    oauth.insert("accessToken".into(), access.into());
+    oauth.insert("refreshToken".into(), refresh.into());
+    oauth.insert("expiresAt".into(), (now + expires_in * 1000).into());
+    Some(access.to_string())
 }
 
 fn percent(bucket: &Value) -> Option<f64> {
@@ -310,14 +470,24 @@ pub fn parse_usage(body: &Value) -> (Vec<Quota>, Option<Value>) {
     (quotas, credits)
 }
 
-fn fetch() -> Result<(Vec<Quota>, Option<Value>), FetchError> {
-    let token = read_oauth_access_token()?;
-    let response = ureq::get(OAUTH_USAGE_URL)
-        .timeout(Duration::from_secs(8))
-        .set("Authorization", &format!("Bearer {token}"))
-        .set("anthropic-beta", OAUTH_USAGE_BETA)
-        .set("User-Agent", "icue-edge-companion")
-        .call();
+fn fetch(renew: bool) -> Result<(Vec<Quota>, Option<Value>), FetchError> {
+    let token = match read_oauth_access_token() {
+        Err(FetchError::Expired) if renew => renew_token()?,
+        other => other?,
+    };
+    let call = |token: &str| {
+        ureq::get(OAUTH_USAGE_URL)
+            .timeout(Duration::from_secs(8))
+            .set("Authorization", &format!("Bearer {token}"))
+            .set("anthropic-beta", OAUTH_USAGE_BETA)
+            .set("User-Agent", "icue-edge-companion")
+            .call()
+    };
+    let response = match call(&token) {
+        // A token revoked before its expiry: renew once, then retry.
+        Err(ureq::Error::Status(401, _)) if renew => call(&renew_token()?),
+        other => other,
+    };
     let body = match response {
         Ok(r) => String::from_utf8(read_limited(r.into_reader(), 2 * 1024 * 1024).map_err(|_| FetchError::Parse)?).map_err(|_| FetchError::Parse)?,
         Err(ureq::Error::Status(429, r)) => {
@@ -340,7 +510,7 @@ pub fn run_quota(shared: Shared) {
     loop {
         std::thread::sleep(Duration::from_secs(1));
         let now = now_ms();
-        let due = {
+        let (due, renew) = {
             let mut st = lock(&shared);
             let active = st.saved.claude.sessions.values().any(|s| s.last_event + ACTIVE_MS > now);
             let forced = std::mem::take(&mut st.force_refresh_claude) && st.claude.quota_backoff == 0;
@@ -349,12 +519,12 @@ pub fn run_quota(shared: Shared) {
                 st.claude.next_quota_try = now + if active { MIN } else { 10 * MIN };
                 st.claude.refreshing = true;
             }
-            due
+            (due, st.saved.renew_claude_token)
         };
         if !due {
             continue;
         }
-        let result = fetch();
+        let result = fetch(renew);
         update(&shared, |st| {
             st.claude.refreshing = false;
             let now = now_ms();
@@ -375,6 +545,8 @@ pub fn run_quota(shared: Shared) {
                 Err(e) => {
                     let (state, reason, wait) = match e {
                         FetchError::NoToken(msg) => ("error", format!("Quotas: {msg}"), 5 * MIN),
+                        FetchError::Expired => ("error", "Claude sign-in expired: run `claude` in a terminal once, or turn on sign-in renewal in Settings".into(), 5 * MIN),
+                        FetchError::RenewFailed => ("error", "Could not renew the Claude sign-in: run `claude` in a terminal once".into(), 30 * MIN),
                         FetchError::Denied => ("error", "Quotas: access denied (401/403). Sign in again in Claude Code.".into(), 15 * MIN),
                         FetchError::RateLimited(ms) => ("stale", format!("Rate limited by the source: retrying in {} min", ms.div_ceil(MIN)), ms),
                         FetchError::Network => ("stale", "Quotas: source unreachable".into(), 2 * MIN),
@@ -425,6 +597,18 @@ mod tests {
     }
 
     #[test]
+    fn tool_calls_keep_only_a_short_target() {
+        let line = r#"{"type":"assistant","isSidechain":false,"timestamp":"2026-11-03T10:00:00Z","message":{"content":[{"type":"text","text":"secret plan"},{"type":"tool_use","name":"Edit","input":{"file_path":"C:\\Users\\me\\project\\widget.css","old_string":"secret","new_string":"x"}},{"type":"tool_use","name":"Bash","input":{"command":"curl -H 'token: abc' x","description":"Run the tests"}}],"usage":{}}}"#;
+        let acts = parse_activity(line);
+        assert_eq!(acts.len(), 2);
+        assert_eq!((acts[0].tool.as_str(), acts[0].target.as_str()), ("Edit", "widget.css"));
+        assert_eq!((acts[1].tool.as_str(), acts[1].target.as_str()), ("Bash", "Run the tests"));
+        let all = format!("{acts:?}");
+        assert!(!all.contains("secret") && !all.contains("token") && !all.contains("Users"));
+        assert_eq!(verb("Edit"), "Editing");
+    }
+
+    #[test]
     fn model_change_is_an_event() {
         let shared = store::tests::load_for_test();
         feed(&shared, &[line("m1", "r1", 1, 1, 0, 0, "2026-09-27T10:00:00Z", "sonnet"), line("m2", "r2", 1, 1, 0, 0, "2026-09-27T10:05:00Z", "opus")]);
@@ -439,6 +623,25 @@ mod tests {
         assert_eq!(labels, ["5-hour limit", "Weekly limit · all models", "Weekly limit · Fable"]);
         assert_eq!(q[0].used, 42.0);
         assert!(credits.is_none());
+    }
+
+    #[test]
+    fn renewal_keeps_other_fields_and_skips_a_token_changed_meanwhile() {
+        let stored = serde_json::json!({ "claudeAiOauth": { "accessToken": "old", "refreshToken": "r1", "expiresAt": 1, "scopes": ["user:inference"], "subscriptionType": "max" }, "other": true });
+        let response = serde_json::json!({ "access_token": "new", "refresh_token": "r2", "expires_in": 28800 });
+        let mut c = stored.clone();
+        assert_eq!(apply_renewed(&mut c, &response, "r1", 1000).as_deref(), Some("new"));
+        let o = &c["claudeAiOauth"];
+        assert_eq!((o["accessToken"].as_str(), o["refreshToken"].as_str(), o["expiresAt"].as_u64()), (Some("new"), Some("r2"), Some(1000 + 28_800_000)));
+        assert_eq!((o["subscriptionType"].as_str(), c["other"].as_bool()), (Some("max"), Some(true)));
+        // Claude Code renewed it first: its newer token is kept.
+        let mut c = stored.clone();
+        assert!(apply_renewed(&mut c, &response, "r0", 1000).is_none());
+        assert_eq!(c, stored);
+        // No new refresh token in the response: the used one stays.
+        let mut c = stored;
+        apply_renewed(&mut c, &serde_json::json!({ "access_token": "new", "expires_in": 60 }), "r1", 0);
+        assert_eq!(c["claudeAiOauth"]["refreshToken"].as_str(), Some("r1"));
     }
 
     #[test]

@@ -20,7 +20,7 @@ cargo build --release
 
 The executable is `companion\target\release\icue-edge-companion.exe`. Run it; an icon appears in the notification area.
 
-To change the icon, edit `SHAPES` in `companion/icons/make_icon.py` and run it: it writes `icon.ico`, `icon.svg` and `icon-256.png`. Then delete `companion\target\release\build\icue-edge-companion-*` before building, otherwise Cargo keeps the old icon in the executable.
+To change the icon, edit `MASTER` / `SMALL` in `companion/icons/make_icon.py` and run it: it writes `icon.ico` (16 and 32 px use the thicker `SMALL` cut), `icon.svg`, `icon-256.png` and `mark.svg` (the bare mark in `currentColor`, copied into `web/index.html` and `web/tray.js`). Then delete `companion\target\release\build\icue-edge-companion-*` before building, otherwise Cargo keeps the old icon in the executable.
 
 To produce an NSIS installer instead, run `cargo tauri build` from `companion` (requires `tauri-cli`, not installed by this repo). TODO: not verified.
 
@@ -38,7 +38,10 @@ Window pages:
 |---|---|
 | `Overview` | AI usage (one card per provider: closest limit, other limits, tokens today, conversation size), Media (Now Playing with artwork and progress, Spotify connection and track), Screens (XENEON EDGE widgets connected, pump relay, local server), and a "How to read the AI figures" section. |
 | `Claude` / `Codex` | All reported limits with reset times, token breakdown, conversation size, recent sessions, events, data sources. |
-| `Widgets` | Each of our widgets on the XENEON EDGE and the pump LCD: installed, placed, connected. Read-only scan of iCUE's files (`CUE5\html_widgets`, `CUE5\dashlcd\storage` for the XENEON EDGE layout, `CUE5\profiles\*.cueprofiledata` for pump screens) plus the live streams per feed; installation steps. |
+| `AI cost` | Estimated cost of today's Claude and Codex tokens at public API prices (the model last seen picks the price), per hour over 24 h, yesterday, month so far and pace. Same rules as the AI Cost widget; an estimate, not a bill. |
+| `Screen time` | Time per application today and per day over the last week. Counting starts with the page's Start button or the Screen Time widget's first request; see Screen Time below. |
+| `Widgets` | All 18 widgets with their icon, on the XENEON EDGE and the pump LCD: installed, placed, and connected for those that use the companion (a stream, or a poll in the last 90 s for AI Cost and Screen Time); a summary, filters, and a link to the packages. Read-only scan of iCUE's files (`CUE5\html_widgets`, `CUE5\dashlcd\storage` for the XENEON EDGE layout, `CUE5\profiles\*.cueprofiledata` for pump screens) plus the live streams per feed; installation steps. |
+| Navigation | Back and forward arrows above the page (also Alt+Left / Alt+Right and the mouse's side buttons), and the path to the Overview above each page title. |
 | `Settings` | Theme (`OLED`, default, true black; `Dark`; `Light`; remembered, also applied to the tray card), start with Windows (off by default, `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` value `iCUE Edge Companion`), pause collection, refresh limits, clear usage history. |
 
 Window with demo usage figures (the track is real):
@@ -76,6 +79,10 @@ iCUE widget `Windows Media Pump` (source folder `icue-edge-widgets/widgets/pump/
 
 Without the companion, the `Now Playing` and `Windows Media Pump` widgets fall back after 8 s to the iCUE Media plugin: title and artist only, labelled `Native mode`. The simulated preview is `icue-edge-widgets/previews/media-player-preview/index.html`; it never reaches the companion.
 
+## Screen Time
+
+The `Screen Time` widget (icue-edge-widgets `screen-time`) needs a companion module that records which application is in front. It keeps the executable's name and seconds per day, and the application's icon as a small image (`screentime-icons.json`, for the window's Screen time page), never a window title, a path or anything typed; time with no keyboard or mouse input for two minutes and the lock screen do not count. Nothing is collected until the widget first asks for its data (`GET /api/screentime/state`). The totals (35 days at most) are in `%LOCALAPPDATA%\icue-edge-companion\screentime.json` and never leave the PC. To stop and erase, quit the companion and delete that file and `screentime-icons.json`.
+
 ## Architecture
 
 - `companion/src/usage/`: the usage feature (Claude and Codex collectors, open apps from the process list in `apps.rs`, state, snapshot `ai-usage/1`). Later features get their own module next to it.
@@ -91,6 +98,11 @@ Without the companion, the `Now Playing` and `Windows Media Pump` widgets fall b
 |---|---|---|
 | Claude tokens, model, client, context estimate | `~/.claude/projects/**/*.jsonl`, `message.usage` of `assistant` lines | Incremental, 1 s for files changed in the last 10 min, 30 s otherwise |
 | Claude quotas and extra usage | `GET https://api.anthropic.com/api/oauth/usage` with the token from `~/.claude/.credentials.json` (undocumented interface) | 60 s while active, 10 min idle, `Retry-After` on 429 |
+| Stocks widget | `GET https://query1.finance.yahoo.com/v8/finance/chart/<symbol>?range=1d&interval=5m` (unofficial, no key) for the symbols the widget sets, at most 8, each at most once a minute; a failure keeps the last quote marked stale | `GET /api/stocks/state?s=…`; symbols checked against `A-Z 0-9 . ^ = -` |
+| Audio Mixer widget | Windows audio sessions of the default output (app name, volume, mute, peak level) and the output device's name and volume; the widget can set volume and mute per app | `GET /api/mixer/state`, `POST /api/mixer/command`; no network |
+| Agent Activity widget | Claude Code's tool calls from the logs already followed: tool name and a short target (a file's name, the command's own description), never prompts, file contents or full paths | `GET /api/agent/state`; no network |
+| Control Deck widget | A fixed list of actions (microphone and sound mute, play / pause, next, screenshot, lock, Calculator, File Explorer, Task Manager, Night light settings); the widget sends an action id, never a command or path | `GET /api/deck/state`, `POST /api/deck/run`; no network |
+| Claude sign-in renewal (off by default, Settings → Collection) | `POST https://platform.claude.com/v1/oauth/token` with Claude Code's refresh token, only once the token has expired or was refused; the new tokens are written back to `~/.claude/.credentials.json`, other fields kept (undocumented interface) | at most once per limits attempt, 30 min after a failure |
 | Codex tokens, model, client, context | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`, `token_count` events | Incremental, same schedule |
 | Codex quotas | `rate_limits` in the same events; `codex app-server` `account/rateLimits/read` only when no local value is under 5 min old | 60 s active, 15 min idle, exponential backoff |
 | Spotify playback, devices, account, up next | Spotify Web API `/me/player`, `/me/player/devices`, `/me`, `/me/player/queue` (60 s) with your app's token | 3 s while playing, 5 s paused, 10 s idle; at most 20 calls per 30 s; `Retry-After` on 429, kept across restarts |

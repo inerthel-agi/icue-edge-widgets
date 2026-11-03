@@ -179,7 +179,7 @@
     // ---------- connection ----------
     const link = { state: "connecting", message: "" };
     let onUpdate = () => {};
-    let latest = null;
+    let latest = null, latestWire = null;
     let generation = 0;
 
     function setLink(state, message) {
@@ -190,6 +190,7 @@
     function receive(wire) {
         if (!wire || wire.schema !== "ai-usage/1") return setLink("error", "Unknown data version: update iCUE Edge Companion.");
         latest = toView(wire);
+        latestWire = wire;
         setLink("live");
     }
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -309,7 +310,7 @@
     }
 
     window.Usage = {
-        start, refresh, invoke, applyWidths, LOGO, limitBar, trend, forecast, contrast, get view() { return latest; }, link, TZ,
+        start, refresh, invoke, applyWidths, LOGO, limitBar, trend, forecast, contrast, get view() { return latest; }, get wire() { return latestWire; }, link, TZ,
         esc, big, dur, resetText, ago, level, tightest, nf,
     };
 })();

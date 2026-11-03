@@ -1,5 +1,6 @@
 //! Spotify Web API polling, artwork, LRCLIB lyrics and command execution.
-//! Polls /me/player every 3 s while playing, 5 s when paused, 10 s with nothing playing,
+//! Polls /me/player every 3 s while playing, 5 s when paused, 10 s with nothing playing; every 15 s / 30 s
+//! when the Spotify app is open on this PC, whose Windows session wakes the poller on each change,
 //! and waits on Retry-After when Spotify rate-limits.
 use super::{auth, lock, parse_lrc, publish, publish_if, Allowed, Art, Call, Device, Item, Line, Lyrics, Player, Status, Upcoming, HUB, QUEUE_LEN};
 use crate::util::{now_ms, read_limited, SEC};
@@ -235,11 +236,32 @@ fn fetch_art(rev: u64, url: String) {
 
 static LYRICS_CACHE: LazyLock<Mutex<HashMap<String, Lyrics>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
-fn lrclib(path: &str, params: &[(&str, String)]) -> Option<Value> {
+/// Ok(None) when LRCLIB answered without a match (404); Err when it could not be reached.
+fn lrclib(path: &str, params: &[(&str, String)]) -> Result<Option<Value>, ()> {
     let query = params.iter().map(|(k, v)| format!("{k}={}", auth::percent(v))).collect::<Vec<_>>().join("&");
-    let r = direct_get(&format!("{LRCLIB}/{path}?{query}")).ok()?;
-    let bytes = read_limited(r.into_reader(), MAX_LYRICS_BYTES as usize).ok()?;
-    serde_json::from_slice(&bytes).ok()
+    let r = match direct_get(&format!("{LRCLIB}/{path}?{query}")) {
+        Ok(r) => r,
+        Err(ureq::Error::Status(404, _)) => return Ok(None),
+        Err(_) => return Err(()),
+    };
+    let bytes = read_limited(r.into_reader(), MAX_LYRICS_BYTES as usize).map_err(|_| ())?;
+    Ok(serde_json::from_slice(&bytes).ok())
+}
+
+/// "Song (feat. X) - Remastered 2011" → "Song": the part LRCLIB entries usually share.
+fn clean_title(title: &str) -> String {
+    let mut t = title.split(" - ").next().unwrap_or(title).to_string();
+    while let Some(i) = t.rfind(|c| c == '(' || c == '[').filter(|&i| i > 0 && t.trim_end().ends_with([')', ']'])) {
+        t.truncate(i);
+        t = t.trim_end().to_string();
+    }
+    t.trim().to_string()
+}
+
+/// The synced result closest in length (within 5 s) from a search answer.
+fn closest(found: &Value, secs: u64) -> Option<Lyrics> {
+    let gap = |r: &&Value| (r["duration"].as_f64().unwrap_or(0.0) as i64 - secs as i64).abs();
+    found.as_array()?.iter().filter(|r| r["syncedLyrics"].is_string()).min_by_key(gap).filter(|r| gap(r) <= 5).and_then(lyrics_from)
 }
 
 fn lyrics_from(v: &Value) -> Option<Lyrics> {
@@ -252,18 +274,18 @@ fn lyrics_from(v: &Value) -> Option<Lyrics> {
 
 /// LRCLIB exact match first (title, artist, album, duration), then the closest synced search result.
 /// None when LRCLIB could not be reached: that answer is not cached, the next play asks again.
-fn find_lyrics(item: &Item) -> Option<Lyrics> {
-    find_lyrics_by(&item.title, item.artists.split(", ").next().unwrap_or(""), &item.album, item.duration_ms / 1000)
+fn find_lyrics(item: &Item, current: &dyn Fn() -> bool) -> Option<Lyrics> {
+    find_lyrics_by(&item.title, item.artists.split(", ").next().unwrap_or(""), &item.album, item.duration_ms / 1000, current)
 }
 
 /// Lyrics of a track played by any Windows player (Now Playing), cached by title, artist and length.
 /// Lyrics::None when LRCLIB has nothing or could not be reached (the latter is not cached).
-pub fn lyrics_for(title: &str, artist: &str, album: &str, secs: u64) -> Lyrics {
+pub fn lyrics_for(title: &str, artist: &str, album: &str, secs: u64, current: &dyn Fn() -> bool) -> Lyrics {
     let key = format!("media|{title}|{artist}|{secs}");
     if let Some(l) = LYRICS_CACHE.lock().unwrap_or_else(|e| e.into_inner()).get(&key) {
         return l.clone();
     }
-    let Some(found) = find_lyrics_by(title, artist, album, secs) else { return Lyrics::None };
+    let Some(found) = find_lyrics_by(title, artist, album, secs, current) else { return Lyrics::None };
     let mut cache = LYRICS_CACHE.lock().unwrap_or_else(|e| e.into_inner());
     if cache.len() >= 64 {
         cache.clear();
@@ -272,30 +294,127 @@ pub fn lyrics_for(title: &str, artist: &str, album: &str, secs: u64) -> Lyrics {
     found
 }
 
-fn find_lyrics_by(title: &str, artist: &str, album: &str, secs: u64) -> Option<Lyrics> {
-    let (title, artist) = (title.to_string(), artist.to_string());
-    let exact = lrclib("get", &[("track_name", title.clone()), ("artist_name", artist.clone()), ("album_name", album.to_string()), ("duration", secs.to_string())]);
-    if let Some(l) = exact.as_ref().and_then(lyrics_from) {
-        return Some(l);
+/// Exact match, then searches from strict to loose: title + artist, cleaned title + artist, free text.
+/// While LRCLIB cannot be reached (network, or its "server busy" 503) it is retried for about four
+/// minutes, as long as `current()` says the track is still the one playing; NetEase is still tried.
+/// None only when no source could be reached.
+fn find_lyrics_by(title: &str, artist: &str, album: &str, secs: u64, current: &dyn Fn() -> bool) -> Option<Lyrics> {
+    for wait in [0, 5, 15, 30, 60, 60, 60] {
+        std::thread::sleep(Duration::from_secs(wait));
+        if !current() {
+            return None;
+        }
+        if wait == 15 {
+            // LRCLIB down twice in a row: NetEase may still have it.
+            if let Some(original) = netease(title, artist, secs) {
+                return Some(original);
+            }
+        }
+        if let Ok(found) = lookup(title, artist, album, secs) {
+            // LRCLIB often has K-pop / J-pop only romanized: NetEase usually has the original script.
+            if wants_original_script(&found, title, artist) {
+                if let Some(original) = netease(title, artist, secs) {
+                    return Some(original);
+                }
+            }
+            return Some(found);
+        }
     }
-    let found = lrclib("search", &[("track_name", title), ("artist_name", artist)])?;
-    let best = found
-        .as_array()
-        .and_then(|a| {
-            a.iter()
-                .filter(|r| r["syncedLyrics"].is_string())
-                .min_by_key(|r| (r["duration"].as_f64().unwrap_or(0.0) as i64 - secs as i64).abs())
-                .filter(|r| (r["duration"].as_f64().unwrap_or(0.0) as i64 - secs as i64).abs() <= 5)
-                .and_then(lyrics_from)
-        })
-        .unwrap_or(Lyrics::None);
-    Some(best)
+    None
+}
+
+fn non_latin(s: &str) -> bool {
+    s.chars().any(|c| matches!(c as u32, 0x3040..=0x30FF | 0x3400..=0x9FFF | 0xAC00..=0xD7A3 | 0x1100..=0x11FF))
+}
+
+/// True when LRCLIB found nothing, or only Latin text for a track that is likely sung in Korean or
+/// Japanese: a non-Latin title or artist, or lyrics that read like romanization.
+/// ponytail: word-pattern heuristic; a song in English with many "eo"/"eu" words could trigger one extra lookup.
+fn wants_original_script(found: &Lyrics, title: &str, artist: &str) -> bool {
+    let lines = match found {
+        Lyrics::Ready(lines) => lines,
+        Lyrics::Instrumental => return false,
+        _ => return true,
+    };
+    if lines.iter().any(|l| non_latin(&l.text)) {
+        return false;
+    }
+    if non_latin(title) || non_latin(artist) {
+        return true;
+    }
+    let words: Vec<String> = lines.iter().flat_map(|l| l.text.split_whitespace().map(|w| w.to_lowercase())).collect();
+    if words.len() < 20 {
+        return false;
+    }
+    let share = |f: &dyn Fn(&str) -> bool| words.iter().filter(|w| f(w)).count() as f64 / words.len() as f64;
+    let korean = share(&|w| ["eo", "eu", "ae", "ui", "jj", "kk", "tt", "ss"].iter().any(|p| w.contains(p)) && !w.contains("ss "));
+    let japanese = share(&|w| matches!(w, "no" | "wa" | "ga" | "wo" | "ni" | "de" | "mo" | "kimi" | "boku" | "watashi" | "kokoro" | "yo" | "ne"));
+    korean > 0.18 || japanese > 0.12
+}
+
+/// NetEase Cloud Music (unofficial public interface): only the title and artist are sent.
+/// Keeps the result only if it is the same recording (artist, length within 3 s, not a live,
+/// cover or alternate version) and its lyrics are in a non-Latin script.
+fn netease(title: &str, artist: &str, secs: u64) -> Option<Lyrics> {
+    let get = |url: String| -> Option<Value> {
+        let r = direct_get(&url).ok()?;
+        serde_json::from_slice(&read_limited(r.into_reader(), MAX_LYRICS_BYTES as usize).ok()?).ok()
+    };
+    let q = auth::percent(&format!("{artist} {}", clean_title(title)));
+    let found = get(format!("https://music.163.com/api/search/get?s={q}&type=1&limit=20"))?;
+    let id = netease_pick(&found, title, artist, secs)?;
+    let lrc = get(format!("https://music.163.com/api/song/lyric?id={id}&lv=1"))?;
+    let lines: Vec<Line> = parse_lrc(lrc.pointer("/lrc/lyric")?.as_str()?).into_iter().filter(|l| !is_credit(&l.text)).collect();
+    (lines.iter().any(|l| non_latin(&l.text))).then(|| Lyrics::Ready(Arc::new(lines)))
+}
+
+fn netease_pick(found: &Value, title: &str, artist: &str, secs: u64) -> Option<u64> {
+    const VARIANTS: [&str; 10] = ["live", "ver", "remix", "cover", "inst", "acoustic", "sped", "slowed", "karaoke", "mr"];
+    let (want_title, want_artist) = (title.to_lowercase(), artist.to_lowercase());
+    let variant = |name: &str| {
+        let n = name.to_lowercase();
+        VARIANTS.iter().any(|v| n.split(|c: char| !c.is_alphanumeric()).any(|w| w == *v || (v.len() > 3 && w.starts_with(v))) && !want_title.contains(v))
+    };
+    let gap = |s: &Value| (s["duration"].as_u64().unwrap_or(0) as i64 / 1000 - secs as i64).abs();
+    found
+        .pointer("/result/songs")?
+        .as_array()?
+        .iter()
+        .filter(|s| s["artists"].as_array().is_some_and(|a| a.iter().any(|x| x["name"].as_str().is_some_and(|n| n.to_lowercase() == want_artist))))
+        .filter(|s| !variant(s["name"].as_str().unwrap_or("")) && gap(s) <= 3)
+        .min_by_key(|s| gap(s))
+        .and_then(|s| s["id"].as_u64())
+}
+
+/// NetEase puts credits first: "作词 : Teddy", "作曲 : …".
+fn is_credit(text: &str) -> bool {
+    text.split_once([':', '：']).is_some_and(|(k, _)| k.trim().chars().count() <= 6 && k.chars().any(|c| matches!(c as u32, 0x4E00..=0x9FFF)))
+}
+
+fn lookup(title: &str, artist: &str, album: &str, secs: u64) -> Result<Lyrics, ()> {
+    let (t, a) = (title.to_string(), artist.to_string());
+    let exact = lrclib("get", &[("track_name", t.clone()), ("artist_name", a.clone()), ("album_name", album.to_string()), ("duration", secs.to_string())])?;
+    if let Some(l) = exact.as_ref().and_then(lyrics_from) {
+        return Ok(l);
+    }
+    let clean = clean_title(title);
+    let mut searches = vec![vec![("track_name", t), ("artist_name", a.clone())]];
+    if clean != title && !clean.is_empty() {
+        searches.push(vec![("track_name", clean.clone()), ("artist_name", a.clone())]);
+    }
+    searches.push(vec![("q", format!("{clean} {a}"))]);
+    for params in searches {
+        if let Some(l) = lrclib("search", &params)?.as_ref().and_then(|f| closest(f, secs)) {
+            return Ok(l);
+        }
+    }
+    Ok(Lyrics::None)
 }
 
 fn fetch_lyrics(rev: u64, item: Item) {
     let cached = LYRICS_CACHE.lock().unwrap_or_else(|e| e.into_inner()).get(&item.key).cloned();
     let lyrics = cached.unwrap_or_else(|| {
-        let Some(l) = find_lyrics(&item) else { return Lyrics::None };
+        let Some(l) = find_lyrics(&item, &|| lock().rev == rev) else { return Lyrics::None };
         let mut cache = LYRICS_CACHE.lock().unwrap_or_else(|e| e.into_inner());
         // ponytail: whole cache cleared at 64 tracks; an LRU if re-fetches ever matter.
         if cache.len() >= 64 {
@@ -336,7 +455,7 @@ fn upcoming_from(v: &Value) -> Vec<Upcoming> {
 
 static QUEUE_GEN: AtomicU64 = AtomicU64::new(0);
 static QUEUE_AT: AtomicU64 = AtomicU64::new(0);
-const QUEUE_EVERY_MS: u64 = 60 * SEC;
+const QUEUE_EVERY_MS: u64 = 120 * SEC;
 const MAX_THUMB_BYTES: u64 = 1024 * 1024;
 
 fn fetch_queue() {
@@ -449,10 +568,15 @@ fn poll_once(last_devices: &mut u64) -> Duration {
                     st.player = player.clone();
                 }
                 publish_if(&mut st, changed || spawn.is_some());
-                let wait = match &player {
-                    Some(p) if p.playing => 3,
-                    Some(_) => 5,
-                    None => 10,
+                // With the Spotify app open on this PC, its Windows session wakes the poller on every change
+                // (spotify::set_local), so the Web API is only read now and then: far fewer calls, no ban.
+                let watched = st.local.is_some();
+                let wait = match (&player, watched) {
+                    (Some(p), false) if p.playing => 3,
+                    (Some(_), false) => 5,
+                    (None, false) => 10,
+                    (Some(p), true) if p.playing => 15,
+                    (_, true) => 30,
                 };
                 (spawn, Duration::from_secs(wait), reshuffled)
             };
@@ -507,6 +631,9 @@ pub fn run() {
 
 /// Runs a validated widget command, then asks the poller for a fresh reading.
 pub fn execute(call: &Call) -> Result<(), (u16, &'static str)> {
+    let volume = |v: u8| call_api("PUT", &format!("/me/player/volume?volume_percent={v}"), None);
+    // Muted so the tracks skipped over are not heard; if muting fails the skips still run.
+    let muted = call.muted_from.is_some_and(|_| volume(0).is_ok());
     let mut result = Ok(None);
     for n in 0..call.times.max(1) {
         if n > 0 {
@@ -516,6 +643,14 @@ pub fn execute(call: &Call) -> Result<(), (u16, &'static str)> {
         result = call_api(call.method, &call.path, call.body.as_deref());
         if result.is_err() {
             break;
+        }
+    }
+    if let (true, Some(v)) = (muted, call.muted_from) {
+        // Restored even when a skip failed: the player must never stay silent.
+        std::thread::sleep(Duration::from_millis(250));
+        if volume(v).is_err() {
+            std::thread::sleep(Duration::from_secs(1));
+            let _ = volume(v);
         }
     }
     let mut st = lock();
@@ -582,6 +717,47 @@ mod tests {
         assert!(!art_host_ok("https://i.scdn.co.evil.example/x"));
         assert!(!art_host_ok("https://evil.example?.scdn.co/x"));
         assert!(!art_host_ok("https://user@i.scdn.co/x"));
+    }
+
+    #[test]
+    fn netease_fallback_picks_the_original_recording_and_drops_credits() {
+        let line = |t: &str| Line { time_ms: 0, text: t.into() };
+        let romanized = Lyrics::Ready(Arc::new((0..6).map(|_| line("Neo mwonde jakku saenggakna jajonsim sanghae aega ta eolguri tteugeopgo")).collect()));
+        let english = Lyrics::Ready(Arc::new((0..6).map(|_| line("Baby come into me it's raining raining you can always come into me")).collect()));
+        assert!(wants_original_script(&romanized, "As If It's Your Last", "BLACKPINK"));
+        assert!(!wants_original_script(&english, "Umbrella", "Rihanna"));
+        assert!(wants_original_script(&english, "행복 (Happiness)", "Red Velvet"));
+        assert!(wants_original_script(&Lyrics::None, "Song", "Artist"));
+        assert!(!wants_original_script(&Lyrics::Instrumental, "Song", "Artist"));
+        let song = |id: u64, name: &str, artist: &str, s: u64| json!({ "id": id, "name": name, "artists": [{ "name": artist }], "duration": s * 1000 });
+        let found = json!({ "result": { "songs": [
+            song(1, "As If It's Your Last (마지막처럼) (Live)", "BLACKPINK", 213),
+            song(2, "AS IF IT'S YOUR LAST (Japanese Ver.)", "BLACKPINK", 212),
+            song(3, "마지막처럼 (Cover BLACKPINK)", "Blue.D", 213),
+            song(4, "마지막처럼", "BLACKPINK", 213),
+        ] } });
+        assert_eq!(netease_pick(&found, "As If It's Your Last", "BLACKPINK", 213), Some(4));
+        assert_eq!(netease_pick(&found, "As If It's Your Last", "BLACKPINK", 240), None);
+        assert!(is_credit("作词 : Teddy/BrotherSu"));
+        assert!(!is_credit("너 뭔데 자꾸 생각나"));
+        assert!(!is_credit("Baby: come here"));
+    }
+
+    #[test]
+    fn lyrics_search_cleanup_and_closest_length() {
+        assert_eq!(clean_title("Song (feat. X) - Remastered 2011"), "Song");
+        assert_eq!(clean_title("Song [Live] (Radio Edit)"), "Song");
+        assert_eq!(clean_title("(Untitled)"), "(Untitled)");
+        let found = json!([
+            { "duration": 191.9, "syncedLyrics": "[00:01.00] far" },
+            { "duration": 203.0, "syncedLyrics": "[00:01.00] near" },
+            { "duration": 202.0, "syncedLyrics": null, "plainLyrics": "plain" },
+        ]);
+        match closest(&found, 202) {
+            Some(Lyrics::Ready(l)) => assert_eq!(l[0].text, "near"),
+            other => panic!("unexpected {other:?}"),
+        }
+        assert!(closest(&found, 230).is_none());
     }
 
     #[test]

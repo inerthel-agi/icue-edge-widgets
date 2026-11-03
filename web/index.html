@@ -10,6 +10,10 @@
 </head>
 <body data-auth="tauri">
 <div class="dragbar" data-tauri-drag-region></div>
+<div class="histnav" aria-label="History">
+  <button type="button" id="navBack" aria-label="Back" title="Back (Alt+Left)" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button type="button" id="navFwd" aria-label="Forward" title="Forward (Alt+Right)" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+</div>
 <div class="winbtns">
   <button type="button" data-win="minimize" aria-label="Minimize"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 5h8" stroke="currentColor"/></svg></button>
   <button type="button" data-win="maximize" aria-label="Maximize"><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor"/></svg></button>
@@ -18,16 +22,19 @@
 <div class="layout">
   <aside class="side">
     <span class="nav-ind" id="navInd" aria-hidden="true"></span>
-    <div class="brand" data-tauri-drag-region><strong>iCUE Edge Companion</strong><span class="status" id="side-status">Connecting…</span></div>
+    <div class="brand" data-tauri-drag-region><strong><svg class="mark-logo" aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><g transform="translate(-6.0 0)"><path d="M150.9 178.9A72 72 0 1 1 170.8 141.0L145.2 136.3A46 46 0 1 0 132.5 160.5Z"/><rect x="48" y="115.0" width="192" height="26" rx="13.0"/></g></svg>iCUE Edge Companion</strong><span class="status" id="side-status">Connecting…</span></div>
     <button type="button" class="nav" data-page="overview" aria-current="page">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
       Overview</button>
     <div class="nav-label">AI usage</div>
     <button type="button" class="nav" data-page="claude"><span class="mark sm claude" data-logo="claude"></span>Claude<span class="dot" id="dot-claude"></span></button>
     <button type="button" class="nav" data-page="codex"><span class="mark sm codex" data-logo="codex"></span>Codex<span class="dot" id="dot-codex"></span></button>
+    <button type="button" class="nav" data-page="aicost"><span class="wico sm" data-icon="ai-cost"><i></i></span>AI cost</button>
+    <div class="nav-label">Activity</div>
+    <button type="button" class="nav" data-page="screentime"><span class="wico sm" data-icon="screen-time"><i></i></span>Screen time</button>
     <div class="nav-label">Media</div>
     <button type="button" class="nav" data-page="spotify"><span class="mark sm spotify" data-logo="spotify"></span>Spotify<span class="dot" id="dot-spotify"></span></button>
-    <div class="nav-label">XENEON screen</div>
+    <div class="nav-label">Screens</div>
     <button type="button" class="nav" data-page="widgets">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="10" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
       Widgets</button>
@@ -46,6 +53,7 @@
     <span id="refresh-label">Refresh limits</span></button>
 </footer>
 <script src="core.js"></script>
+<script src="costs.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

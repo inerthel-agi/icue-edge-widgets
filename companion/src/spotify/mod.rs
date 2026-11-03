@@ -113,6 +113,28 @@ pub struct Upcoming {
 /// Upcoming tracks shown by the widget.
 pub const QUEUE_LEN: usize = 5;
 
+/// The Spotify app's own Windows media session, as the media thread last read it. It tells the poller at
+/// once when the music changes, and stands in for the Web API while Spotify rate-limits the app.
+#[derive(Clone)]
+pub struct Local {
+    pub session_id: String,
+    pub rev: u64,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub playing: bool,
+    pub position_ms: u64,
+    pub duration_ms: u64,
+    pub updated_at: u64,
+    /// Play/pause, next, previous, as Windows allows them.
+    pub caps: (bool, bool, bool),
+    pub art: Option<(&'static str, Arc<Vec<u8>>)>,
+    pub lyrics: Lyrics,
+}
+
+/// Local revisions live above this, so their artwork URLs never collide with Web API ones.
+const LOCAL_REV: u64 = 1 << 40;
+
 #[derive(Default)]
 pub struct State {
     pub version: u64,
@@ -137,6 +159,8 @@ pub struct State {
     pub tokens: Option<auth::Tokens>,
     /// Set by commands and sign-in so the poller runs at once.
     pub poke: bool,
+    pub local: Option<Local>,
+    local_seen: u64,
     published_at: u64,
 }
 
@@ -192,7 +216,75 @@ fn device_json(d: &Device) -> Value {
 }
 
 /// What the widget receives. Tokens, client id and account details are never included.
+fn banned(st: &State) -> bool {
+    st.rate_limited_until.is_some_and(|t| t > now_ms())
+}
+
+/// Records the Spotify app's Windows session (None: Spotify is not open on this PC).
+pub fn set_local(local: Option<Local>, now: u64) {
+    let mut st = lock();
+    let key = |l: &Option<Local>| l.as_ref().map(|l| (l.rev, l.playing));
+    let moved = key(&st.local) != key(&local);
+    let shown = moved
+        || st.local.as_ref().zip(local.as_ref()).is_some_and(|(a, b)| {
+            a.position_ms != b.position_ms || a.art.is_some() != b.art.is_some() || a.lyrics != b.lyrics || a.caps != b.caps
+        });
+    st.local = local;
+    st.local_seen = now;
+    if banned(&st) {
+        // The widget runs on these readings until the ban ends; the heartbeat keeps them fresh.
+        publish_if(&mut st, shown);
+    } else if moved && matches!(st.status, Status::Connected | Status::PremiumRequired) {
+        // A new track, a pause or a play: read the Web API now instead of at the next slow poll.
+        // Spotify updates its Web API a moment after the app, hence the short delay.
+        std::thread::spawn(|| {
+            std::thread::sleep(std::time::Duration::from_millis(1200));
+            let mut st = lock();
+            st.poke = true;
+            HUB.changed.notify_all();
+        });
+    } else {
+        publish_if(&mut st, false);   // heartbeat only: keeps lastSeen fresh between slow polls
+    }
+}
+
+/// While Spotify rate-limits the app, play/pause and skips go to the Spotify app through Windows.
+/// Returns the Windows media command to run instead, or None to use the Web API as usual.
+pub fn local_command(st: &State, body: &Value) -> Option<Value> {
+    let l = st.local.as_ref().filter(|_| banned(st))?;
+    let cmd = body["cmd"].as_str().filter(|c| matches!(*c, "playPause" | "next" | "prev"))?;
+    Some(json!({ "cmd": cmd, "sessionId": l.session_id, "rev": l.rev }))
+}
+
+/// The widget's snapshot built from the Spotify app's Windows session (no queue, devices, volume or modes).
+fn local_snapshot(st: &State, l: &Local) -> Value {
+    let rev = LOCAL_REV + l.rev;
+    json!({
+        "schema": "spotify/1",
+        "source": { "kind": "companion", "connected": true, "lastSeen": st.local_seen, "local": true },
+        "account": { "status": st.status.word(), "message": st.message },
+        "device": Value::Null,
+        "devices": [],
+        "item": {
+            "id": format!("local:{}", l.session_id), "rev": rev, "type": "track",
+            "title": l.title, "artists": l.artist, "album": l.album,
+            "art": l.art.as_ref().map(|_| json!({ "url": format!("/api/spotify/art?r={rev}") })),
+            "artState": if l.art.is_some() { "ready" } else { "none" },
+            "duration": l.duration_ms as f64 / 1000.0,
+        },
+        "playback": { "playing": l.playing, "position": l.position_ms as f64 / 1000.0, "updatedAt": l.updated_at, "shuffle": false, "repeat": "off" },
+        "actions": { "playPause": l.caps.0, "next": l.caps.1, "prev": l.caps.2, "seek": false, "shuffle": false, "repeat": false, "volume": false },
+        "rateLimitedUntil": st.rate_limited_until.filter(|&t| t > now_ms()),
+        "lyrics": lyrics_json(&l.lyrics),
+        "queueRev": st.queue_rev,
+        "queue": [],
+    })
+}
+
 pub fn snapshot(st: &State) -> Value {
+    if let Some(l) = st.local.as_ref().filter(|_| banned(st)) {
+        return local_snapshot(st, l);
+    }
     let p = st.player.as_ref();
     let item = p.and_then(|p| p.item.as_ref()).map(|it| {
         json!({
@@ -212,7 +304,8 @@ pub fn snapshot(st: &State) -> Value {
     let lyrics = lyrics_json(&st.lyrics);
     json!({
         "schema": "spotify/1",
-        "source": { "kind": "companion", "connected": true, "lastSeen": st.last_seen },
+        // Between the slower Web API readings, the Spotify app's Windows session vouches that nothing changed.
+        "source": { "kind": "companion", "connected": true, "lastSeen": if st.local.is_some() { st.last_seen.max(st.local_seen) } else { st.last_seen } },
         "account": { "status": st.status.word(), "message": st.message },
         "device": device.map(device_json),
         "devices": st.devices.iter().map(device_json).collect::<Vec<_>>(),
@@ -248,6 +341,8 @@ pub fn queue_for(title: &str) -> Option<Value> {
     }
     Some(json!({
         "rev": st.queue_rev,
+        // What `skipTo` must carry as `rev`, so the Now Playing widget can skip to a row without the Spotify feed.
+        "spotifyRev": st.rev,
         "items": st.queue.iter().enumerate().map(|(i, q)| json!({
             "title": q.title,
             "artist": q.artists,
@@ -281,6 +376,9 @@ pub fn page(st: &State) -> Value {
 }
 
 pub fn art_for(st: &State, rev: u64) -> Option<(&'static str, Arc<Vec<u8>>)> {
+    if rev >= LOCAL_REV {
+        return st.local.as_ref().filter(|l| LOCAL_REV + l.rev == rev).and_then(|l| l.art.clone());
+    }
     st.art.as_ref().filter(|a| a.rev == rev && rev == st.rev).map(|a| (a.mime, Arc::clone(&a.bytes)))
 }
 
@@ -292,6 +390,8 @@ pub struct Call {
     pub body: Option<String>,
     /// How many times to send it: `skipTo` is that many "next" in a row (Spotify has no jump-to-queue-item).
     pub times: u8,
+    /// Volume to restore after a multi-track skip, which runs muted so the skipped tracks are not heard.
+    pub muted_from: Option<u8>,
 }
 
 /// Validates a widget command against the state. Errors are (HTTP status, code).
@@ -315,7 +415,7 @@ pub fn resolve(st: &State, body: &Value) -> Result<Call, (u16, &'static str)> {
         }
         Ok(())
     };
-    let call = |method: &'static str, path: String| Call { method, path, body: None, times: 1 };
+    let call = |method: &'static str, path: String| Call { method, path, body: None, times: 1, muted_from: None };
     Ok(match cmd {
         "playPause" => {
             if !a.play_pause {
@@ -334,7 +434,8 @@ pub fn resolve(st: &State, body: &Value) -> Result<Call, (u16, &'static str)> {
                 return Err((409, "queue_changed"));
             }
             let i = body["value"].as_u64().filter(|&i| (i as usize) < st.queue.len()).ok_or((400, "bad_request"))?;
-            Call { times: i as u8 + 1, ..call("POST", "/me/player/next".into()) }
+            let volume = p.and_then(|p| p.device.as_ref()).and_then(|d| d.volume).filter(|&v| i > 0 && v > 0);
+            Call { times: i as u8 + 1, muted_from: volume, ..call("POST", "/me/player/next".into()) }
         }
         "prev" => {
             current(a.prev)?;
@@ -371,7 +472,7 @@ pub fn resolve(st: &State, body: &Value) -> Result<Call, (u16, &'static str)> {
             let id = body["deviceId"].as_str().ok_or((400, "bad_request"))?;
             // Only a device Spotify listed for this account; the id never reaches a URL.
             let d = st.devices.iter().find(|d| d.id == id).ok_or((404, "device_gone"))?;
-            Call { method: "PUT", path: "/me/player".into(), body: Some(json!({ "device_ids": [d.id], "play": true }).to_string()), times: 1 }
+            Call { method: "PUT", path: "/me/player".into(), body: Some(json!({ "device_ids": [d.id], "play": true }).to_string()), times: 1, muted_from: None }
         }
         _ => return Err((400, "unknown_command")),
     })
@@ -425,6 +526,26 @@ mod tests {
     }
 
     #[test]
+    fn the_windows_session_stands_in_only_during_a_ban() {
+        let mut st = connected();
+        st.local = Some(Local {
+            session_id: "m-1".into(), rev: 3, title: "RBB".into(), artist: "Red Velvet".into(), album: String::new(),
+            playing: true, position_ms: 34_000, duration_ms: 187_000, updated_at: 1, caps: (true, true, false),
+            art: Some(("image/png", Arc::new(vec![1, 2, 3]))), lyrics: Lyrics::None,
+        });
+        let play = json!({ "cmd": "playPause" });
+        assert!(local_command(&st, &play).is_none());
+        assert_ne!(snapshot(&st)["item"]["title"], "RBB");
+        st.rate_limited_until = Some(now_ms() + 60 * SEC);
+        let snap = snapshot(&st);
+        assert_eq!((snap["item"]["title"].as_str(), snap["source"]["local"].as_bool(), snap["actions"]["prev"].as_bool()), (Some("RBB"), Some(true), Some(false)));
+        assert_eq!(local_command(&st, &play), Some(json!({ "cmd": "playPause", "sessionId": "m-1", "rev": 3 })));
+        assert!(local_command(&st, &json!({ "cmd": "volume", "value": 10 })).is_none());
+        let rev = snap["item"]["rev"].as_u64().unwrap();
+        assert!(art_for(&st, rev).is_some() && art_for(&st, rev + 1).is_none());
+    }
+
+    #[test]
     fn commands_are_an_allowlist() {
         let st = connected();
         let r = |v: Value| resolve(&st, &v);
@@ -443,6 +564,9 @@ mod tests {
         q.queue_rev = 4;
         let skip = |v: Value| resolve(&q, &v);
         assert_eq!(skip(json!({ "cmd": "skipTo", "rev": 7, "q": 4, "value": 1 })).unwrap().times, 2);
+        // Skipping over tracks runs muted and restores the device volume; a single skip is not muted.
+        assert_eq!(skip(json!({ "cmd": "skipTo", "rev": 7, "q": 4, "value": 1 })).unwrap().muted_from, Some(40));
+        assert_eq!(skip(json!({ "cmd": "skipTo", "rev": 7, "q": 4, "value": 0 })).unwrap().muted_from, None);
         assert_eq!(skip(json!({ "cmd": "skipTo", "rev": 7, "q": 3, "value": 1 })).unwrap_err(), (409, "queue_changed"));
         assert_eq!(skip(json!({ "cmd": "skipTo", "rev": 7, "q": 4, "value": 2 })).unwrap_err(), (400, "bad_request"));
         assert_eq!(skip(json!({ "cmd": "skipTo", "rev": 6, "q": 4, "value": 0 })).unwrap_err(), (409, "track_changed"));
