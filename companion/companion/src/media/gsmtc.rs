@@ -93,7 +93,13 @@ fn observe(session: &windows::Media::Control::GlobalSystemMediaTransportControls
     };
     let timeline = timeline(&session.GetTimelineProperties()?, now);
     let fetch = wants_thumb(&lock(), &app_id, ordinal, &meta, now);
-    let thumb = if fetch { read_thumb(&props) } else { Thumb::Unchanged };
+    let mut thumb = if fetch { read_thumb(&props) } else { Thumb::Unchanged };
+    // Spotify's Windows session often has no thumbnail: use the cover the Web API knows for the same track.
+    if matches!(thumb, Thumb::Missing) && super::app_name(&app_id) == "Spotify" {
+        if let Some(bytes) = crate::spotify::art_matching(&meta.title, &meta.artist) {
+            thumb = Thumb::Image(bytes);
+        }
+    }
     Ok(Observed { app_id, ordinal, meta, playback, timeline, caps, modes, thumb })
 }
 

@@ -377,6 +377,17 @@ pub fn page(st: &State) -> Value {
     })
 }
 
+/// The cover of the track the Web API shows, when it is the one the Windows session names. The Spotify app
+/// often publishes no thumbnail to Windows, so Now Playing borrows this one.
+pub fn art_matching(title: &str, artist: &str) -> Option<Vec<u8>> {
+    let st = lock();
+    let item = st.player.as_ref()?.item.as_ref()?;
+    let first = artist.split(&[',', ';', '&'][..]).next().unwrap_or("").trim().to_lowercase();
+    let same = item.title.trim().eq_ignore_ascii_case(title.trim()) && (first.is_empty() || item.artists.to_lowercase().contains(&first));
+    let art = st.art.as_ref().filter(|a| a.rev == st.rev)?;
+    same.then(|| art.bytes.as_ref().clone())
+}
+
 pub fn art_for(st: &State, rev: u64) -> Option<(&'static str, Arc<Vec<u8>>)> {
     if rev >= LOCAL_REV {
         return st.local.as_ref().filter(|l| LOCAL_REV + l.rev == rev).and_then(|l| l.art.clone());

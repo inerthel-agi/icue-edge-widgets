@@ -112,7 +112,7 @@
             if (!m) return;
             try {
                 const v = Number.parseFloat(await api("getSensorValue", m.id));
-                if (Number.isFinite(v)) out[role] = { value: v, units: m.units || "", name: m.name || m.device || "" };
+                if (Number.isFinite(v)) out[role] = { value: v, units: m.units || "", name: m.name || m.device || "", device: m.device || "" };
             } catch (_) { /* stays null this round */ }
         }));
         return out;
@@ -120,6 +120,14 @@
 
     function demo() {
         const t = Date.now() / 1000, wave = (base, amp, speed) => base + amp * Math.sin(t * speed) + amp * 0.4 * Math.sin(t * speed * 3.7);
+        // demo=spiky: bursts like a real game or build, for the Rig Monitor graphs.
+        const burst = (seed, b) => b + Math.max(0, Math.sin(t * 0.7 + seed) * Math.sin(t * 2.3 + seed * 3)) * 40 + Math.abs(Math.sin(t * 9 + seed * 7)) * 18;
+        if (new URLSearchParams(location.search).get("demo") === "spiky") {
+            const L = (seed, b, n) => ({ value: Math.max(1, Math.min(100, burst(seed, b) + n)), units: "%", name: "Demo", device: seed === 1 ? "Intel Core i9-14900K" : "NVIDIA GeForce RTX 4080 SUPER" });
+            const T = (seed, b) => ({ value: b + (burst(seed, 0) * 0.35), units: "°C", name: "Demo" });
+            return { plugin: true, cpuLoad: L(1, 12, 0), cpuTemp: T(1, 48), cpuPower: { value: 40 + burst(1, 0) * 1.6, units: "W", name: "Demo" }, gpuLoad: L(4, 30, 10), gpuTemp: T(4, 52), gpuPower: { value: 90 + burst(4, 0) * 4, units: "W", name: "Demo" },
+                ram: { value: 52 + Math.sin(t * 0.05) * 3, units: "%", name: "Demo", device: "CORSAIR VENGEANCE DDR5" }, vram: { value: 41 + Math.sin(t * 0.08) * 6, units: "%", name: "Demo" }, liquid: { value: 31 + burst(4, 0) * 0.08, units: "°C", name: "Demo", device: "CORSAIR iCUE LINK H150i" }, pump: { value: 2600 + burst(1, 0) * 8, units: "RPM", name: "Demo" }, air: { value: 24.6, units: "°C", name: "Demo" }, fps: null };
+        }
         const load = (b, a, s) => ({ value: Math.max(1, Math.min(100, wave(b, a, s))), units: "%", name: "Demo" });
         const temp = (b, a, s) => ({ value: wave(b, a, s), units: "°C", name: "Demo" });
         const params = new URLSearchParams(location.search);

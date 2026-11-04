@@ -36,6 +36,7 @@ const OURS: &[Widget] = &[
     w("stocks", "Stocks", EDGE, "stocks", "#ffa028", "Quotes in a market-terminal look", Link::Poll(Poll::Stocks)),
     w("networkpulse", "Network Pulse", EDGE, "network-pulse", "#7cc8ff", "Download, upload and ping", Link::Poll(Poll::Net)),
     w("systempulse", "System Pulse", EDGE, "system-pulse", "#a8d5ba", "CPU, GPU and memory load from iCUE sensors", Link::None),
+    w("rigmonitor", "Rig Monitor", EDGE, "rig-monitor", "#a8d5ba", "CPU, GPU, memory and cooling history with peaks", Link::None),
     w("rigpet", "Rig Pet", EDGE, "rig-pet", "#ffb84d", "A small creature that feels your PC's heat", Link::None),
     w("flipclock", "Flip Clock", EDGE, "flip-clock", "#f7f8fb", "Flip, Nixie or fluorescent clock", Link::None),
     w("rainwindow", "Rain Window", EDGE, "rain-window", "#7cc8ff", "A window on the real weather outside", Link::None),

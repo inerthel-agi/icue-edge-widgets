@@ -6,6 +6,16 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Fixed - Now Playing cover for Spotify
+- The Spotify app often gives Windows no thumbnail, so Now Playing showed a blank cover. When the Spotify account is connected, the companion now uses the cover the Spotify Web API shows for the same track.
+
+### Added - Search on the Widgets page
+- A search box above the list on the Widgets page finds a widget by name or description, together with the filters and the screen choice.
+
+### Added - Rig Monitor widget
+- A graph of the last 3 minutes for each part of the PC, from the iCUE Sensors plugin: CPU (load, temperature, power), GPU (same), memory (RAM, VRAM) and cooling (coolant, pump, room). Each card shows the part's brand name, min, average and peak, with the peak marked on the graph; temperatures turn amber and red when hot.
+- Four switches choose the sections to show, from one to all four.
+
 ### Added - Community widgets
 - iCUE Edge Companion has a Community page. It lists the widgets other people share on GitHub, with author, avatar, screens, what they use, stars and licence. Filters: All, XENEON EDGE, Pump LCD, Packages, Installed. Search by name or author. Sort by stars, date or name.
 - Install downloads exactly what the list pinned: a release package checked against its SHA-256, or a folder at one commit with every file checked against its git blob id and packed by the companion. iCUE asks for confirmation. Pump widgets get the pump step. A widget that needs files outside its folder is marked Source only.

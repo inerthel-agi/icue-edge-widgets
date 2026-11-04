@@ -405,6 +405,7 @@ html.theme-fade, html.theme-fade * { transition: background-color .35s, color .3
 [data-icon="control-deck"] { --c: #a8d5ba; --m: url(icons/control-deck.svg); }
 [data-icon="stocks"] { --c: #ffa028; --m: url(icons/stocks.svg); }
 [data-icon="network-pulse"] { --c: #7cc8ff; --m: url(icons/network-pulse.svg); }
+[data-icon="rig-monitor"] { --c: #a8d5ba; --m: url(icons/rig-monitor.svg); }
 [data-icon="system-pulse"] { --c: #a8d5ba; --m: url(icons/system-pulse.svg); }
 [data-icon="rig-pet"] { --c: #ffb84d; --m: url(icons/rig-pet.svg); }
 [data-icon="flip-clock"] { --c: #f7f8fb; --m: url(icons/flip-clock.svg); }

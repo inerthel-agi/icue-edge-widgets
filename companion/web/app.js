@@ -16,6 +16,7 @@
   const store = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* not kept */ } };
   let widgetFilter = stored("widgets.filter", "all");
   let widgetSort = stored("widgets.sort", "az");
+  let widgetQuery = "";
   let widgetScreen = stored("widgets.screen", "all");
   const hist = { back: [], fwd: [] };
   const TITLES = { community: "Community", changelog: "Changelog", overview: "Overview", claude: "Claude", codex: "Codex", aicost: "AI cost", screentime: "Screen time", spotify: "Spotify", widgets: "Widgets", settings: "Settings" };
@@ -244,7 +245,8 @@
     if (!FILTERS[widgetFilter]) widgetFilter = "all";
     if (!SCREEN_NAME[widgetScreen]) widgetScreen = "all";
     const order = widgetSort === "za" ? -1 : 1;
-    const shown = list.filter((w) => FILTERS[widgetFilter][1](w) && (widgetScreen === "all" || screenOf(w) === widgetScreen))
+    const wq = widgetQuery.trim().toLowerCase();
+    const shown = list.filter((w) => FILTERS[widgetFilter][1](w) && (widgetScreen === "all" || screenOf(w) === widgetScreen) && (!wq || (w.name + " " + w.desc).toLowerCase().includes(wq)))
       .sort((a, b) => order * a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
     const card = (w) => {
       const [label, cls] = state(w);
@@ -271,7 +273,8 @@
       "</b><small>Installed</small></div><div" + (outdated ? ' class="warn"' : "") + "><b>" + two(outdated) + "</b><small>To update</small></div><div><b>" + two(list.length) + "</b><small>Available</small></div></div>" +
       deviceMap(list, "wscreen") +
       '<div class="toolbar"><div class="filters" role="group" aria-label="Filter">' + Object.keys(FILTERS).map(f).join("") + "</div>" +
-      '<div class="listbar"><span class="shown">' + shown.length + " of " + list.length + " shown" + (widgetScreen === "all" ? "" : " · " + SCREEN_NAME[widgetScreen] + " only") + "</span>" +
+      '<div class="listbar"><label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+      '<input id="widgets-q" type="search" placeholder="Search a widget" aria-label="Search the widgets" value="' + esc(widgetQuery) + '"></label><span class="shown">' + shown.length + " of " + list.length + " shown" + (widgetScreen === "all" ? "" : " · " + SCREEN_NAME[widgetScreen] + " only") + "</span>" +
       '<div class="seg sort" role="group" aria-label="Order by name">' + s("az", "A → Z", "Names from A to Z") + s("za", "Z → A", "Names from Z to A") + "</div></div></div>" +
       ["edge", "pump"].filter((x) => widgetScreen === "all" || widgetScreen === x).map(group).join("") +
       '<h2 class="grp">Install a widget</h2><div class="group">' +
@@ -1037,6 +1040,13 @@
     document.getElementById("market-results").innerHTML = marketResults(shown);
     document.getElementById("market-shown").textContent = shown.length + " of " + community.marketplace.length + " shown";
     lastHtml = communityPage().replace(/^<div class="page">/, '<div class="page"><p class="crumb"><button type="button" data-page="overview">Overview</button><span aria-hidden="true">›</span><span>Community</span></p>');
+  });
+  content.addEventListener("input", (e) => {
+    if (e.target.id !== "widgets-q") return;
+    widgetQuery = e.target.value;
+    render();
+    const q = content.querySelector("#widgets-q");
+    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
   });
   content.addEventListener("input", (e) => {
     if (e.target.id !== "community-q") return;

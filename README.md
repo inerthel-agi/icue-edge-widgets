@@ -38,6 +38,7 @@ The packaging script finds `icuewidget` on PATH or under `%LOCALAPPDATA%\Program
 | --- | --- | --- |
 | `rig-pet` | A pet that reacts to CPU and GPU heat, with needs, levels, a room with the real weather and 39 mascots | iCUE Sensors plugin |
 | `system-pulse` | CPU, GPU, RAM and VRAM load rings with temperatures and the last minute | iCUE Sensors plugin |
+| `rig-monitor` | A graph of the last 3 minutes per part (CPU, GPU, memory, cooling) with min, average and peak; show any sections you like | iCUE Sensors plugin |
 | `flip-clock` | Flip, nixie or VFD clock | — |
 | `rain-window` | The weather outside as a window, with the time | Internet (Open-Meteo) |
 | `weather-now`, `daily-brief` | Current weather, sunrise and sunset; the day at a glance | Internet (Open-Meteo) |
