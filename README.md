@@ -74,18 +74,20 @@ The same script lists the Elgato Marketplace's iCUE widgets from its public page
 
 ## Screenshots
 
-Live data at capture time for weather, GitHub and the ISS; demo values for sensors, countdowns and habits; invented lyrics and queue.
+Demo values for sensors, usage, network, games, deals and screen time; live weather for Rain Window; invented lyrics and queue.
 
 | | |
 | --- | --- |
-| <img src="docs/screenshots/system-pulse.png" width="400" alt="System Pulse, 1688 × 696" /><br>System Pulse, 1688 × 696 | <img src="docs/screenshots/iss-horizon.png" width="400" alt="ISS Horizon, 1688 × 696" /><br>ISS Horizon, 1688 × 696 |
-| <img src="docs/screenshots/now-playing.png" width="400" alt="Now Playing, 840 × 696" /><br>Now Playing, 840 × 696 | <img src="docs/screenshots/spotify.png" width="400" alt="Spotify, 840 × 696" /><br>Spotify, 840 × 696 |
-| <img src="docs/screenshots/flip-clock.png" width="400" alt="Flip Clock, 840 × 696" /><br>Flip Clock, 840 × 696 | <img src="docs/screenshots/rain-window.png" width="400" alt="Rain Window, 840 × 696" /><br>Rain Window, 840 × 696 |
+| <img src="docs/screenshots/rig-monitor.png" width="400" alt="Rig Monitor, 1688 × 696" /><br>Rig Monitor, 1688 × 696 | <img src="docs/screenshots/system-pulse.png" width="400" alt="System Pulse, 1688 × 696" /><br>System Pulse, 1688 × 696 |
+| <img src="docs/screenshots/network-pulse.png" width="400" alt="Network Pulse, 1688 × 696" /><br>Network Pulse, 1688 × 696 | <img src="docs/screenshots/game-session.png" width="400" alt="Game Session, 1688 × 696" /><br>Game Session, 1688 × 696 |
+| <img src="docs/screenshots/energy-cost.png" width="400" alt="Energy Cost, 1688 × 696" /><br>Energy Cost, 1688 × 696 | <img src="docs/screenshots/now-playing.png" width="400" alt="Now Playing, 840 × 696" /><br>Now Playing, 840 × 696 |
+| <img src="docs/screenshots/spotify.png" width="400" alt="Spotify, 840 × 696" /><br>Spotify, 840 × 696 | <img src="docs/screenshots/agent-activity.png" width="400" alt="Agent Activity, 840 × 696" /><br>Agent Activity, 840 × 696 |
 | <img src="docs/screenshots/claude-usage.png" width="400" alt="Claude Usage, 840 × 696" /><br>Claude Usage, 840 × 696 | <img src="docs/screenshots/codex-usage.png" width="400" alt="Codex Usage, 840 × 696" /><br>Codex Usage, 840 × 696 |
-| <img src="docs/screenshots/weather-now.png" width="400" alt="Weather Now, 840 × 344" /><br>Weather Now, 840 × 344 | <img src="docs/screenshots/daily-brief.png" width="400" alt="Daily Brief, 840 × 344" /><br>Daily Brief, 840 × 344 |
-| <img src="docs/screenshots/world-clock.png" width="400" alt="World Clock, 840 × 344" /><br>World Clock, 840 × 344 | <img src="docs/screenshots/github-repo-monitor.png" width="400" alt="GitHub Repo Monitor, 840 × 344" /><br>GitHub Repo Monitor, 840 × 344 |
-| <img src="docs/screenshots/focus-timer.png" width="400" alt="Focus Timer, 840 × 344" /><br>Focus Timer, 840 × 344 | <img src="docs/screenshots/countdowns.png" width="400" alt="Countdowns, 840 × 344" /><br>Countdowns, 840 × 344 |
-| <img src="docs/screenshots/habit-rings.png" width="400" alt="Habit Rings, 840 × 344" /><br>Habit Rings, 840 × 344 | <img src="docs/screenshots/windows-media-pump.png" width="400" alt="Windows Media Pump, 480 × 480" /><br>Windows Media Pump, pump LCD 480 × 480 |
+| <img src="docs/screenshots/control-deck.png" width="400" alt="Control Deck, 840 × 696" /><br>Control Deck, 840 × 696 | <img src="docs/screenshots/audio-mixer.png" width="400" alt="Audio Mixer, 840 × 696" /><br>Audio Mixer, 840 × 696 |
+| <img src="docs/screenshots/free-games.png" width="400" alt="Free Games, 840 × 696" /><br>Free Games, 840 × 696 | <img src="docs/screenshots/patch-radar.png" width="400" alt="Patch Radar, 840 × 696" /><br>Patch Radar, 840 × 696 |
+| <img src="docs/screenshots/ci-radar.png" width="400" alt="CI Radar, 840 × 696" /><br>CI Radar, 840 × 696 | <img src="docs/screenshots/screen-time.png" width="400" alt="Screen Time, 840 × 696" /><br>Screen Time, 840 × 696 |
+| <img src="docs/screenshots/grid-pulse.png" width="400" alt="Grid Pulse, 840 × 696" /><br>Grid Pulse, 840 × 696 | <img src="docs/screenshots/flip-clock.png" width="400" alt="Flip Clock, 840 × 696" /><br>Flip Clock, 840 × 696 |
+| <img src="docs/screenshots/rain-window.png" width="400" alt="Rain Window, 840 × 696" /><br>Rain Window, 840 × 696 | <img src="docs/screenshots/pump-faces.png" width="400" alt="Pump Faces, pump LCD, 480 × 480" /><br>Pump Faces, pump LCD, 480 × 480 |
 
 <img src="docs/screenshots/now-playing-xl.png" width="820" alt="Now Playing, 2536 × 696" /><br>Now Playing, 2536 × 696: player mark, cover colours, synced lyrics (tap a line to seek), shuffle, repeat, visualiser, volume and sleep timer.
 
