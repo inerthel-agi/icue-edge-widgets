@@ -2,7 +2,7 @@
 
 Widgets for CORSAIR iCUE on Windows: 30 for the XENEON EDGE touch screen and 5 for pump LCDs, plus [iCUE Edge Companion](companion/README.md), the tray application that feeds sixteen of them with local data (AI usage, music, games, network, mixer, stocks, screen time) and gives Rig Monitor its RAM and VRAM figures.
 
-<img src="docs/screenshots/rig-pet.png" width="820" alt="Rig Pet, 2536 × 696" />
+<img src="docs/screenshots/hero.png" width="820" alt="XENEON EDGE with Now Playing, Rig Monitor and Control Deck" />
 
 ## Requirements
 
@@ -88,6 +88,8 @@ Demo values for sensors, usage, network, games, deals and screen time; live weat
 | <img src="docs/screenshots/ci-radar.png" width="400" alt="CI Radar, 840 × 696" /><br>CI Radar, 840 × 696 | <img src="docs/screenshots/screen-time.png" width="400" alt="Screen Time, 840 × 696" /><br>Screen Time, 840 × 696 |
 | <img src="docs/screenshots/grid-pulse.png" width="400" alt="Grid Pulse, 840 × 696" /><br>Grid Pulse, 840 × 696 | <img src="docs/screenshots/flip-clock.png" width="400" alt="Flip Clock, 840 × 696" /><br>Flip Clock, 840 × 696 |
 | <img src="docs/screenshots/rain-window.png" width="400" alt="Rain Window, 840 × 696" /><br>Rain Window, 840 × 696 | <img src="docs/screenshots/pump-faces.png" width="400" alt="Pump Faces, pump LCD, 480 × 480" /><br>Pump Faces, pump LCD, 480 × 480 |
+
+<img src="docs/screenshots/rig-pet.png" width="820" alt="Rig Pet, 2536 × 696" /><br>Rig Pet, 2536 × 696: a pet that reacts to CPU and GPU heat, with needs, levels and a room with the real weather.
 
 <img src="docs/screenshots/now-playing-xl.png" width="820" alt="Now Playing, 2536 × 696" /><br>Now Playing, 2536 × 696: player mark, cover colours, synced lyrics (tap a line to seek), shuffle, repeat, visualiser, volume and sleep timer.
 
