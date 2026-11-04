@@ -179,11 +179,19 @@
     const i = info || {};
     const list = i.widgets || [];
     const state = (w) => w.live ? ["Connected", "live"] : w.placed ? [w.companion ? "Placed · not connected" : "Placed", w.companion ? "warn" : "live"] : w.installed ? ["Installed · not placed", ""] : ["Not installed", ""];
+    // Install / Update from the fingerprint the packaging script writes: an up-to-date widget only offers a quiet reinstall.
+    const installButton = (w) => {
+      const [text, cls, title] = w.update === "missing" ? ["Install", "btn", "Install in iCUE"]
+        : w.update === "current" ? ["Up to date", "btn ghost", "Reinstall the same version"]
+        : w.update === "outdated" ? ["Update", "btn primary", "A newer version is available"]
+        : ["Update", "btn", "Could not check for a newer version"];
+      return '<button type="button" class="' + cls + '" title="' + title + '" data-act="install" data-id="' + esc(w.id) + '">' + text + "</button>";
+    };
     const shown = list.filter((w) => widgetFilter === "installed" ? w.installed : widgetFilter === "companion" ? w.companion : true);
     const row = (w) => {
       const [label, cls] = state(w);
       return '<div class="row">' + wicon(w) + '<div class="row-text"><span>' + esc(w.name) + (w.companion ? '<span class="tagc">companion</span>' : "") + "</span><small>" + esc(w.desc) +
-        " · " + (w.screen === "Pump LCD" ? "480 × 480" : "S · M · L · XL") + '</small></div><span class="pill ' + cls + '">' + label + "</span></div>";
+        " · " + (w.screen === "Pump LCD" ? "480 × 480" : "S · M · L · XL") + '</small></div><span class="pill ' + cls + '">' + label + "</span>" + installButton(w) + "</div>";
     };
     const group = (screenName) => {
       const ws = shown.filter((w) => w.screen === screenName);
@@ -195,14 +203,14 @@
     return '<div class="page"><h1>Widgets</h1><p class="sub">Every iCUE Edge widget, where it is, and whether it is talking to the companion.</p>' +
       (i.serverError ? alert(i.serverError + ". Widgets cannot connect.", "page-alert") : "") +
       '<div class="summary"><div><b>' + list.filter((w) => w.live).length + "</b><small>connected now</small></div><div><b>" + list.filter((w) => w.installed).length +
-      "</b><small>installed in iCUE</small></div><div><b>" + list.length + "</b><small>available</small></div></div>" +
+      "</b><small>installed in iCUE</small></div><div><b>" + list.filter((w) => w.update === "outdated").length + "</b><small>to update</small></div><div><b>" + list.length + "</b><small>available</small></div></div>" +
       '<div class="filters" role="group" aria-label="Filter">' + f("all", "All") + f("installed", "Installed") + f("companion", "Use the companion") + "</div>" +
       group("XENEON EDGE") + group("Pump LCD") +
       '<div class="group-title">Install a widget</div><div class="group">' +
-      '<div class="row"><span class="step">1</span><div class="row-text"><span>Import the .icuewidget package in iCUE</span><small>xeneon-edge folder for the XENEON EDGE, corsair-watercooling folder for the pump</small></div><button type="button" class="btn" data-act="link" data-link="packages">Packages</button></div>' +
+      '<div class="row"><span class="step">1</span><div class="row-text"><span>Press Install (or Update) beside the widget</span><small>iCUE opens the package and asks you to confirm; the packages also sit in the repository</small></div><button type="button" class="btn" data-act="link" data-link="packages">Packages</button></div>' +
       '<div class="row"><span class="step">2</span><div class="row-text"><span>Place it on the screen</span><small>XENEON EDGE → Widgets, or the pump LCD screen settings</small></div></div>' +
       '<div class="row"><span class="step">3</span><div class="row-text"><span>Keep iCUE Edge Companion running</span><small>Only the widgets tagged companion need it; it stays in the notification area</small></div></div></div>' +
-      '<p class="hint">Read from the iCUE files (installed widgets, XENEON EDGE layout, pump profiles); nothing there is changed. Widgets without the companion can only show installed and placed.</p></div>';
+      '<p class="hint">Read from the iCUE files (installed widgets, XENEON EDGE layout, pump profiles); nothing there is changed by reading; installing goes through the confirmation in iCUE. Widgets without the companion can only show installed and placed.</p></div>';
   }
 
   // ---------- AI cost (estimate from token counts) ----------
@@ -534,6 +542,10 @@
         return setTimeout(loadMedia, 350);
       }
       case "st-start": return loadScreen(true);
+      case "install":
+        flash(act, "Opening iCUE…", 4000);
+        try { await U.invoke("install_widget", { id: act.dataset.id }); } catch (e) { flash(act, "Failed"); }
+        return;
       case "link":
         try { await U.invoke("open_link", { link: act.dataset.link }); } catch (_) { flash(act, "Unavailable"); }
         return;

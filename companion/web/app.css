@@ -174,7 +174,7 @@ html.theme-fade, html.theme-fade * { transition: background-color .35s, color .3
 .wico.sm { width: 20px; height: 20px; border-radius: 6px; } .wico.sm i { width: 12px; height: 12px; }
 :root[data-theme="light"] .wico i { background: color-mix(in srgb, var(--c) 70%, #000); }
 .tagc { margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: var(--hover); color: var(--muted); font-size: 11px; font-weight: 500; }
-.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 6px 0 16px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin: 6px 0 16px; }
 .summary div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
 .summary b { display: block; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; } .summary small { color: var(--muted); }
 .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
@@ -212,6 +212,13 @@ html.theme-fade, html.theme-fade * { transition: background-color .35s, color .3
 .wico[data-icon="cooling-sensor-pump"] { --c: #00c8ff; --m: url(icons/cooling-sensor-pump.svg); }
 .wico[data-icon="racing-gauge-pump"] { --c: #00c8ff; --m: url(icons/racing-gauge-pump.svg); }
 .wico[data-icon="fps-gauge-pump"] { --c: #7cf29a; --m: url(icons/fps-gauge-pump.svg); }
+.wico[data-icon="game-session"] { --c: #ff3d2e; --m: url(icons/game-session.svg); }
+.wico[data-icon="free-games"] { --c: #e2412f; --m: url(icons/free-games.svg); }
+.wico[data-icon="grid-pulse"] { --c: #3dff7a; --m: url(icons/grid-pulse.svg); }
+.wico[data-icon="patch-radar"] { --c: #ff6a4a; --m: url(icons/patch-radar.svg); }
+.wico[data-icon="ci-radar"] { --c: #f2c46d; --m: url(icons/ci-radar.svg); }
+.wico[data-icon="energy-cost"] { --c: #a8d5ba; --m: url(icons/energy-cost.svg); }
+.wico[data-icon="pump-faces"] { --c: #ff9a3c; --m: url(icons/pump-faces.svg); }
 .chart-group { padding: 12px 14px; }
 /* Top strip: the window buttons and history arrows sit on their own band; the page scrolls under nothing. */
 .content { margin-top: 32px; padding-top: 8px; }
@@ -229,3 +236,6 @@ html.theme-fade, html.theme-fade * { transition: background-color .35s, color .3
 /* Screen time: each application's own icon. */
 .app-ico { flex: none; width: 28px; height: 28px; border-radius: 6px; object-fit: contain; }
 .app-ico.letter { display: grid; place-items: center; background: var(--hover); color: var(--muted); font-size: 13px; font-weight: 600; }
+/* Widgets page: an up-to-date widget only offers a quiet reinstall. */
+.btn.ghost { border-color: transparent; color: var(--faint); }
+.btn.ghost:hover { color: var(--text); border-color: var(--line-2); }

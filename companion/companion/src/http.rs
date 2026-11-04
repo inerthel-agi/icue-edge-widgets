@@ -48,8 +48,11 @@ pub enum Poll {
     Deck,
     Stocks,
     Net,
+    Game,
+    Deals,
+    Patches,
 }
-static POLLED_AT: [std::sync::atomic::AtomicU64; 7] = [const { std::sync::atomic::AtomicU64::new(0) }; 7];
+static POLLED_AT: [std::sync::atomic::AtomicU64; 10] = [const { std::sync::atomic::AtomicU64::new(0) }; 10];
 fn polled(p: Poll) {
     POLLED_AT[p as usize].store(crate::util::now_ms(), Ordering::SeqCst);
 }
@@ -322,6 +325,31 @@ fn handle(mut stream: TcpStream, shared: Shared) {
         ("GET", "/api/net/state") => {
             polled(Poll::Net);
             respond(&mut stream, 200, &headers, crate::net::snapshot(req.param("ping").unwrap_or("off")).to_string().as_bytes());
+        }
+        // Game Session widget: asking is what switches the foreground watch on (see game.rs).
+        ("GET", "/api/game/state") => {
+            polled(Poll::Game);
+            respond(&mut stream, 200, &headers, crate::game::snapshot().to_string().as_bytes());
+        }
+        // Free Games & Deals widget: ?cc=FR&steam=570,1245620 (checked and capped in deals.rs).
+        ("GET", "/api/deals/state") => {
+            polled(Poll::Deals);
+            let body = crate::deals::snapshot(req.param("cc").unwrap_or("US"), &crate::spotify::auth::percent_decode(req.param("steam").unwrap_or(""))).to_string();
+            respond(&mut stream, 200, &headers, body.as_bytes());
+        }
+        ("GET", "/api/deals/image") => match crate::deals::image_bytes(&crate::spotify::auth::percent_decode(req.param("u").unwrap_or(""))) {
+            Some((mime, bytes)) => {
+                headers.retain(|(k, _)| *k != "Content-Type");
+                headers.push(("Content-Type", mime));
+                respond(&mut stream, 200, &headers, &bytes)
+            }
+            None => respond(&mut stream, 404, &headers, b"{\"error\":\"no_image\"}"),
+        },
+        // Patch Radar widget: ?apps=271590,1245620 (checked and capped in deals.rs).
+        ("GET", "/api/patches/state") => {
+            polled(Poll::Patches);
+            let body = crate::patches::snapshot(&crate::spotify::auth::percent_decode(req.param("apps").unwrap_or(""))).to_string();
+            respond(&mut stream, 200, &headers, body.as_bytes());
         }
         ("GET", "/api/deck/state") => {
             polled(Poll::Deck);

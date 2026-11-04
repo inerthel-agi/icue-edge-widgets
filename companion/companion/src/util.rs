@@ -16,6 +16,20 @@ pub fn home_dir() -> PathBuf {
     std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(PathBuf::from).unwrap_or_default()
 }
 
+/// SHA-256 of a buffer through Windows CNG (no extra crate). None where CNG is unavailable.
+#[cfg(windows)]
+pub fn sha256(bytes: &[u8]) -> Option<[u8; 32]> {
+    use windows::Win32::Security::Cryptography::{BCryptHash, BCRYPT_SHA256_ALG_HANDLE};
+    let mut out = [0u8; 32];
+    unsafe { BCryptHash(BCRYPT_SHA256_ALG_HANDLE, None, bytes, &mut out) }.ok().ok()?;
+    Some(out)
+}
+
+#[cfg(not(windows))]
+pub fn sha256(_: &[u8]) -> Option<[u8; 32]> {
+    None
+}
+
 pub fn app_dir() -> PathBuf {
     std::env::var_os("LOCALAPPDATA").map(PathBuf::from).unwrap_or_else(home_dir).join("icue-edge-companion")
 }

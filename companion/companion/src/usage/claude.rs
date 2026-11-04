@@ -175,7 +175,41 @@ pub fn agent_snapshot(st: &crate::usage::store::Store, now: u64) -> Value {
         "recent": rt.activity.iter().rev().filter(|(t, ..)| t + 30 * MIN > now).take(10).map(|(t, tool, target)| serde_json::json!({ "at": t, "tool": tool, "target": target })).collect::<Vec<_>>(),
         "toolsToday": rt.activity.iter().filter(|(t, ..)| *t >= midnight).count(),
         "tokensPerMin": tokens5 / 5,
+        "attention": attention(session.map_or(0, |s| s.last_event), now),
     })
+}
+
+/// Written by a Claude Code `Notification` hook (see the companion README): the last notification Claude
+/// Code raised. Read on each request; tiny, and absent unless the user installed the hook.
+pub const HOOK_FILE: &str = "claude-hook.json";
+const ATTENTION_FOR: u64 = 30 * MIN;
+
+fn attention(last_event: u64, now: u64) -> Option<Value> {
+    let path = crate::util::app_dir().join(HOOK_FILE);
+    let at = std::fs::metadata(&path).ok()?.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_millis() as u64;
+    let file = std::fs::File::open(&path).ok()?;
+    let v: Value = serde_json::from_slice(&read_limited(file, 64 * 1024).ok()?).ok()?;
+    attention_from(&v, at, last_event, now)
+}
+
+/// What Claude Code waits for, from a Notification hook's input written at `at`. None once Claude Code
+/// moved on (a newer log event), after 30 min, or for notifications that ask nothing.
+pub fn attention_from(v: &Value, at: u64, last_event: u64, now: u64) -> Option<Value> {
+    if v["hook_event_name"] != "Notification" || at + ATTENTION_FOR < now || last_event > at {
+        return None;
+    }
+    let message: String = v["message"].as_str().unwrap_or("").chars().take(200).collect();
+    let kind = match v["notification_type"].as_str() {
+        Some("permission_prompt") => "permission",
+        Some("idle_prompt") => "reply",
+        Some("elicitation_dialog") => "question",
+        Some(_) => return None,
+        None if message.to_lowercase().contains("permission") => "permission",
+        None => "reply",
+    };
+    // Only the project folder's name, not the full path.
+    let project = v["cwd"].as_str().and_then(|c| c.trim_end_matches(['\\', '/']).rsplit(['\\', '/']).next()).unwrap_or("").chars().take(60).collect::<String>();
+    Some(serde_json::json!({ "kind": kind, "message": message, "project": project, "since": at }))
 }
 
 fn apply(shared: &Shared, path_key: &str, usages: Vec<Usage>, offset: u64) {
@@ -565,6 +599,21 @@ pub fn run_quota(shared: Shared) {
 mod tests {
     use super::*;
     use crate::usage::store;
+
+    #[test]
+    fn hook_notification_becomes_attention_until_claude_moves_on() {
+        let n = |t: Option<&str>, msg: &str| serde_json::json!({ "hook_event_name": "Notification", "notification_type": t, "message": msg, "cwd": r"D:\Users\me\GitHub\my-app\" });
+        let a = attention_from(&n(Some("permission_prompt"), "Claude needs your permission to use Bash"), 1_000, 900, 2_000).unwrap();
+        assert_eq!((a["kind"].as_str(), a["project"].as_str()), (Some("permission"), Some("my-app")));
+        assert_eq!(attention_from(&n(Some("idle_prompt"), "Claude is waiting for your input"), 1_000, 0, 2_000).unwrap()["kind"], "reply");
+        assert!(attention_from(&n(Some("permission_prompt"), "x"), 1_000, 1_500, 2_000).is_none());   // Claude moved on
+        assert!(attention_from(&n(Some("permission_prompt"), "x"), 1_000, 0, 1_000 + 31 * MIN).is_none());   // too old
+        assert!(attention_from(&n(Some("auth_success"), "x"), 1_000, 0, 2_000).is_none());
+        let mut legacy = n(None, "Claude needs your permission to use Edit");
+        legacy.as_object_mut().unwrap().remove("notification_type");
+        assert_eq!(attention_from(&legacy, 1_000, 0, 2_000).unwrap()["kind"], "permission");
+        assert!(attention_from(&serde_json::json!({ "hook_event_name": "Stop" }), 1_000, 0, 2_000).is_none());
+    }
 
     fn line(id: &str, req: &str, input: u64, output: u64, read: u64, write: u64, ts: &str, model: &str) -> String {
         format!(

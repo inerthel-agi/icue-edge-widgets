@@ -1,7 +1,7 @@
-//! File relay for the pump LCD widget. iCUE renders pump widgets in `QmlRenderer.exe`, which
+//! File relay for the pump LCD widgets. iCUE renders pump widgets in `QmlRenderer.exe`, which
 //! never reaches the loopback server, so the media snapshot and its artwork are written next to
-//! the installed `Windows Media Pump` widget, which loads them as local files (`live/`).
-//! Nothing is written unless that widget is installed; the folder is never created otherwise.
+//! each installed media pump widget (`Windows Media Pump`, `Pump Faces`), which loads them as local
+//! files (`live/`). Nothing is written for a widget that is not installed; no folder is created otherwise.
 use super::{art_for, lock, snapshot, HUB};
 use crate::util::{atomic_write, ensure_no_links, now_ms, remove_stale_tmp};
 use serde_json::{json, Value};
@@ -19,16 +19,16 @@ pub fn written_at() -> Option<u64> {
 
 /// For the window: is the pump widget installed, and when did the relay last write.
 pub fn status() -> Value {
-    json!({ "installed": live_dir().is_some(), "writtenAt": written_at() })
+    json!({ "installed": !live_dirs().is_empty(), "writtenAt": written_at() })
 }
 
-const WIDGET_DIR: &str = r"Corsair\CUE5\html_widgets\com\stealthsrc\windowsmediapump";
+const WIDGET_DIRS: &[&str] = &[r"Corsair\CUE5\html_widgets\com\stealthsrc\windowsmediapump", r"Corsair\CUE5\html_widgets\com\stealthsrc\pumpfaces"];
 /// The widget treats a relay older than 8 s as gone, so an unchanged state is rewritten this often.
 const EVERY: Duration = Duration::from_secs(2);
 
-fn live_dir() -> Option<PathBuf> {
-    let dir = Path::new(&std::env::var_os("APPDATA")?).join(WIDGET_DIR);
-    dir.join("manifest.json").is_file().then(|| dir.join("live"))
+fn live_dirs() -> Vec<PathBuf> {
+    let Some(appdata) = std::env::var_os("APPDATA") else { return Vec::new() };
+    WIDGET_DIRS.iter().map(|d| Path::new(&appdata).join(d)).filter(|d| d.join("manifest.json").is_file()).map(|d| d.join("live")).collect()
 }
 
 fn ext(mime: &str) -> &'static str {
@@ -71,15 +71,20 @@ pub fn publish_to(dir: &Path, mut snap: Value, art: Option<(&str, &[u8])>) -> st
 pub fn run() {
     loop {
         drop(HUB.changed.wait_timeout(lock(), EVERY));
-        let Some(dir) = live_dir() else { continue };
+        let dirs = live_dirs();
+        if dirs.is_empty() {
+            continue;
+        }
         let (snap, art) = {
             let st = lock();
             let snap = snapshot(&st);
             let art = snap.pointer("/session/art").and_then(|a| art_for(&st, a["sessionId"].as_str()?, a["rev"].as_u64()?));
             (snap, art)
         };
-        if publish_to(&dir, snap, art.as_ref().map(|(m, b)| (*m, b.as_slice()))).is_ok() {
-            WRITTEN_AT.store(now_ms(), Ordering::Relaxed);
+        for dir in dirs {
+            if publish_to(&dir, snap.clone(), art.as_ref().map(|(m, b)| (*m, b.as_slice()))).is_ok() {
+                WRITTEN_AT.store(now_ms(), Ordering::Relaxed);
+            }
         }
     }
 }

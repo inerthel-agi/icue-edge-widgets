@@ -266,6 +266,14 @@ async fn spotify_connect(client_id: String) -> Result<(), String> {
     hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).args(["url.dll,FileProtocolHandler", &url]).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
+/// Installs or updates one of our widgets: the package goes to iCUE through its file association, as a
+/// double-click would, so iCUE itself asks to confirm and installs it.
+#[tauri::command]
+async fn install_widget(id: String) -> Result<(), String> {
+    let path = tauri::async_runtime::spawn_blocking(move || icue_edge_companion::widgets::package_file(&id)).await.map_err(|e| e.to_string())??;
+    hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).arg("url.dll,FileProtocolHandler").arg(&path).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
 /// Opens one of the About links in the default browser. The page names a link; it never supplies a URL.
 #[tauri::command]
 async fn open_link(link: String) -> Result<(), String> {
@@ -305,7 +313,7 @@ fn autostart_enabled() -> bool {
     query(RUN_KEY).is_some() && !query(APPROVED_KEY).is_some_and(|o| approved_off(&String::from_utf8_lossy(&o.stdout)))
 }
 
-/// `reg query` line `    iCUE Edge Companion    REG_BINARY    0300…`: an odd first byte means disabled.
+/// `reg query` line `    iCUE Edge Companion    REG_BINARY    0300â€¦`: an odd first byte means disabled.
 fn approved_off(out: &str) -> bool {
     out.split_whitespace().skip_while(|w| *w != "REG_BINARY").nth(1).and_then(|hex| u8::from_str_radix(hex.get(..2)?, 16).ok()).is_some_and(|b| b & 1 == 1)
 }
@@ -433,6 +441,7 @@ fn main() {
             screentime_enable,
             clear_history,
             open_main,
+            install_widget,
             open_link,
             quit_app,
             spotify_page,
@@ -454,6 +463,7 @@ fn main() {
             }
             std::thread::Builder::new().name("media".into()).spawn(media::run)?;
             std::thread::Builder::new().name("screentime".into()).spawn(icue_edge_companion::screentime::run)?;
+            std::thread::Builder::new().name("game".into()).spawn(icue_edge_companion::game::run)?;
             std::thread::Builder::new().name("media-relay".into()).spawn(media::relay::run)?;
             std::thread::Builder::new().name("media-lyrics".into()).spawn(media::run_lyrics)?;
             std::thread::Builder::new().name("media-viz".into()).spawn(media::viz::run)?;

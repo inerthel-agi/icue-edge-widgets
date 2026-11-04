@@ -85,6 +85,26 @@ Without the companion, the `Now Playing` and `Windows Media Pump` widgets fall b
 
 The `Screen Time` widget (icue-edge-widgets `screen-time`) needs a companion module that records which application is in front. It keeps the executable's name and seconds per day, and the application's icon as a small image (`screentime-icons.json`, for the window's Screen time page), never a window title, a path or anything typed; time with no keyboard or mouse input for two minutes and the lock screen do not count. Nothing is collected until the widget first asks for its data (`GET /api/screentime/state`). The totals (35 days at most) are in `%LOCALAPPDATA%\icue-edge-companion\screentime.json` and never leave the PC. To stop and erase, quit the companion and delete that file and `screentime-icons.json`.
 
+## Game Session and Free Games
+
+`Game Session` asks `GET /api/game/state`; while it does, the companion looks at the foreground window every 2 s and names the game when its executable sits in a store library (Steam, Epic, Xbox, Riot, EA, Ubisoft, GOG, Battle.net). Nothing is stored. `Free Games` asks `GET /api/deals/state?cc=FR&steam=570`: the companion calls the Epic Games Store's free-games list and Steam's `appdetails` for the listed app ids (at most ten), once an hour each, and sends only the country code and those ids.
+
+## Claude Code waiting for you (optional hook)
+
+`Agent Activity` turns into a full-screen card when Claude Code waits for your permission, your reply or an answer. Claude Code does not log that, so it needs a `Notification` hook that copies the notification to `%LOCALAPPDATA%\icue-edge-companion\claude-hook.json`. Add to `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "powershell -NoProfile -Command \"[IO.File]::WriteAllText([Environment]::GetFolderPath('LocalApplicationData') + '\icue-edge-companion\claude-hook.json', [Console]::In.ReadToEnd())\"" } ] }
+    ]
+  }
+}
+```
+
+The card shows the notification's message and the project folder's name, never a path or a prompt; it goes away as soon as Claude Code writes to its log again, or after 30 minutes. The command has no `$`, so it runs the same from Git Bash (which Claude Code uses on Windows) and from cmd. Remove the hook to stop it.
+
 ## Architecture
 
 - `companion/src/usage/`: the usage feature (Claude and Codex collectors, open apps from the process list in `apps.rs`, state, snapshot `ai-usage/1`). Later features get their own module next to it.
