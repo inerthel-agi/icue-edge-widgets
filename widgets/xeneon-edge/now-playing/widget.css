@@ -362,11 +362,13 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
     .topline, .meta, .timeline, .controls { position: relative; z-index: 1; }
     .art-zone { position: absolute; inset: 0; width: auto; aspect-ratio: auto; z-index: 0; }
     .art-zone::after { display: none; }
-    .art-zone::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, color-mix(in srgb, var(--x-bg) 40%, transparent) 0%, transparent 16%, color-mix(in srgb, var(--x-bg) 72%, transparent) 34%, color-mix(in srgb, var(--x-bg) 94%, transparent) 52%, var(--x-bg) 70%); }
+    .art-zone::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, color-mix(in srgb, var(--x-bg) 82%, transparent) 0%, color-mix(in srgb, var(--x-bg) 50%, transparent) 12%, transparent 24%, color-mix(in srgb, var(--x-bg) 72%, transparent) 36%, color-mix(in srgb, var(--x-bg) 94%, transparent) 52%, var(--x-bg) 70%); }
     .art-frame { border-radius: 0; box-shadow: none; }
     .art-frame img { object-fit: cover; }
     .meta { justify-content: flex-end; }
     .controls { justify-content: center; }
+    /* The source line sits on the cover: a scrim at the top and a halo in the background colour keep it legible on bright covers. */
+    .topline { text-shadow: 0 1px 3px var(--x-bg), 0 0 14px var(--x-bg); }
 }
 
 /* ---------- Formats: ultra wide (2536x696) ---------- */

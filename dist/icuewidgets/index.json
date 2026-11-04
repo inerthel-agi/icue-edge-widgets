@@ -51,7 +51,7 @@
                                    },
                     "nowplaying":  {
                                        "package":  "xeneon-edge/now-playing.icuewidget",
-                                       "build":  "3c691f406b6f8eb3"
+                                       "build":  "83e5626a76fa9539"
                                    },
                     "spotify":  {
                                     "package":  "xeneon-edge/spotify.icuewidget",
