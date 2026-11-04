@@ -19,7 +19,7 @@
                                          },
                     "coolingsensorpump":  {
                                               "package":  "corsair-watercooling/cooling-sensor-pump.icuewidget",
-                                              "build":  "254e145ec93af4fa"
+                                              "build":  "1fd5b449d0a30083"
                                           },
                     "worldclock":  {
                                        "package":  "xeneon-edge/world-clock.icuewidget",
@@ -127,7 +127,7 @@
                                    },
                     "racinggaugepump":  {
                                             "package":  "corsair-watercooling/racing-gauge-pump.icuewidget",
-                                            "build":  "5f55395460700504"
+                                            "build":  "0ba519b996518486"
                                         },
                     "pumpfaces":  {
                                       "package":  "corsair-watercooling/pump-faces.icuewidget",
@@ -135,7 +135,7 @@
                                   },
                     "fpsgaugepump":  {
                                          "package":  "corsair-watercooling/fps-gauge-pump.icuewidget",
-                                         "build":  "41b761e88247aba6"
+                                         "build":  "8d40292194aa5cac"
                                      }
                 }
 }

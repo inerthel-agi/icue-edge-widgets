@@ -8,17 +8,11 @@
     const $ = id => document.getElementById(id);
 
     let api = null, requestId = 1, selectedId = "", pollTimer = null, initialized = false;
-    let pluginInstance = null, generation = 0, busy = false, selectionKey = "", currentMeta = null;
+    let pluginInstance = null, generation = 0, busy = false, currentMeta = null;
     let gauge = null, gaugeKey = "", scale = null;
     const recent = [];   // FPS readings of the last minute, for the average and the low
 
     const setting = (name, fallback) => (typeof window[name] !== "undefined" && window[name] !== null && window[name] !== "" ? window[name] : fallback);
-
-    function selection() {
-        const automatic = setting("gaugeAuto", true) !== false;
-        const id = typeof window.gaugeSensor === "string" ? window.gaugeSensor.trim() : "";
-        return { automatic, id };
-    }
 
     const getPlugin = () => window.plugins && window.plugins.Sensorsdataprovider;
 
@@ -106,7 +100,6 @@
 
     function sensorLabel(meta) {
         if (KIND === "fps") return "Frame rate";
-        if (!selection().automatic) return meta.name || "Sensor";
         const haystack = normalize(`${meta.id} ${meta.name} ${meta.type} ${meta.kind}`);
         if (haystack.includes("pump")) return "Pump";
         if (haystack.includes("gpu")) return "GPU Temp";
@@ -235,9 +228,6 @@
 
     async function update() {
         const client = ensureApi();
-        const selected = selection();
-        const key = selected.automatic ? "auto" : `manual:${selected.id}`;
-        if (selectionKey !== key) { selectionKey = key; invalidate(); }
         if (!client) {
             $("widget").dataset.state = "offline";
             showIdle(KIND === "fps" ? "FPS" : "Sensors", "Plugin unavailable");
@@ -252,21 +242,14 @@
                 const connected = await client.request("sensorIsConnected", meta.id);
                 if (connected === false || connected === "false") meta = null;
             }
-            if (!meta && selected.automatic) meta = await chooseSensor(client);
-            else if (!meta && selected.id) {
-                const ids = parseIds(await client.request("getAllSensorIds"));
-                const connected = ids.includes(selected.id) && (typeof pluginInstance.sensorIsConnected !== "function" ||
-                    await client.request("sensorIsConnected", selected.id));
-                if (connected && connected !== "false") meta = await metadata(selected.id, client);
-            }
+            if (!meta) meta = await chooseSensor(client);
             if (epoch !== generation) return;
             currentMeta = meta;
             selectedId = meta ? meta.id : "";
             if (!meta) {
                 $("widget").dataset.state = "empty";
                 const none = KIND === "fps" ? "No FPS sensor: start a game" : "No cooling sensor";
-                showIdle(KIND === "fps" ? "FPS" : selected.automatic ? "Cooling" : "Manual sensor",
-                    selected.automatic ? none : selected.id ? "Selected sensor unavailable" : "Choose a sensor in iCUE");
+                showIdle(KIND === "fps" ? "FPS" : "Cooling", none);
                 return;
             }
             const [value, units] = await Promise.all([

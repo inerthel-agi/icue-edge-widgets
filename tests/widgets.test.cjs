@@ -418,36 +418,18 @@ test('freshness distinguishes missing, current, old and retrying data', () => {
     assert.equal(format(NaN), 'No data yet');
 });
 
-test('manual sensor selection overrides auto and never substitutes a disconnected sensor', async () => {
+test('cooling sensor picks its sensor itself, even with an old manual choice saved', async () => {
     const rows = {
         pump: { name: 'CPU pump', type: 'rpm', units: 'RPM', value: '2400' },
         gpu: { name: 'GPU temperature', type: 'temperature', units: 'C', value: '55' }
     };
-    const plugin = sensorPlugin(rows);
-    const app = runtime('cooling-sensor-pump', { plugins: { Sensorsdataprovider: plugin }, pluginSensorsdataprovider_initialized: true });
-    await flush();
-    assert.equal(app.get('value').textContent, '2400');
-    app.context.coolingAuto = false;
-    app.context.coolingSensor = 'gpu';
-    await app.context.icueEvents.onDataUpdated();
-    assert.equal(app.get('value').textContent, '55.0');
-    assert.equal(app.get('label').textContent, 'GPU temperature');
-    delete rows.gpu;
-    plugin.sensorRemoved.emit('gpu'); await flush();
-    assert.equal(app.get('value').textContent, '--');
-    assert.equal(app.get('device').textContent, 'Selected sensor unavailable');
-    app.context.coolingAuto = true;
-    await app.context.icueEvents.onDataUpdated();
-    assert.equal(app.get('value').textContent, '2400');
-});
-
-test('manual mode asks for a sensor when none is selected', async () => {
     const app = runtime('cooling-sensor-pump', {
-        plugins: { Sensorsdataprovider: sensorPlugin({}) }, pluginSensorsdataprovider_initialized: true,
-        coolingAuto: false, coolingSensor: ''
+        plugins: { Sensorsdataprovider: sensorPlugin(rows) }, pluginSensorsdataprovider_initialized: true,
+        coolingAuto: false, coolingSensor: 'gpu'
     });
     await flush();
-    assert.equal(app.get('device').textContent, 'Choose a sensor in iCUE');
+    assert.equal(app.get('value').textContent, '2400');
+    assert.equal(app.get('label').textContent, 'Pump');
 });
 
 for (const widget of ['weather-now', 'daily-brief']) {

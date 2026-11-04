@@ -12,13 +12,6 @@
     let pluginInstance = null;
     let generation = 0;
     let busy = false;
-    let selectionKey = "";
-
-    function selection() {
-        const automatic = typeof coolingAuto === "undefined" || coolingAuto !== false;
-        const id = typeof coolingSensor === "string" ? coolingSensor.trim() : "";
-        return { automatic, id };
-    }
 
     function getPlugin() {
         return window.plugins && window.plugins.Sensorsdataprovider;
@@ -107,7 +100,6 @@
     }
 
     function sensorLabel(meta) {
-        if (!selection().automatic) return meta.name || "Sensor";
         const haystack = normalize(`${meta.id} ${meta.name} ${meta.type} ${meta.kind}`);
         if (haystack.includes("pump")) return "Pump";
         if (haystack.includes("gpu")) return "GPU Temp";
@@ -190,9 +182,6 @@
 
     async function update() {
         const client = ensureApi();
-        const selected = selection();
-        const key = selected.automatic ? "auto" : `manual:${selected.id}`;
-        if (selectionKey !== key) { selectionKey = key; invalidate(); }
         if (!client) {
             $("widget").dataset.state = "offline";
             $("label").textContent = "Sensors";
@@ -210,22 +199,16 @@
                 const connected = await client.request("sensorIsConnected", meta.id);
                 if (connected === false || connected === "false") meta = null;
             }
-            if (!meta && selected.automatic) meta = await chooseSensor(client);
-            else if (!meta && selected.id) {
-                const ids = parseIds(await client.request("getAllSensorIds"));
-                const connected = ids.includes(selected.id) && (typeof pluginInstance.sensorIsConnected !== "function" ||
-                    await client.request("sensorIsConnected", selected.id));
-                if (connected && connected !== "false") meta = await metadata(selected.id, client);
-            }
+            if (!meta) meta = await chooseSensor(client);
             if (epoch !== generation) return;
             currentMeta = meta;
             selectedId = meta ? meta.id : "";
             if (!meta) {
                 $("widget").dataset.state = "empty";
-                $("label").textContent = selected.automatic ? "Cooling" : "Manual sensor";
+                $("label").textContent = "Cooling";
                 $("value").textContent = "--"; tubes("--");
                 $("units").textContent = "";
-                $("device").textContent = selected.automatic ? "No cooling sensor" : selected.id ? "Selected sensor unavailable" : "Choose a sensor in iCUE";
+                $("device").textContent = "No cooling sensor";
                 return;
             }
             const [value, units] = await Promise.all([
