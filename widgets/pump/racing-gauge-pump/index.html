@@ -9,6 +9,8 @@
     <title>Racing Gauge Pump</title>
     <meta name="x-icue-property" content="gaugeDesign" data-label="tr('Design')" data-type="combobox"
         data-default="'classic'" data-values="[{'key':'classic','value':'Classic (Style colours)'},{'key':'race','value':'Race'},{'key':'munich','value':'Munich'},{'key':'stuttgart','value':'Stuttgart'},{'key':'gr','value':'GR'},{'key':'gtr','value':'GT-R'},{'key':'maranello','value':'Maranello'},{'key':'vintage','value':'Vintage'},{'key':'cockpit','value':'Cockpit'},{'key':'eighties','value':'80s Digital'},{'key':'marine','value':'Marine'},{'key':'superbike','value':'Superbike'}]" />
+    <meta name="x-icue-property" content="gaugeMeasure" data-label="tr('Measure')" data-type="combobox"
+        data-default="'auto'" data-values="[{'key':'auto','value':'Automatic (pump, then CPU)'},{'key':'pump','value':'Pump speed'},{'key':'liquid','value':'Coolant temperature'},{'key':'cpu','value':'CPU temperature'},{'key':'gpu','value':'GPU temperature'},{'key':'cpuload','value':'CPU load'},{'key':'gpuload','value':'GPU load'},{'key':'fan','value':'Fan speed'}]" />
     <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
         data-default="'#f2f3ed'" />
     <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
@@ -20,7 +22,7 @@
     <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
         data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
     <script type="application/json" id="x-icue-groups">
-        [{"title":"tr('Racing Gauge Pump')","properties":["gaugeDesign"]},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency","widgetStyle"]}]
+        [{"title":"tr('Racing Gauge Pump')","properties":["gaugeMeasure","gaugeDesign"]},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency","widgetStyle"]}]
     </script>
     <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
     <link rel="stylesheet" href="../../../shared/widget-styles.css" />

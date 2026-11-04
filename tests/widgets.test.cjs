@@ -65,7 +65,11 @@ function runtime(widget, globals = {}, storage = new Map()) {
     context.window = context;
     vm.createContext(context);
     vm.runInContext(fs.readFileSync(path.join(root, 'shared', 'widget-runtime.js'), 'utf8'), context);
-    vm.runInContext(fs.readFileSync(path.join(widgetDir(widget), 'app.js'), 'utf8'), context);
+    // A widget built from shared scripts (the pump gauges) has no app.js: run its index.html scripts instead.
+    const own = path.join(widgetDir(widget), 'app.js');
+    const scripts = fs.existsSync(own) ? [own] : [...fs.readFileSync(path.join(widgetDir(widget), 'index.html'), 'utf8').matchAll(/<script src="([^"]+)"/g)]
+        .map(m => path.resolve(widgetDir(widget), m[1])).filter(f => !f.endsWith('widget-runtime.js') && !(globals.skipScripts || []).includes(path.basename(f)));
+    for (const file of scripts) vm.runInContext(fs.readFileSync(file, 'utf8'), context);
     return {
         context, get, storage, events, timeouts, writes: () => writes,
         runTimeout: ms => { for (const [id, timer] of [...timeouts]) if (timer.ms === ms) { timeouts.delete(id); timer.fn(); } },
@@ -146,6 +150,26 @@ test('countdowns reject impossible dates and accept leap days', () => {
 test('countdowns count calendar days across the autumn clock change', () => {
     const app = runtime('countdowns', { countdown1Date: '2026-10-26' });
     assert.equal(app.get('nextDays').textContent, '2');
+});
+
+test('racing gauge measures the sensor chosen in Measure', async () => {
+    const rows = {
+        pump: { name: 'CPU pump', type: 'rpm', units: 'RPM', value: '2400' },
+        gpu: { name: 'GPU temperature', type: 'temperature', units: 'C', value: '55' }
+    };
+    // The dial drawing (gauge-designs.js, SVG) is replaced by a stub that records what it shows.
+    const shown = {};
+    const GaugeDesigns = { list: ['classic'], mount: () => ({ destroy() {}, info: (label) => { shown.label = label; }, set: (n, text) => { shown.text = text; }, fps() {} }) };
+    const app = runtime('racing-gauge-pump', { plugins: { Sensorsdataprovider: sensorPlugin(rows) }, pluginSensorsdataprovider_initialized: true,
+        gaugeMeasure: 'gpu', GaugeDesigns, skipScripts: ['gauge-designs.js'] });
+    await flush(); await flush();
+    assert.deepEqual([shown.label, shown.text], ['GPU Temp', '55.0']);
+    app.context.gaugeMeasure = 'auto';
+    await app.context.icueEvents.onDataUpdated(); await flush(); await flush();
+    assert.deepEqual([shown.label, shown.text], ['Pump', '2400']);
+    app.context.gaugeMeasure = 'fan';
+    await app.context.icueEvents.onDataUpdated(); await flush(); await flush();
+    assert.deepEqual([shown.label, shown.text], ['Fan', '--']);
 });
 
 for (const widget of ['weather-now', 'daily-brief']) {

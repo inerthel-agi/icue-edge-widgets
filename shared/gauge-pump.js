@@ -8,7 +8,7 @@
     const $ = id => document.getElementById(id);
 
     let api = null, requestId = 1, selectedId = "", pollTimer = null, initialized = false;
-    let pluginInstance = null, generation = 0, busy = false, currentMeta = null;
+    let pluginInstance = null, generation = 0, busy = false, currentMeta = null, measured = "";
     let gauge = null, gaugeKey = "", scale = null;
     const recent = [];   // FPS readings of the last minute, for the average and the low
 
@@ -81,9 +81,23 @@
 
     const normalize = value => String(value || "").toLowerCase();
 
+    // What the dial measures (Racing Gauge's Measure setting); "auto" keeps the cooling order below.
+    const MEASURES = {
+        pump: ["Pump", (h) => h.includes("pump")],
+        liquid: ["Coolant", (h) => /liquid|coolant|water/.test(h) && /temp/.test(h)],
+        cpu: ["CPU Temp", (h) => h.includes("cpu") && /temp/.test(h)],
+        gpu: ["GPU Temp", (h) => h.includes("gpu") && /temp/.test(h)],
+        cpuload: ["CPU Load", (h) => h.includes("cpu") && /load|usage|utili/.test(h)],
+        gpuload: ["GPU Load", (h) => h.includes("gpu") && /load|usage|utili/.test(h)],
+        fan: ["Fan", (h) => h.includes("fan") && !h.includes("pump")],
+    };
+    const measure = () => (KIND === "fps" ? "auto" : MEASURES[setting("gaugeMeasure", "auto")] ? setting("gaugeMeasure", "auto") : "auto");
+
     function scoreSensor(meta) {
         const haystack = normalize(`${meta.id} ${meta.name} ${meta.device} ${meta.type} ${meta.kind}`);
         if (KIND === "fps") return haystack.includes("fps") || haystack.includes("frames per second") ? 100 : 0;
+        const m = measure();
+        if (m !== "auto") return MEASURES[m][1](haystack) ? 100 + (haystack.includes("cpu") ? 1 : 0) : 0;
         if (haystack.includes("cpu-pump") || (haystack.includes("pump") && haystack.includes("cpu"))) return 100;
         if (haystack.includes("pump")) return 90;
         if (haystack.includes("cpu-temp") || (haystack.includes("temperature") && haystack.includes("cpu"))) return 80;
@@ -100,6 +114,7 @@
 
     function sensorLabel(meta) {
         if (KIND === "fps") return "Frame rate";
+        if (measure() !== "auto") return MEASURES[measure()][0];
         const haystack = normalize(`${meta.id} ${meta.name} ${meta.type} ${meta.kind}`);
         if (haystack.includes("pump")) return "Pump";
         if (haystack.includes("gpu")) return "GPU Temp";
@@ -233,6 +248,8 @@
             showIdle(KIND === "fps" ? "FPS" : "Sensors", "Plugin unavailable");
             return;
         }
+        // A new Measure choice drops the current sensor and looks again.
+        if (measured !== measure()) { measured = measure(); invalidate(); }
         if (busy) return;
         busy = true;
         const epoch = generation;
@@ -248,8 +265,9 @@
             selectedId = meta ? meta.id : "";
             if (!meta) {
                 $("widget").dataset.state = "empty";
-                const none = KIND === "fps" ? "No FPS sensor: start a game" : "No cooling sensor";
-                showIdle(KIND === "fps" ? "FPS" : "Cooling", none);
+                const m = measure();
+                const none = KIND === "fps" ? "No FPS sensor: start a game" : m === "auto" ? "No cooling sensor" : "No " + MEASURES[m][0] + " sensor in iCUE";
+                showIdle(KIND === "fps" ? "FPS" : m === "auto" ? "Cooling" : MEASURES[m][0], none);
                 return;
             }
             const [value, units] = await Promise.all([

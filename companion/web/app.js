@@ -264,6 +264,8 @@
     const s = (id, label, title) => '<button type="button" data-act="wsort" data-s="' + id + '" title="' + title + '" aria-pressed="' + (widgetSort === id) + '">' + label + "</button>";
     const outdated = list.filter((w) => w.update === "outdated").length;
     return '<div class="page"><h1>Widgets</h1><p class="sub">Every widget for your XENEON EDGE and pump, where it sits, and whether it talks to the companion.</p>' +
+      '<div class="own-note"><span class="own-mark" aria-hidden="true">e</span><div><b>Our own widgets, designed and made by inerthel-agi</b>' +
+      "<p>The ones marked <span class=\"needs\">" + PLUG + "Companion</span> get their data from iCUE Edge Companion: without it running, they show nothing. The others work with iCUE alone.</p></div></div>" +
       (i.serverError ? alert(i.serverError + ". Widgets cannot connect.", "page-alert") : "") +
       '<div class="summary"><div><b>' + two(list.filter((w) => w.live).length) + "</b><small>Connected</small></div><div><b>" + two(list.filter((w) => w.installed).length) +
       "</b><small>Installed</small></div><div" + (outdated ? ' class="warn"' : "") + "><b>" + two(outdated) + "</b><small>To update</small></div><div><b>" + two(list.length) + "</b><small>Available</small></div></div>" +
