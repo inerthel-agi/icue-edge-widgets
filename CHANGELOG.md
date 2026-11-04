@@ -4,6 +4,16 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ---
 
+## [Companion 0.1.8] - 2026-11-04
+
+Summary of what changed since iCUE Edge Companion 0.1.7 (details under Unreleased below).
+
+- **New widget, Rig Monitor**: a 3-minute graph per part (CPU, GPU, memory, cooling) with the brand name, min, average and peak. RAM and VRAM are shown in GB, and with the companion running the CPU, GPU, RAM and VRAM graphs keep going while the widget is hidden.
+- **Widgets page**: a search box finds a widget by name or description.
+- **Now Playing**: the Spotify cover shows again when the Spotify app gives Windows no thumbnail (needs the Spotify account connected).
+- **Security**: the API now refuses requests from remote web pages, and the developer "local dist" fallback only trusts the checkout the exe was built in (it could reach `C:\`, where any Windows account can create folders).
+- **Sensors**: the GPU's Frame Buffer and Memory Load sensors are no longer mistaken for GPU load (System Pulse, Rig Pet, Rig Monitor).
+
 ## [Unreleased]
 
 ### Security - audit follow-up (2026-11-04)
