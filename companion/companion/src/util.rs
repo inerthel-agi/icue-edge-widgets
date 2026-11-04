@@ -12,6 +12,83 @@ pub fn now_ms() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0)
 }
 
+/// Physical memory and commit charge in bytes: (used, total, commit used, commit limit), for Rig Monitor.
+#[cfg(windows)]
+pub fn memory() -> Option<(u64, u64, u64, u64)> {
+    use windows::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+    let mut m = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..Default::default() };
+    unsafe { GlobalMemoryStatusEx(&mut m) }.ok()?;
+    Some((m.ullTotalPhys - m.ullAvailPhys, m.ullTotalPhys, m.ullTotalPageFile - m.ullAvailPageFile, m.ullTotalPageFile))
+}
+/// Dedicated video memory in bytes: (in use on the busiest card, size of the largest card), for Rig Monitor.
+/// Use comes from the "GPU Adapter Memory" performance counter, size from DXGI (read once).
+/// ponytail: opens a PDH query per call (a few ms every 1.5 s); keep one open if it ever shows up.
+#[cfg(windows)]
+pub fn vram() -> Option<(u64, u64)> {
+    use std::sync::OnceLock;
+    use windows::core::{w, PCWSTR};
+    use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1, DXGI_ADAPTER_FLAG_SOFTWARE};
+    use windows::Win32::System::Performance::*;
+    static TOTAL: OnceLock<u64> = OnceLock::new();
+    let total = *TOTAL.get_or_init(|| unsafe {
+        let Ok(f) = CreateDXGIFactory1::<IDXGIFactory1>() else { return 0 };
+        let mut best = 0u64;
+        let mut i = 0;
+        while let Ok(a) = f.EnumAdapters1(i) {
+            if let Ok(d) = a.GetDesc1() {
+                if d.Flags & DXGI_ADAPTER_FLAG_SOFTWARE.0 as u32 == 0 {
+                    best = best.max(d.DedicatedVideoMemory as u64);
+                }
+            }
+            i += 1;
+        }
+        best
+    });
+    if total == 0 {
+        return None;
+    }
+    unsafe {
+        let mut q = PDH_HQUERY::default();
+        if PdhOpenQueryW(PCWSTR::null(), 0, &mut q) != 0 {
+            return None;
+        }
+        let mut used = None;
+        let mut c = PDH_HCOUNTER::default();
+        if PdhAddEnglishCounterW(q, w!(r"\GPU Adapter Memory(*)\Dedicated Usage"), 0, &mut c) == 0 && PdhCollectQueryData(q) == 0 {
+            let (mut size, mut n) = (0u32, 0u32);
+            let _ = PdhGetFormattedCounterArrayW(c, PDH_FMT_LARGE, &mut size, &mut n, None);
+            // u64 buffer keeps the items aligned.
+            let mut buf = vec![0u64; size as usize / 8 + 1];
+            if size > 0 && PdhGetFormattedCounterArrayW(c, PDH_FMT_LARGE, &mut size, &mut n, Some(buf.as_mut_ptr().cast())) == 0 {
+                let items = std::slice::from_raw_parts(buf.as_ptr() as *const PDH_FMT_COUNTERVALUE_ITEM_W, n as usize);
+                used = items.iter().map(|it| it.FmtValue.Anonymous.largeValue.max(0) as u64).max();
+            }
+        }
+        let _ = PdhCloseQuery(q);
+        used.map(|u| (u.min(total), total))
+    }
+}
+#[cfg(not(windows))]
+pub fn vram() -> Option<(u64, u64)> {
+    None
+}
+
+#[cfg(not(windows))]
+pub fn memory() -> Option<(u64, u64, u64, u64)> {
+    None
+}
+
+/// The repository checkout this companion was built in (`<root>/companion/companion/target/...`), if any.
+/// Developer builds read `dist/` and `community/` from there. Only the checkout that contains the running
+/// exe counts: a folder that merely sits above it (another account can create `C:\dist`) is never trusted.
+pub fn checkout_root() -> Option<PathBuf> {
+    checkout_of(&std::env::current_exe().ok()?)
+}
+
+pub fn checkout_of(exe: &Path) -> Option<PathBuf> {
+    exe.ancestors().skip(1).take(6).find(|d| exe.starts_with(d.join("companion").join("companion").join("target"))).map(Path::to_path_buf)
+}
+
 pub fn home_dir() -> PathBuf {
     std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(PathBuf::from).unwrap_or_default()
 }
@@ -245,6 +322,20 @@ pub fn exe_path(pid: u32) -> Option<String> {
 #[cfg(not(windows))]
 pub fn exe_path(_: u32) -> Option<String> {
     None
+}
+
+#[cfg(test)]
+mod checkout_tests {
+    use super::*;
+
+    #[test]
+    fn only_the_build_checkout_counts() {
+        let root = Path::new(r"D:\src\icue-edge-widgets");
+        let exe = root.join(r"companion\companion\target\release\icue-edge-companion.exe");
+        assert_eq!(checkout_of(&exe).as_deref(), Some(root));
+        assert_eq!(checkout_of(Path::new(r"C:\Users\u\Downloads\icue-edge-companion.exe")), None);
+        assert_eq!(checkout_of(Path::new(r"C:\Users\u\AppData\Local\iCUE Edge Companion\icue-edge-companion.exe")), None);
+    }
 }
 
 #[cfg(test)]

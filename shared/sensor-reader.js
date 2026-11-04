@@ -44,8 +44,12 @@
         if (t === "fps" || has(m, "fps", "framerate", "frame rate")) return "fps";
         if (has(m, "fan", "pump", "clock", "power", "voltage", "frequency")) return "";
         if (t.startsWith("temperature") || t === "temp") return "temp";
-        if (t === "framebufferload") return "framebuffer";
-        if (t === "load") return "load";
+        if (t.includes("framebuffer")) return "framebuffer";
+        // Any other memory-flavoured id ("MemoryLoad", "MemoryUsage", "RamLoad", "MemoryUsed"…) is memory use.
+        if (/mem|ram|vram/.test(t)) return "memory";
+        // iCUE gives a graphics card's "Frame Buffer" (VRAM in use) and "Memory Load" the plain id type "load".
+        if (has(m, "frame buffer")) return "framebuffer";
+        if (t === "load") return has(m, "memory") ? "memory" : "load";
         if (t) return t === "memoryload" && part(m) !== "gpu" ? "memory" : "";
         // No senstype in the id: from the name, type and units.
         if (has(m, "temperature", "temp") || /°|^\s*[cf]\s*$/i.test(String(m.units))) return "temp";

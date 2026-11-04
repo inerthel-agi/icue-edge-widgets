@@ -120,6 +120,18 @@ pub fn read_request(stream: &mut impl Read) -> Result<Request, u16> {
 }
 
 /// DNS-rebinding guard: only our loopback authority is accepted.
+/// A web page from a remote site (Origin http(s)://, not this machine). Widgets run from local files
+/// (Origin null or file://) and local dev pages from loopback, so none of ours is refused. This keeps a
+/// remote document that iCUE might render in its own process (and so passes the peer check) away from the API.
+pub fn remote_origin(req: &Request) -> bool {
+    let Some(o) = req.header("origin") else { return false };
+    let o = o.trim().to_ascii_lowercase();
+    let Some(rest) = o.strip_prefix("http://").or_else(|| o.strip_prefix("https://")) else { return false };
+    let host = rest.split(['/', '?', '#']).next().unwrap_or("");
+    let host = host.rsplit_once(':').filter(|(_, p)| p.chars().all(|c| c.is_ascii_digit())).map_or(host, |(h, _)| h);
+    !matches!(host, "127.0.0.1" | "localhost" | "[::1]")
+}
+
 pub fn host_ok(req: &Request) -> bool {
     matches!(req.header("host"), Some(h) if h == format!("127.0.0.1:{PORT}") || h == format!("localhost:{PORT}"))
 }
@@ -258,6 +270,9 @@ fn handle(mut stream: TcpStream, shared: Shared) {
     if !host_ok(&req) {
         return respond(&mut stream, 421, &[], b"");
     }
+    if remote_origin(&req) {
+        return respond(&mut stream, 403, &[], b"");
+    }
     // CORS preflight: reveals nothing; the real request still needs iCUE (or the token in test mode).
     if req.method == "OPTIONS" {
         let mut h = vec![
@@ -326,6 +341,8 @@ fn handle(mut stream: TcpStream, shared: Shared) {
             polled(Poll::Net);
             respond(&mut stream, 200, &headers, crate::net::snapshot(req.param("ping").unwrap_or("off")).to_string().as_bytes());
         }
+        // Rig Monitor widget: CPU and GPU load, RAM and VRAM over the last 3 minutes, sampled without pause.
+        ("GET", "/api/system/history") => respond(&mut stream, 200, &headers, crate::system::snapshot().to_string().as_bytes()),
         // Game Session widget: asking is what switches the foreground watch on (see game.rs).
         ("GET", "/api/game/state") => {
             polled(Poll::Game);
@@ -569,6 +586,18 @@ mod tests {
 
     fn req(raw: &str) -> Request {
         read_request(&mut raw.as_bytes()).unwrap()
+    }
+
+    #[test]
+    fn remote_web_origins_are_refused() {
+        let o = |v: &str| req(&format!("GET /api/x HTTP/1.1\r\nHost: 127.0.0.1:47821\r\nOrigin: {v}\r\n\r\n"));
+        for bad in ["https://example.com", "http://evil.test:8080", "https://127.0.0.1.evil.test", "HTTPS://Store.SteamPowered.com/x"] {
+            assert!(remote_origin(&o(bad)), "{bad}");
+        }
+        for ok in ["null", "file://", "http://localhost:8812", "http://127.0.0.1:5181", "http://[::1]:80"] {
+            assert!(!remote_origin(&o(ok)), "{ok}");
+        }
+        assert!(!remote_origin(&req("GET /api/x HTTP/1.1\r\nHost: 127.0.0.1:47821\r\n\r\n")));
     }
 
     #[test]

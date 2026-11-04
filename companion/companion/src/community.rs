@@ -39,8 +39,7 @@ fn download(url: &str, max: usize) -> Result<Vec<u8>, String> {
 
 /// `community/index.json` of a checkout next to the companion (a developer build), if any.
 fn local_index() -> Option<PathBuf> {
-    let exe = std::env::current_exe().ok()?;
-    exe.ancestors().skip(1).take(6).map(|d| d.join("community").join("index.json")).find(|p| p.is_file())
+    Some(crate::util::checkout_root()?.join("community").join("index.json")).filter(|p| p.is_file())
 }
 
 fn valid(v: &Value) -> bool {
@@ -51,7 +50,8 @@ fn valid(v: &Value) -> bool {
 /// disk for when GitHub cannot be reached.
 pub fn index() -> Option<Value> {
     if let Some(p) = local_index() {
-        return std::fs::read(p).ok().and_then(|b| serde_json::from_slice(&b).ok()).filter(valid);
+        let file = std::fs::File::open(p).ok()?;
+        return crate::util::read_limited(file, MAX_INDEX).ok().and_then(|b| serde_json::from_slice(&b).ok()).filter(valid);
     }
     let disk = app_dir().join("community-index.json");
     let mut g = INDEX.lock().unwrap_or_else(|e| e.into_inner());

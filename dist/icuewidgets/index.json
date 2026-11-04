@@ -87,11 +87,11 @@
                                      },
                     "energycost":  {
                                        "package":  "xeneon-edge/energy-cost.icuewidget",
-                                       "build":  "53e2a23195c7af58"
+                                       "build":  "a8cf931bfce060c4"
                                    },
                     "gamesession":  {
                                         "package":  "xeneon-edge/game-session.icuewidget",
-                                        "build":  "4ef2981b198c350c"
+                                        "build":  "c0dfda7641606a42"
                                     },
                     "freegames":  {
                                       "package":  "xeneon-edge/free-games.icuewidget",
@@ -111,11 +111,15 @@
                                 },
                     "systempulse":  {
                                         "package":  "xeneon-edge/system-pulse.icuewidget",
-                                        "build":  "fdcdea365bd05f93"
+                                        "build":  "d75a423aed0cd3a5"
                                     },
+                    "rigmonitor":  {
+                                       "package":  "xeneon-edge/rig-monitor.icuewidget",
+                                       "build":  "2d9571cdd4dd7740"
+                                   },
                     "rigpet":  {
                                    "package":  "xeneon-edge/rig-pet.icuewidget",
-                                   "build":  "1366188c98a80f76"
+                                   "build":  "2eb445e9e829d6e9"
                                },
                     "flipclock":  {
                                       "package":  "xeneon-edge/flip-clock.icuewidget",
@@ -131,7 +135,7 @@
                                         },
                     "pumpfaces":  {
                                       "package":  "corsair-watercooling/pump-faces.icuewidget",
-                                      "build":  "73ac4aafa5ec6a8e"
+                                      "build":  "30dd3db0c77cd0ff"
                                   },
                     "fpsgaugepump":  {
                                          "package":  "corsair-watercooling/fps-gauge-pump.icuewidget",

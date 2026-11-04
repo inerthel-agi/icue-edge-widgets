@@ -14,6 +14,7 @@ pub mod patches;
 pub mod screentime;
 pub mod spotify;
 pub mod stocks;
+pub mod system;
 pub mod tail;
 pub mod usage;
 pub mod util;

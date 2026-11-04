@@ -6,6 +6,10 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Security - audit follow-up (2026-11-04)
+- The companion API refuses requests from remote web pages (an `Origin` of `http(s)://` that is not this machine) with 403. Widgets run from local files (`Origin: null`) and are unaffected. A remote page that iCUE might render in its own process can no longer use the API with iCUE's identity.
+- The developer fallback that reads `dist/icuewidgets` and `community/index.json` from a checkout now only trusts the checkout the running exe was built in (`<root>/companion/companion/target/...`). It used to search six parent folders, up to `C:\`, where any Windows account can create folders. The local community list read is capped like the download (8 MiB).
+
 ### Fixed - Now Playing cover for Spotify
 - The Spotify app often gives Windows no thumbnail, so Now Playing showed a blank cover. When the Spotify account is connected, the companion now uses the cover the Spotify Web API shows for the same track.
 
@@ -15,6 +19,8 @@ All notable changes to **icue-edge-widgets** are documented here.
 ### Added - Rig Monitor widget
 - A graph of the last 3 minutes for each part of the PC, from the iCUE Sensors plugin: CPU (load, temperature, power), GPU (same), memory (RAM, VRAM) and cooling (coolant, pump, room). Each card shows the part's brand name, min, average and peak, with the peak marked on the graph; temperatures turn amber and red when hot.
 - Four switches choose the sections to show, from one to all four.
+- Memory shows RAM and VRAM in use in GB (and the commit charge). iCUE has no RAM sensor, and its GPU "Frame Buffer" is the memory controller's load, not memory in use, so these come from iCUE Edge Companion.
+- With the companion running, CPU load, GPU load, RAM and VRAM are sampled by the companion every 1.5 s without pause (`/api/system/history`), so their graphs stay unbroken while iCUE hides or reloads the widget. Temperatures, power and cooling come from iCUE's sensors and keep their last 3 minutes in the widget's storage.
 
 ### Added - Community widgets
 - iCUE Edge Companion has a Community page. It lists the widgets other people share on GitHub, with author, avatar, screens, what they use, stars and licence. Filters: All, XENEON EDGE, Pump LCD, Packages, Installed. Search by name or author. Sort by stars, date or name.
