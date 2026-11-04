@@ -82,22 +82,42 @@
     const normalize = value => String(value || "").toLowerCase();
 
     // What the dial measures (Racing Gauge's Measure setting); "auto" keeps the cooling order below.
+    // iCUE names the part in the id, not in the name: "vid<1b1c>pid<000002>…senstype<TemperaturePackage>" is the
+    // CPU, pid<000007> a graphics card, and device names say "Intel Core" or "NVIDIA GeForce" (same rules as
+    // shared/sensor-reader.js).
+    const hay = m => normalize(`${m.id} ${m.name} ${m.device} ${m.type} ${m.kind}`);
+    const has = (m, ...w) => w.some(x => hay(m).includes(x));
+    const senstype = m => ((String(m.id).match(/senstype<([a-z]+)>/i) || [])[1] || "").toLowerCase();
+    function part(m) {
+        if (/vid<1b1c>pid<0*2>/i.test(m.id)) return "cpu";
+        if (/vid<1b1c>pid<0*7>/i.test(m.id)) return "gpu";
+        if (has(m, "gpu", "geforce", "nvidia", "radeon", "rtx", "gtx", "intel arc", "graphics")) return "gpu";
+        if (has(m, "cpu", "processor", "ryzen", "intel core", "core i", "xeon", "threadripper", "package")) return "cpu";
+        return "";
+    }
+    const isTemp = m => senstype(m).startsWith("temp") || has(m, "temperature", "temp") || /°|^\s*[cf]\s*$/i.test(String(m.units));
+    const isLoad = m => senstype(m) === "load" || (!senstype(m) && (has(m, "load", "usage", "utili") || String(m.units).trim() === "%"));
+    const isRpm = m => /rpm/i.test(String(m.units)) || has(m, "speed", "rpm");
+    const notCooler = m => !has(m, "fan", "pump", "clock", "power", "voltage", "frequency");
     const MEASURES = {
-        pump: ["Pump", (h) => h.includes("pump")],
-        liquid: ["Coolant", (h) => /liquid|coolant|water/.test(h) && /temp/.test(h)],
-        cpu: ["CPU Temp", (h) => h.includes("cpu") && /temp/.test(h)],
-        gpu: ["GPU Temp", (h) => h.includes("gpu") && /temp/.test(h)],
-        cpuload: ["CPU Load", (h) => h.includes("cpu") && /load|usage|utili/.test(h)],
-        gpuload: ["GPU Load", (h) => h.includes("gpu") && /load|usage|utili/.test(h)],
-        fan: ["Fan", (h) => h.includes("fan") && !h.includes("pump")],
+        pump: ["Pump", m => has(m, "pump") && isRpm(m)],
+        liquid: ["Coolant", m => has(m, "coolant", "liquid", "water") && isTemp(m)],
+        cpu: ["CPU Temp", m => part(m) === "cpu" && notCooler(m) && isTemp(m)],
+        gpu: ["GPU Temp", m => part(m) === "gpu" && notCooler(m) && isTemp(m)],
+        cpuload: ["CPU Load", m => part(m) === "cpu" && notCooler(m) && !has(m, "memory", "ram ") && isLoad(m)],
+        gpuload: ["GPU Load", m => part(m) === "gpu" && notCooler(m) && !has(m, "memory", "vram", "framebuffer") && isLoad(m)],
+        fan: ["Fan", m => has(m, "fan") && !has(m, "pump") && isRpm(m)],
     };
+    // Among matches: the CPU package over one core, a dedicated card over a chip's graphics.
+    const preference = m => (senstype(m) === "temperaturepackage" ? 4 : 0) + (has(m, "package", "tctl", "total") ? 2 : 0)
+        + (has(m, "geforce", "rtx", "radeon rx", "nvidia") ? 3 : 0) - (/index<[1-9]>/.test(m.id) ? 0.5 : 0);
     const measure = () => (KIND === "fps" ? "auto" : MEASURES[setting("gaugeMeasure", "auto")] ? setting("gaugeMeasure", "auto") : "auto");
 
     function scoreSensor(meta) {
         const haystack = normalize(`${meta.id} ${meta.name} ${meta.device} ${meta.type} ${meta.kind}`);
         if (KIND === "fps") return haystack.includes("fps") || haystack.includes("frames per second") ? 100 : 0;
         const m = measure();
-        if (m !== "auto") return MEASURES[m][1](haystack) ? 100 + (haystack.includes("cpu") ? 1 : 0) : 0;
+        if (m !== "auto") return MEASURES[m][1](meta) ? 100 + preference(meta) : 0;
         if (haystack.includes("cpu-pump") || (haystack.includes("pump") && haystack.includes("cpu"))) return 100;
         if (haystack.includes("pump")) return 90;
         if (haystack.includes("cpu-temp") || (haystack.includes("temperature") && haystack.includes("cpu"))) return 80;

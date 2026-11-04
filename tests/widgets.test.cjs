@@ -155,7 +155,9 @@ test('countdowns count calendar days across the autumn clock change', () => {
 test('racing gauge measures the sensor chosen in Measure', async () => {
     const rows = {
         pump: { name: 'CPU pump', type: 'rpm', units: 'RPM', value: '2400' },
-        gpu: { name: 'GPU temperature', type: 'temperature', units: 'C', value: '55' }
+        // As iCUE names them: the part is in the id, the device name says NVIDIA GeForce, not GPU.
+        'vid<1b1c>pid<000007>serial<x>senstype<Temperature>sensindex<0>': { name: 'Temperature', device: 'NVIDIA GeForce RTX 5080', type: 'temperature', units: '°C', value: '55' },
+        'vid<1b1c>pid<000002>serial<x>senstype<TemperaturePackage>sensindex<0>': { name: 'Package', device: 'Intel Core Ultra 9', type: 'temperature', units: '°C', value: '61' }
     };
     // The dial drawing (gauge-designs.js, SVG) is replaced by a stub that records what it shows.
     const shown = {};
@@ -164,6 +166,9 @@ test('racing gauge measures the sensor chosen in Measure', async () => {
         gaugeMeasure: 'gpu', GaugeDesigns, skipScripts: ['gauge-designs.js'] });
     await flush(); await flush();
     assert.deepEqual([shown.label, shown.text], ['GPU Temp', '55.0']);
+    app.context.gaugeMeasure = 'cpu';
+    await app.context.icueEvents.onDataUpdated(); await flush(); await flush();
+    assert.deepEqual([shown.label, shown.text], ['CPU Temp', '61.0']);
     app.context.gaugeMeasure = 'auto';
     await app.context.icueEvents.onDataUpdated(); await flush(); await flush();
     assert.deepEqual([shown.label, shown.text], ['Pump', '2400']);

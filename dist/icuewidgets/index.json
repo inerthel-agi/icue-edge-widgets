@@ -127,7 +127,7 @@
                                    },
                     "racinggaugepump":  {
                                             "package":  "corsair-watercooling/racing-gauge-pump.icuewidget",
-                                            "build":  "8e705c55e97bf680"
+                                            "build":  "dd3074d82788c843"
                                         },
                     "pumpfaces":  {
                                       "package":  "corsair-watercooling/pump-faces.icuewidget",
@@ -135,7 +135,7 @@
                                   },
                     "fpsgaugepump":  {
                                          "package":  "corsair-watercooling/fps-gauge-pump.icuewidget",
-                                         "build":  "dd25240396e49496"
+                                         "build":  "a010f44ac30833a5"
                                      }
                 }
 }
