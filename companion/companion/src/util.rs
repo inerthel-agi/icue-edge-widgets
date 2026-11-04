@@ -30,6 +30,26 @@ pub fn sha256(_: &[u8]) -> Option<[u8; 32]> {
     None
 }
 
+/// SHA-1 through Windows CNG, for git blob ids only (git names files by SHA-1). None where CNG is unavailable.
+#[cfg(windows)]
+pub fn sha1(bytes: &[u8]) -> Option<[u8; 20]> {
+    use windows::Win32::Security::Cryptography::{BCryptHash, BCRYPT_SHA1_ALG_HANDLE};
+    let mut out = [0u8; 20];
+    unsafe { BCryptHash(BCRYPT_SHA1_ALG_HANDLE, None, bytes, &mut out) }.ok().ok()?;
+    Some(out)
+}
+
+#[cfg(not(windows))]
+pub fn sha1(_: &[u8]) -> Option<[u8; 20]> {
+    None
+}
+
+/// Where packages handed to iCUE are written: iCUE ignores, without a message, a package opened from a folder
+/// of `%LOCALAPPDATA%` (such as `app_dir()`), while `%TEMP%` and Downloads work (checked on iCUE 5, Nov 2026).
+pub fn handoff_dir(sub: &str) -> PathBuf {
+    std::env::temp_dir().join("icue-edge-companion").join(sub)
+}
+
 pub fn app_dir() -> PathBuf {
     std::env::var_os("LOCALAPPDATA").map(PathBuf::from).unwrap_or_else(home_dir).join("icue-edge-companion")
 }

@@ -3,7 +3,7 @@
   .card { width: 320px; margin: 10px; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
   .header { display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; }
   .header div { display: grid; flex: 1; min-width: 0; }
-  .header strong { font-size: 13px; font-weight: 600; }
+  .header strong { font: 600 14px/1.2 var(--f-display); }
   .header small { color: var(--muted); font-size: 11px; }
 
   .usage { display: grid; gap: 4px; margin: 0 4px 6px; }
@@ -12,7 +12,7 @@
   .prov-top strong { font-size: 12.5px; font-weight: 600; }
   .prov-top .pill { margin-left: auto; font-size: 11px; padding: 1px 8px; }
   .fig { display: flex; align-items: baseline; gap: 6px; }
-  .fig b { font-size: 22px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .fig b { font: 600 24px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
   .fig span { color: var(--muted); font-size: 11.5px; }
   .meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
   .err { color: var(--danger); font-size: 12px; }

@@ -32,13 +32,15 @@
     let html;
     if (!v) html = '<header class="header">' + MARK + '<div><strong>iCUE Edge Companion</strong><small>' + esc(U.link.message || "Loading…") + "</small></div></header>";
     else {
-      const problem = [v.claude, v.codex].find((p) => p.state === "danger" || p.state === "warn");
-      const sub = v.paused ? "Collection paused" : problem ? problem.name + ": check needed · open the dashboard" : "Up to date";
+      // AI usage is off by default (Settings > AI usage): then the card is the menu alone.
+      const ai = window.showAi();
+      const problem = ai ? [v.claude, v.codex].find((p) => p.state === "danger" || p.state === "warn") : null;
+      const sub = v.paused ? "Collection paused" : problem ? problem.name + ": check needed · open the dashboard" : ai ? "Up to date" : "Running";
       html = '<header class="header">' + MARK + '<div><strong>iCUE Edge Companion</strong><small>' + esc(sub) + "</small></div></header>" +
-        '<div class="usage">' + prov(v.claude, v.paused) + prov(v.codex, v.paused) + "</div>" +
+        (ai ? '<div class="usage">' + prov(v.claude, v.paused) + prov(v.codex, v.paused) + "</div>" : "") +
         '<div class="separator"></div>' +
         '<button type="button" class="item" data-act="open">' + icon("open") + '<span class="label">Open dashboard</span></button>' +
-        '<button type="button" class="item" data-act="refresh">' + icon("refresh") + '<span class="label">Refresh limits</span></button>' +
+        (ai ? '<button type="button" class="item" data-act="refresh">' + icon("refresh") + '<span class="label">Refresh limits</span></button>' : "") +
         '<button type="button" class="item" data-act="pause" role="switch" aria-checked="' + v.paused + '">' + icon("pause") + '<span class="label">Pause collection</span><span class="switch" aria-hidden="true" aria-checked="' + v.paused + '"></span></button>' +
         '<div class="separator"></div>' +
         '<button type="button" class="item danger" data-act="quit">' + icon("quit") + '<span class="label">Quit</span></button>';
@@ -66,6 +68,7 @@
     }
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  window.addEventListener("ai-change", () => { lastHtml = ""; render(); });
 
   U.start(render);
 })();

@@ -63,6 +63,14 @@ Use `now-playing` for music, including Spotify: it reads the Windows media sessi
 
 Every XENEON EDGE widget has a `Style` setting with 22 looks (Instrument by default) and the iCUE colour, background and transparency settings.
 
+### Community widgets
+
+`community/index.json` lists iCUE widgets that other people share on GitHub. `.github/workflows/community-index.yml` rebuilds it every day with `scripts/community-index.py`. The script looks for repositories with the topic `icue-widget`, `icuewidget` or `xeneon-edge-widget`, with `icuewidget` in their name, or matching a XENEON EDGE or pump widget search. A widget is listed when it has an iCUE `manifest.json` (with `id` and `supported_devices`) and an `index.html`. A folder is pinned to one commit, with the git blob id of each file. An `.icuewidget` file in a release is pinned to its SHA-256. Each widget id is listed once: a published package wins, then the most stars, then the oldest repository. The companion's Community page installs from this list. Nobody reviews the listed widgets.
+
+To list your widget, publish it in a public GitHub repository and add the topic `icue-widget`. It appears after the next daily run.
+
+The same script lists the Elgato Marketplace's iCUE widgets from its public pages (its `robots.txt` allows them): the widget listing, each maker's page, and the widgets' pages, at one request a second and at most 400 requests. It keeps the name, maker, price or Free, devices, picture and page address. It downloads nothing: Marketplace widgets come from an Elgato account, so the companion opens their page.
+
 ## Screenshots
 
 Live data at capture time for weather, GitHub and the ISS; demo values for sensors, countdowns and habits; invented lyrics and queue.
@@ -98,7 +106,6 @@ All settings are made in iCUE, in the widget's properties. The main ones:
 | ISS Horizon | `issMapStyle` | dark; also day, satellite, auto |
 | Network Pulse | `pingTarget`, `netUnits` | cloudflare (also google, quad9, off), bits |
 | Stocks | `stockSymbols` | `AAPL,NVDA,MSFT,TSLA,CRSR,^GSPC` |
-| Cooling Sensor Pump | `coolingAuto`, `coolingSensor` | Automatic sensor choice on |
 
 The companion has its own settings window; see [companion/README.md](companion/README.md).
 

@@ -12,9 +12,13 @@
   let renderedPage = null;
   let enterPending = true;
   let screen = null;          // Screen Time snapshot (screentime/1)
-  let widgetFilter = "all";
+  const stored = (k, d) => { try { return localStorage.getItem(k) || d; } catch (_) { return d; } };
+  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* not kept */ } };
+  let widgetFilter = stored("widgets.filter", "all");
+  let widgetSort = stored("widgets.sort", "az");
+  let widgetScreen = stored("widgets.screen", "all");
   const hist = { back: [], fwd: [] };
-  const TITLES = { overview: "Overview", claude: "Claude", codex: "Codex", aicost: "AI cost", screentime: "Screen time", spotify: "Spotify", widgets: "Widgets", settings: "Settings" };
+  const TITLES = { community: "Community", changelog: "Changelog", overview: "Overview", claude: "Claude", codex: "Codex", aicost: "AI cost", screentime: "Screen time", spotify: "Spotify", widgets: "Widgets", settings: "Settings" };
   const still = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   const ICON_ALERT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
@@ -101,33 +105,29 @@
       '<div class="card-foot"><span>Shown on Spotify</span><button type="button" class="link" data-go="spotify">' + (s && s.status === "not_configured" ? "Connect" : "View details") + " →</button></div></div>";
   }
 
+  // Screens on the Overview: the map alone (a click opens the Widgets page on that screen); a server error still shows.
   function screensGroup() {
     const i = info || {};
-    const n = (i.widgets || []).filter((w) => w.live && w.screen === "XENEON EDGE").length;
-    const pump = i.pumpRelay || {};
-    const row = (title, sub, right) => '<div class="row"><div class="row-text"><span>' + title + "</span><small>" + sub + "</small></div>" + (right || "") + "</div>";
-    return '<div class="group">' +
-      row("XENEON EDGE", n ? n + (n === 1 ? " widget connected" : " widgets connected") + " right now" : "No widget connected. Add them in iCUE.",
-        '<span class="pill ' + (n ? "live" : "") + '">' + (n ? n + " connected" : "None") + "</span>") +
-      row("Pump LCD", pump.installed ? "Windows Media Pump · artwork and progress written " + (pump.writtenAt ? U.ago(pump.writtenAt) : "soon") : "Windows Media Pump is not installed",
-        '<span class="pill ' + (pump.installed ? "live" : "") + '">' + (pump.installed ? "Relay on" : "Off") + "</span>") +
-      row("Local server", i.serverError ? esc(i.serverError) : "127.0.0.1:" + (i.port || 47821) + " · answers iCUE only",
-        '<span class="pill ' + (i.serverError ? "danger" : "live") + '">' + (i.serverError ? "Error" : "Running") + "</span>") +
-      '<div class="row"><div class="row-text"><span>Install or update widgets</span><small>Packages, formats and steps</small></div><button type="button" class="btn" data-go="widgets">Widgets</button></div></div>';
+    return (i.serverError ? alert(i.serverError + ". Widgets cannot connect.", "page-alert") : "") + deviceMap(i.widgets || [], "wscreen-go");
   }
 
   function overview(v) {
+    const ai = window.showAi();
     return '<div class="page"><h1>Overview</h1><p class="sub">What the companion tracks on this computer and sends to your XENEON EDGE and pump.</p>' +
-      (v.paused ? alert("Collection is paused: AI figures stay frozen until you resume.", "warn page-alert") : "") +
-      '<div class="group-title">AI usage</div><div class="cards">' + providerCard(v.claude) + providerCard(v.codex) + "</div>" +
+      (v.paused ? alert("Collection is paused" + (ai ? ": AI figures stay frozen until you resume." : "."), "warn page-alert") : "") +
+      (ai ? '<div class="group-title">AI usage</div><div class="cards">' + providerCard(v.claude) + providerCard(v.codex) + "</div>" : "") +
       '<div class="group-title">Media</div><div class="cards">' + nowPlayingCard(media) + spotifyCard(sp) + "</div>" +
       '<div class="group-title">Screens</div>' + screensGroup() +
-      '<details class="help"' + (helpOpen ? " open" : "") + '><summary>How to read the AI figures</summary><dl>' +
+      (ai ? aiHelp() : "") + "</div>";
+  }
+
+  function aiHelp() {
+    return '<details class="help"' + (helpOpen ? " open" : "") + '><summary>How to read the AI figures</summary><dl>' +
       "<dt>Limits</dt><dd>Share of your plan already used over a period (5 hours, one week). They reset on their own at the time shown.</dd>" +
       "<dt>Tokens today</dt><dd>Amount of text processed since midnight (" + esc(U.TZ) + "). The cache (text already sent and re-read) is often most of it.</dd>" +
       "<dt>Current conversation</dt><dd>Size of the conversation open right now. The bigger it gets, the more each message costs.</dd>" +
       "<dt>Why no link between the two?</dt><dd>Claude and Codex do not say how many tokens one percent of a limit is worth, so they are never converted.</dd>" +
-      "</dl></details></div>";
+      "</dl></details>";
   }
 
   // ---------- provider page ----------
@@ -175,42 +175,345 @@
   // ---------- widgets & settings (need app_info) ----------
   const wicon = (w, cls) => '<span class="wico' + (cls ? " " + cls : "") + '" data-icon="' + esc(w.icon) + '"><i></i></span>';
 
+  const screenOf = (w) => (w.screen === "Pump LCD" ? "pump" : "edge");
+  const SCREEN_NAME = { edge: "XENEON EDGE", pump: "Pump LCD" };
+  // Counter digits: leading zeros stay dim, like a two-digit display.
+  const two = (n) => { const s = String(n).padStart(2, "0"); const k = s.search(/[1-9]/); const cut = k < 0 ? s.length - 1 : k; return "<i>" + s.slice(0, cut) + "</i>" + s.slice(cut); };
+
+  // The XENEON EDGE page iCUE shows, drawn to scale: a 3 × 2 grid where each widget keeps its slot and size
+  // (read by the companion from iCUE's layout file). Free cells stay hatched.
+  const SIZE_NAME = { 1: "S", 2: "M", 4: "L", 6: "XL" };
+  function edgeGlass(list) {
+    const lay = (info && info.edgeLayout) || { widgets: [] };
+    const used = new Set();
+    const tiles = lay.widgets.map((x) => {
+      const col = Math.floor(x.slot / 2), row = x.slot % 2, cols = x.size >= 4 ? x.size / 2 : 1, rows = x.size === 1 ? 1 : 2;
+      for (let c = col; c < col + cols; c++) for (let r = row; r < row + rows; r++) used.add(c * 2 + r);
+      const w = list.find((v) => v.id === x.id);
+      const cls = "tile c" + col + " r" + row + " s" + x.size;
+      return w ? '<span class="' + cls + '" data-icon="' + esc(w.icon) + '" title="' + esc(w.name) + " · " + SIZE_NAME[x.size] + '">' + wicon(w) + "<em>" + esc(w.name) + "</em><b>" + SIZE_NAME[x.size] + "</b></span>"
+        : '<span class="' + cls + ' other" title="Another iCUE widget"><em>iCUE widget</em><b>' + SIZE_NAME[x.size] + "</b></span>";
+    }).join("");
+    let free = "";
+    for (let k = 0; k < 6; k++) if (!used.has(k)) free += '<span class="cell c' + Math.floor(k / 2) + " r" + (k % 2) + '"></span>';
+    return '<span class="glass">' + free + tiles + "</span>";
+  }
+
+  // The two screens with what is placed on them. `act` is "wscreen" on the Widgets page (keeps only that
+  // screen's widgets) and "wscreen-go" elsewhere (opens the Widgets page on it).
+  function deviceMap(list, act) {
+    const on = (s) => list.filter((w) => screenOf(w) === s && (w.placed || w.live));
+    const lay = info && info.edgeLayout;
+    const pageNote = (s) => (s === "edge" && lay && lay.pages > 1 ? "Page " + (lay.page + 1) + " of " + lay.pages + " · " : "");
+    const note = (s) => pageNote(s) + on(s).length + " placed · " + list.filter((w) => screenOf(w) === s && w.installed).length + " installed";
+    const pressed = (s) => (act === "wscreen" ? ' aria-pressed="' + (widgetScreen === s) + '"' : "");
+    return '<div class="map">' +
+      '<button type="button" class="screen-btn edge" data-act="' + act + '" data-screen="edge"' + pressed("edge") + ' title="Show the XENEON EDGE widgets">' +
+      '<span class="bezel">' + edgeGlass(list) + "</span>" +
+      '<span class="screen-label"><b>XENEON EDGE</b><small>' + note("edge") + "</small></span></button>" +
+      '<button type="button" class="screen-btn pump" data-act="' + act + '" data-screen="pump"' + pressed("pump") + ' title="Show the pump widgets">' +
+      '<span class="ring"><span class="lcd">' + on("pump").slice(0, 1).map((w) => wicon(w)).join("") + "</span></span>" +
+      '<span class="screen-label"><b>Pump LCD</b><small>' + note("pump") + "</small></span></button></div>";
+  }
+
+  const TICK = '<svg class="tick" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const PLUG = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 1.5v3M10 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0zM8 11.5v3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
   function widgets() {
     const i = info || {};
     const list = i.widgets || [];
-    const state = (w) => w.live ? ["Connected", "live"] : w.placed ? [w.companion ? "Placed · not connected" : "Placed", w.companion ? "warn" : "live"] : w.installed ? ["Installed · not placed", ""] : ["Not installed", ""];
-    // Install / Update from the fingerprint the packaging script writes: an up-to-date widget only offers a quiet reinstall.
+    const state = (w) => w.live ? ["Connected", "live"] : w.placed ? [w.companion ? "Placed · not connected" : "On screen", w.companion ? "warn" : "live"] : w.installed ? ["Installed · not placed", ""] : ["Not installed", ""];
+    // Install / Update from the fingerprint of the installed files: an up-to-date widget only offers a quiet reinstall.
     const installButton = (w) => {
       const [text, cls, title] = w.update === "missing" ? ["Install", "btn", "Install in iCUE"]
-        : w.update === "current" ? ["Up to date", "btn ghost", "Reinstall the same version"]
-        : w.update === "outdated" ? ["Update", "btn primary", "A newer version is available"]
+        : w.update === "current" ? [TICK + "<span>Up to date</span>", "btn ghost", "Reinstall the same version"]
+        : w.update === "outdated" ? ["Update", "btn amber", "A newer version is available"]
         : ["Update", "btn", "Could not check for a newer version"];
-      return '<button type="button" class="' + cls + '" title="' + title + '" data-act="install" data-id="' + esc(w.id) + '">' + text + "</button>";
+      const pump = screenOf(w) === "pump";
+      return '<button type="button" class="' + cls + '" title="' + (pump ? title + " (on the pump)" : title) + '" data-act="' + (pump ? "install-pump" : "install") + '" data-id="' + esc(w.id) + '">' +
+        (text.startsWith("<") ? text : "<span>" + text + "</span>") + "</button>";
     };
-    const shown = list.filter((w) => widgetFilter === "installed" ? w.installed : widgetFilter === "companion" ? w.companion : true);
-    const row = (w) => {
+    const FILTERS = {
+      all: ["All", () => true],
+      installed: ["Installed", (w) => w.installed],
+      missing: ["Not installed", (w) => !w.installed],
+      outdated: ["To update", (w) => w.update === "outdated"],
+      placed: ["On screen", (w) => w.placed || w.live],
+      companion: ["Companion", (w) => w.companion],
+    };
+    if (!FILTERS[widgetFilter]) widgetFilter = "all";
+    if (!SCREEN_NAME[widgetScreen]) widgetScreen = "all";
+    const order = widgetSort === "za" ? -1 : 1;
+    const shown = list.filter((w) => FILTERS[widgetFilter][1](w) && (widgetScreen === "all" || screenOf(w) === widgetScreen))
+      .sort((a, b) => order * a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
+    const card = (w) => {
       const [label, cls] = state(w);
-      return '<div class="row">' + wicon(w) + '<div class="row-text"><span>' + esc(w.name) + (w.companion ? '<span class="tagc">companion</span>' : "") + "</span><small>" + esc(w.desc) +
-        " · " + (w.screen === "Pump LCD" ? "480 × 480" : "S · M · L · XL") + '</small></div><span class="pill ' + cls + '">' + label + "</span>" + installButton(w) + "</div>";
+      return '<article class="wmod" data-id="' + esc(w.id) + '" data-icon="' + esc(w.icon) + '">' + wicon(w) +
+        '<div class="wmod-text"><h3>' + esc(w.name) + "</h3><p>" + esc(w.desc) + ' · <span class="nowrap">' + (w.screen === "Pump LCD" ? "480 × 480" : "S · M · L · XL") + "</span></p></div>" +
+        '<div class="wmod-foot"><span class="pill ' + cls + '">' + label + "</span>" + (w.companion ? '<span class="needs" title="Needs iCUE Edge Companion">' + PLUG + "Companion</span>" : "") + "</div>" +
+        installButton(w) + "</article>";
     };
-    const group = (screenName) => {
-      const ws = shown.filter((w) => w.screen === screenName);
+    const group = (s) => {
+      const ws = shown.filter((w) => screenOf(w) === s);
       const live = ws.filter((w) => w.live).length;
-      return '<div class="group-title">' + esc(screenName) + "<small>" + (live ? live + " connected" : ws.length + " shown") + '</small></div><div class="group">' +
-        (ws.map(row).join("") || '<div class="empty">No widget here with this filter.</div>') + "</div>";
+      return '<h2 class="grp" data-id="grp-' + s + '">' + SCREEN_NAME[s] + "<small>" + ws.length + (live ? " · " + live + " connected" : "") + "</small></h2>" +
+        (ws.length ? '<div class="wgrid">' + ws.map(card).join("") + "</div>" : '<p class="empty" data-id="empty-' + s + '">No widget here with this filter.</p>');
     };
-    const f = (id, label) => '<button type="button" data-act="wfilter" data-f="' + id + '" aria-pressed="' + (widgetFilter === id) + '">' + label + "</button>";
-    return '<div class="page"><h1>Widgets</h1><p class="sub">Every iCUE Edge widget, where it is, and whether it is talking to the companion.</p>' +
+    const f = (id) => '<button type="button" data-act="wfilter" data-f="' + id + '" aria-pressed="' + (widgetFilter === id) + '">' + FILTERS[id][0] +
+      "<small>" + list.filter(FILTERS[id][1]).length + "</small></button>";
+    const s = (id, label, title) => '<button type="button" data-act="wsort" data-s="' + id + '" title="' + title + '" aria-pressed="' + (widgetSort === id) + '">' + label + "</button>";
+    const outdated = list.filter((w) => w.update === "outdated").length;
+    return '<div class="page"><h1>Widgets</h1><p class="sub">Every widget for your XENEON EDGE and pump, where it sits, and whether it talks to the companion.</p>' +
       (i.serverError ? alert(i.serverError + ". Widgets cannot connect.", "page-alert") : "") +
-      '<div class="summary"><div><b>' + list.filter((w) => w.live).length + "</b><small>connected now</small></div><div><b>" + list.filter((w) => w.installed).length +
-      "</b><small>installed in iCUE</small></div><div><b>" + list.filter((w) => w.update === "outdated").length + "</b><small>to update</small></div><div><b>" + list.length + "</b><small>available</small></div></div>" +
-      '<div class="filters" role="group" aria-label="Filter">' + f("all", "All") + f("installed", "Installed") + f("companion", "Use the companion") + "</div>" +
-      group("XENEON EDGE") + group("Pump LCD") +
-      '<div class="group-title">Install a widget</div><div class="group">' +
-      '<div class="row"><span class="step">1</span><div class="row-text"><span>Press Install (or Update) beside the widget</span><small>iCUE opens the package and asks you to confirm; the packages also sit in the repository</small></div><button type="button" class="btn" data-act="link" data-link="packages">Packages</button></div>' +
+      '<div class="summary"><div><b>' + two(list.filter((w) => w.live).length) + "</b><small>Connected</small></div><div><b>" + two(list.filter((w) => w.installed).length) +
+      "</b><small>Installed</small></div><div" + (outdated ? ' class="warn"' : "") + "><b>" + two(outdated) + "</b><small>To update</small></div><div><b>" + two(list.length) + "</b><small>Available</small></div></div>" +
+      deviceMap(list, "wscreen") +
+      '<div class="toolbar"><div class="filters" role="group" aria-label="Filter">' + Object.keys(FILTERS).map(f).join("") + "</div>" +
+      '<div class="listbar"><span class="shown">' + shown.length + " of " + list.length + " shown" + (widgetScreen === "all" ? "" : " · " + SCREEN_NAME[widgetScreen] + " only") + "</span>" +
+      '<div class="seg sort" role="group" aria-label="Order by name">' + s("az", "A → Z", "Names from A to Z") + s("za", "Z → A", "Names from Z to A") + "</div></div></div>" +
+      ["edge", "pump"].filter((x) => widgetScreen === "all" || widgetScreen === x).map(group).join("") +
+      '<h2 class="grp">Install a widget</h2><div class="group">' +
+      '<div class="row"><span class="step">1</span><div class="row-text"><span>Press Install (or Update) on the widget</span><small>iCUE opens the package and asks you to confirm; the packages also sit in the repository</small></div><button type="button" class="btn" data-act="link" data-link="packages">Packages</button></div>' +
       '<div class="row"><span class="step">2</span><div class="row-text"><span>Place it on the screen</span><small>XENEON EDGE → Widgets, or the pump LCD screen settings</small></div></div>' +
-      '<div class="row"><span class="step">3</span><div class="row-text"><span>Keep iCUE Edge Companion running</span><small>Only the widgets tagged companion need it; it stays in the notification area</small></div></div></div>' +
+      '<div class="row"><span class="step">3</span><div class="row-text"><span>Keep iCUE Edge Companion running</span><small>Only the widgets marked Companion need it; it stays in the notification area</small></div></div></div>' +
       '<p class="hint">Read from the iCUE files (installed widgets, XENEON EDGE layout, pump profiles); nothing there is changed by reading; installing goes through the confirmation in iCUE. Widgets without the companion can only show installed and placed.</p></div>';
+  }
+
+  // ---------- Community (widgets other people share on GitHub; list built daily by the repository) ----------
+  let community = null;
+  let communityFilter = stored("community.filter", "all");
+  let communitySort = stored("community.sort", "stars");
+  let communityQuery = "";
+  let communitySource = stored("community.source", "github");
+  let marketFilter = stored("market.filter", "all");
+  let marketSort = stored("market.sort", "az");
+  let marketQuery = "";
+  let communityJob = null;          // { key, sentAt, phase: "sent" | "installed" | "wait" }
+  async function loadCommunity() {
+    try { community = await U.invoke("community"); } catch (e) { community = { error: String(e) }; }
+    communityStatus();
+    if (page === "community") render();
+  }
+  const DEVICE = { dashboard_lcd: "XENEON EDGE", pump_lcd: "Pump LCD", keyboard_lcd: "Keyboard" };
+  const PLUGIN = (p) => /sensors/i.test(p) ? "Sensors" : /media/i.test(p) ? "Media" : /link/i.test(p) ? "Links" : String(p).split(":")[1] || String(p);
+  const C_FILTERS = {
+    all: ["All", () => true],
+    edge: ["XENEON EDGE", (w) => (w.devices || []).includes("dashboard_lcd")],
+    pump: ["Pump LCD", (w) => (w.devices || []).includes("pump_lcd")],
+    package: ["Packages", (w) => w.kind === "release"],
+    installed: ["Installed", (w) => w.installed],
+  };
+  const licence = (l) => (l === "none" ? "no licence" : l === "NOASSERTION" ? "own licence" : l);
+  const avatar = (w) => (Number.isInteger(w.ownerId) ? '<img class="ava" src="https://avatars.githubusercontent.com/u/' + w.ownerId + '?s=40&amp;v=4" alt="">' : "");
+  const STAR = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="currentColor"/></svg>';
+  const GH = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.4c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.3.7 0-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.5 7.5 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.7-3.6 3.9.3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>';
+
+  function communityCard(w) {
+    const letter = esc((w.name || "?").charAt(0).toUpperCase());
+    const icon = typeof w.icon === "string" && w.icon.startsWith("https://raw.githubusercontent.com/")
+      ? '<img class="cicon" src="' + esc(w.icon) + '" alt="" loading="lazy" data-letter="' + letter + '">' : '<span class="cicon mono">' + letter + "</span>";
+    const devs = (w.devices || []).length ? w.devices.map((d) => '<span class="chip scr">' + esc(DEVICE[d] || d) + "</span>").join("") : "";
+    const plugs = (w.plugins || []).map((p) => '<span class="chip">' + esc(PLUGIN(p)) + "</span>").join("");
+    const src = w.kind === "release" ? '<span class="chip pkg">Package ' + esc(w.tag || "") + "</span>" : '<span class="chip">Source folder</span>';
+    const author = w.author || w.owner;
+    const btn = !w.installable ? '<button type="button" class="btn" disabled title="Needs files outside its folder: install it from its repository"><span>Source only</span></button>'
+      : w.installed ? '<button type="button" class="btn ghost" data-act="community-open" data-key="' + esc(w.key) + '" title="Installed in iCUE. Install again">' + TICK + "<span>Installed</span></button>"
+      : '<button type="button" class="btn" data-act="community-open" data-key="' + esc(w.key) + '"><span>Install</span></button>';
+    return '<article class="cmod" data-id="c:' + esc(w.key) + '">' + icon +
+      '<div class="cmod-text"><h3>' + esc(w.name) + '</h3><p class="by">' + avatar(w) + "by <b>" + esc(author) + "</b>" +
+      (String(author).toLowerCase() !== String(w.owner).toLowerCase() ? ' <span class="muted">· @' + esc(w.owner) + "</span>" : "") + "</p>" +
+      '<p class="desc">' + esc(w.description || "No description.") + "</p></div>" +
+      '<div class="chips">' + devs + plugs + src + "</div>" +
+      '<div class="cmod-foot"><span class="cmeta">' + STAR + esc(w.stars) + " · " + esc(w.pushed) + " · " + esc(licence(w.license)) + "</span>" +
+      '<button type="button" class="btn ghost" data-act="community-source" data-key="' + esc(w.key) + '" title="Open its source on GitHub">' + GH + "<span>Source</span></button>" + btn + "</div></article>";
+  }
+
+  function communityShown() {
+    const list = (community && community.widgets) || [];
+    const q = communityQuery.trim().toLowerCase();
+    const f = (C_FILTERS[communityFilter] || C_FILTERS.all)[1];
+    const cmp = communitySort === "recent" ? (a, b) => String(b.pushed).localeCompare(String(a.pushed))
+      : communitySort === "az" ? (a, b) => String(a.name).localeCompare(String(b.name), "en", { sensitivity: "base" })
+      : (a, b) => (b.stars || 0) - (a.stars || 0) || String(a.name).localeCompare(String(b.name));
+    return list.filter((w) => f(w) && (!q || (w.name + " " + w.author + " " + w.owner + " " + w.description).toLowerCase().includes(q))).sort(cmp);
+  }
+  const communityResults = (shown) => shown.length ? '<div class="cgrid">' + shown.map(communityCard).join("") + "</div>"
+    : '<div class="group"><div class="empty">No widget matches.</div></div>';
+
+  function communityPage() {
+    const head = '<div class="page"><h1>Community</h1><p class="sub">Widgets other people share on GitHub, with their author. Install one in two clicks; iCUE asks you to confirm.</p>';
+    const share = '<h2 class="grp">Share yours</h2><div class="group">' +
+      '<div class="row"><span class="step">1</span><div class="row-text"><span>Put your widget on GitHub</span><small>A public repository with its folder (manifest.json, index.html), or an .icuewidget file in a release</small></div></div>' +
+      '<div class="row"><span class="step">2</span><div class="row-text"><span>Add the topic icue-widget</span><small>Or put icuewidget in the repository name. The list is rebuilt every day; your name shows on the card.</small></div></div>' +
+      '<div class="row"><div class="row-text"><span>Elgato Marketplace</span><small>The official store for XENEON EDGE widgets</small></div><button type="button" class="btn" data-act="csource" data-src="marketplace"><span>See</span></button></div></div></div>';
+    const count = community && community.widgets ? community.widgets.length : null;
+    const mcount = community && community.marketplace ? community.marketplace.length : null;
+    const tabs = '<div class="seg source" role="group" aria-label="Where the widgets come from">' +
+      '<button type="button" data-act="csource" data-src="github" aria-pressed="' + (communitySource !== "marketplace") + '">GitHub' + (count === null ? "" : "<small>" + count + "</small>") + "</button>" +
+      '<button type="button" data-act="csource" data-src="marketplace" aria-pressed="' + (communitySource === "marketplace") + '">Elgato Marketplace' + (mcount ? "<small>" + mcount + "</small>" : "") + "</button></div>";
+    if (communitySource === "marketplace") return '<div class="page"><h1>Community</h1><p class="sub">Widgets other people share, with their author.</p>' + tabs + marketplacePanel() + marketList() + marketSteps() + "</div>";
+    if (!community) return '<p class="waiting">Loading the community list…</p>';
+    if (community.error) return head + tabs + alert(community.error, "page-alert") + share;
+    if (!C_FILTERS[communityFilter]) communityFilter = "all";
+    const list = community.widgets;
+    const shown = communityShown();
+    const authors = new Set(list.map((w) => String(w.owner).toLowerCase())).size;
+    const f = (id) => '<button type="button" data-act="cfilter" data-f="' + id + '" aria-pressed="' + (communityFilter === id) + '">' + C_FILTERS[id][0] + "<small>" + list.filter(C_FILTERS[id][1]).length + "</small></button>";
+    const s = (id, label) => '<button type="button" data-act="csort" data-s="' + id + '" aria-pressed="' + (communitySort === id) + '">' + label + "</button>";
+    return head + tabs +
+      alert("Not made or checked by us. Each widget runs its own code in iCUE: look at its source and its author before installing.", "warn page-alert") +
+      '<div class="summary"><div><b>' + two(list.length) + "</b><small>Widgets</small></div><div><b>" + two(authors) + "</b><small>Authors</small></div><div><b>" +
+      two(list.filter((w) => w.kind === "release").length) + '</b><small>Packages</small></div><div><b class="date">' + esc(String(community.generated || "").slice(0, 10)) + "</b><small>List updated</small></div></div>" +
+      '<div class="toolbar"><div class="filters" role="group" aria-label="Filter">' + Object.keys(C_FILTERS).map(f).join("") + "</div>" +
+      '<div class="listbar"><label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+      '<input id="community-q" type="search" placeholder="Search a widget or an author" aria-label="Search the community widgets" value="' + esc(communityQuery) + '"></label>' +
+      '<div class="seg sort" role="group" aria-label="Order">' + s("stars", "★ Stars") + s("recent", "Recent") + s("az", "A → Z") + "</div></div></div>" +
+      '<p class="shown" id="community-shown">' + shown.length + " of " + list.length + " shown</p>" +
+      '<div id="community-results">' + communityResults(shown) + "</div>" + share;
+  }
+
+  // Elgato Marketplace: the official store. Its widgets come from the user's Elgato account (many are paid) and
+  // iCUE installs them; there is no public list, so the companion links to it and downloads nothing.
+  function marketplacePanel() {
+    return '<div class="market-head"><div><b>Elgato Marketplace</b><p>Free widgets: Get, sign in with your Elgato account, and iCUE installs them. Paid widgets are bought on their page. ' +
+      "The companion opens the page and downloads nothing: Marketplace widgets come from your Elgato account.</p></div>" +
+      '<div class="btns"><button type="button" class="btn" data-act="link" data-link="marketplace-widgets"><span>Browse the site</span></button>' +
+      '<button type="button" class="btn" data-act="link" data-link="marketplace-library"><span>Your library</span></button></div></div>';
+  }
+  const marketSteps = () => '<h2 class="grp">How it works</h2><div class="group">' +
+    '<div class="row"><span class="step">1</span><div class="row-text"><span>Open the widget\'s page</span><small>Get it free or Buy opens it in your browser</small></div></div>' +
+    '<div class="row"><span class="step">2</span><div class="row-text"><span>Get or buy it with your Elgato account</span><small>It goes to your library on the Marketplace</small></div></div>' +
+    '<div class="row"><span class="step">3</span><div class="row-text"><span>Install it in iCUE</span><small>From the widget\'s page or your library (iCUE 5.44 or later). For a pump widget, open the pump\'s screen in iCUE first.</small></div></div></div>';
+
+  const M_FILTERS = { all: ["All", () => true], free: ["Free", (m) => m.free], paid: ["Paid", (m) => !m.free] };
+  const money = (p) => {
+    if (!p || typeof p.amount !== "number" || !/^[A-Z]{3}$/.test(p.currency || "")) return "Paid";
+    try { return new Intl.NumberFormat(undefined, { style: "currency", currency: p.currency }).format(p.amount / 100); } catch (_) { return (p.amount / 100).toFixed(2) + " " + p.currency; }
+  };
+  function marketShown() {
+    const list = (community && community.marketplace) || [];
+    const q = marketQuery.trim().toLowerCase();
+    const f = (M_FILTERS[marketFilter] || M_FILTERS.all)[1];
+    const cmp = marketSort === "recent" ? (a, b) => String(b.published).localeCompare(String(a.published))
+      : marketSort === "price" ? (a, b) => (a.free === b.free ? 0 : a.free ? -1 : 1)
+          || String((a.price && a.price.currency) || "").localeCompare(String((b.price && b.price.currency) || ""))
+          || ((a.price && a.price.amount) || 0) - ((b.price && b.price.amount) || 0) || String(a.name).localeCompare(String(b.name))
+      : (a, b) => String(a.name).localeCompare(String(b.name), "en", { sensitivity: "base" });
+    return list.filter((m) => f(m) && (!q || (m.name + " " + m.maker + " " + m.type + " " + m.description).toLowerCase().includes(q))).sort(cmp);
+  }
+  function marketCard(m) {
+    const img = m.image ? '<img class="mthumb" src="' + esc(m.image) + '" alt="" loading="lazy">' : '<span class="mthumb"></span>';
+    const devices = (m.devices || []).map((d) => '<span class="chip scr">' + esc(d) + "</span>").join("") + (m.type ? '<span class="chip">' + esc(m.type) + "</span>" : "");
+    const price = m.free ? '<span class="chip pkg">Free</span>' : '<span class="chip paid">' + esc(money(m.price)) + "</span>";
+    return '<article class="mcard" data-id="m:' + esc(m.id) + '">' + img + '<div class="mbody"><h3>' + esc(m.name) + '</h3><p class="by">by <b>' + esc(m.maker) + "</b></p>" +
+      '<p class="desc">' + esc(m.description || "") + '</p><div class="chips">' + price + devices + "</div>" +
+      '<div class="cmod-foot"><span class="cmeta">' + esc(m.published || "") + "</span>" +
+      (m.installed ? '<button type="button" class="btn ghost" data-act="market-open" data-id="' + esc(m.id) + '" title="A widget with this name is installed in iCUE">' + TICK + "<span>Installed</span></button>"
+        : '<button type="button" class="btn ' + (m.free ? "" : "amber") + '" data-act="market-open" data-id="' + esc(m.id) + '"><span>' + (m.free ? "Get it free" : "Buy · " + esc(money(m.price))) + "</span></button>") + "</div></div></article>";
+  }
+  const marketResults = (shown) => shown.length ? '<div class="mgrid">' + shown.map(marketCard).join("") + "</div>" : '<div class="group"><div class="empty">No widget matches.</div></div>';
+  function marketList() {
+    if (!community || !community.marketplace || !community.marketplace.length) return "";
+    if (!M_FILTERS[marketFilter]) marketFilter = "all";
+    const list = community.marketplace;
+    const shown = marketShown();
+    const f = (id) => '<button type="button" data-act="mfilter" data-f="' + id + '" aria-pressed="' + (marketFilter === id) + '">' + M_FILTERS[id][0] + "<small>" + list.filter(M_FILTERS[id][1]).length + "</small></button>";
+    const s = (id, label) => '<button type="button" data-act="msort" data-s="' + id + '" aria-pressed="' + (marketSort === id) + '">' + label + "</button>";
+    return '<h2 class="grp">On the Marketplace<small>list of ' + esc(String(community.generated || "").slice(0, 10)) + "</small></h2>" +
+      '<div class="toolbar"><div class="filters" role="group" aria-label="Filter">' + Object.keys(M_FILTERS).map(f).join("") + "</div>" +
+      '<div class="listbar"><label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+      '<input id="market-q" type="search" placeholder="Search a widget or a maker" aria-label="Search the Marketplace widgets" value="' + esc(marketQuery) + '"></label>' +
+      '<div class="seg sort" role="group" aria-label="Order">' + s("az", "A → Z") + s("recent", "Recent") + s("price", "Price") + "</div></div></div>" +
+      '<p class="shown" id="market-shown">' + shown.length + " of " + list.length + " shown</p>" +
+      '<div id="market-results">' + marketResults(shown) + "</div>";
+  }
+
+  // Install sheet: what the widget is and uses, then the checked download.
+  function communitySheet(key) {
+    const w = ((community && community.widgets) || []).find((x) => x.key === key);
+    if (!w) return;
+    const devices = (w.devices || []).map((d) => DEVICE[d] || d);
+    const pump = (w.devices || []).includes("pump_lcd");
+    const uses = (w.plugins || []).map(PLUGIN).concat(w.interactive ? ["touch"] : []);
+    const kb = w.size ? " · " + (w.size >= 1048576 ? (w.size / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(w.size / 1024)) + " KB") : "";
+    const fact = (title, text) => '<li><span class="step">' + TICK + "</span><div><b>" + title + "</b><small>" + esc(text) + "</small></div></li>";
+    const sheet = document.getElementById("community-sheet");
+    sheet.innerHTML = '<p class="cap">Community · github.com/' + esc(w.repo) + "</p>" +
+      '<h2 id="community-sheet-title">Install ' + esc(w.name) + "</h2>" +
+      '<p class="sub">by <b>' + esc(w.author || w.owner) + "</b> · " + esc(licence(w.license)) + ". Not checked by us: the companion only makes sure you get exactly the files on the list.</p>" +
+      '<ol class="sheet-steps facts-list">' +
+      fact("Screen", devices.join(", ") || "Not stated") +
+      fact("Uses", uses.length ? uses.join(", ") : "Nothing from iCUE") +
+      fact("Source", (w.kind === "release" ? "Package " + (w.asset || "") + " from release " + (w.tag || "") : "Folder " + (w.folder || "(root)") + " at the listed commit, packed by the companion") + kb) +
+      (pump ? '<li class="s-open"><span class="step">!</span><div><b>For the pump: show it in iCUE first</b><small>iCUE adds a pump widget only while the pump\'s LCD screen is open in iCUE.</small></div><button type="button" class="btn" data-act="open-icue"><span>Open iCUE</span></button></li>' : "") +
+      "</ol>" +
+      '<p class="sheet-status" id="community-status" role="status"></p>' +
+      '<div class="sheet-foot"><button type="button" class="link" data-act="community-source" data-key="' + esc(w.key) + '">View the source on GitHub</button>' +
+      '<div class="btns"><button type="button" class="btn ghost" data-act="sheet-close"><span>Close</span></button>' +
+      '<button type="button" class="btn amber" data-act="community-install" data-key="' + esc(w.key) + '" id="community-send"><span>' + (w.installed ? "Install again" : "Install") + "</span></button></div></div>";
+    communityJob = { key: w.key, before: !!w.installed, sentAt: 0, phase: "wait" };
+    sheet.showModal();
+  }
+  function communityStatus() {
+    if (!communityJob || communityJob.phase !== "sent") return;
+    const w = ((community && community.widgets) || []).find((x) => x.key === communityJob.key);
+    const st = document.getElementById("community-status");
+    if (!st) return;
+    if (w && w.installed && !communityJob.before) {
+      communityJob.phase = "installed";
+      st.className = "sheet-status ok";
+      st.textContent = w.name + " is installed in iCUE. Place it from iCUE" + ((w.devices || []).includes("pump_lcd") && !(w.devices || []).includes("dashboard_lcd") ? " on the pump's screen." : ".");
+      const send = document.getElementById("community-send");
+      if (send) send.hidden = true;
+    } else if (Date.now() - communityJob.sentAt > 25000) {
+      communityJob.phase = "wait";
+      st.className = "sheet-status warn";
+      st.textContent = communityJob.before ? "Sent again. The same version gives no visible change." : "iCUE has not added it yet. Confirm in iCUE; for the pump, open its screen in iCUE first.";
+    }
+  }
+
+  // ---------- Changelog (CHANGELOG.md of the repository, built into the companion) ----------
+  let changelogText = null;
+  let changelogAll = false;
+  async function loadChangelog() {
+    try { changelogText = await U.invoke("changelog"); } catch (_) { changelogText = ""; }
+    if (page === "changelog") render();
+  }
+  // Markdown, the little the changelog uses: `code`, **bold**, [text](link) shown as its text.
+  const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+  const SHOWN = 8;
+  function changelogPage() {
+    if (changelogText === null) return '<p class="waiting">Loading…</p>';
+    const releases = [];
+    let rel = null, sec = null;
+    for (const raw of changelogText.split(/\r?\n/)) {
+      const line = raw.trim();
+      let m;
+      if ((m = /^## \[([^\]]+)\](?:\s*-\s*(.+))?/.exec(line))) { rel = { name: m[1], date: m[2] || "", secs: [] }; releases.push(rel); sec = null; }
+      else if (!rel || !line || line === "---") continue;
+      else if ((m = /^### (.+)/.exec(line))) { sec = { title: m[1], items: [] }; rel.secs.push(sec); }
+      else {
+        if (!sec) { sec = { title: "", items: [] }; rel.secs.push(sec); }
+        if ((m = /^[-*] (.+)/.exec(line)) || !sec.items.length) sec.items.push(m ? m[1] : line);
+        else sec.items[sec.items.length - 1] += " " + line;
+      }
+    }
+    const total = releases.reduce((n, r) => n + r.secs.length, 0);
+    let left = changelogAll ? Infinity : SHOWN;
+    const KIND = /^(Added|Changed|Fixed|Removed|Security|Deprecated)\b\s*(?:-\s*)?(.*)$/;
+    const body = releases.map((r) => {
+      const secs = r.secs.slice(0, Math.max(0, left));
+      left -= secs.length;
+      if (!secs.length) return "";
+      return '<h2 class="grp">' + esc(r.name) + (r.date ? "<small>" + esc(r.date) + "</small>" : "") + "</h2>" + secs.map((s) => {
+        const k = KIND.exec(s.title);
+        const head = k ? '<span class="kind ' + k[1].toLowerCase() + '">' + k[1] + "</span>" + (k[2] ? "<b>" + inline(k[2]) + "</b>" : "") : s.title ? "<b>" + inline(s.title) + "</b>" : "";
+        return '<section class="group rel">' + (head ? '<div class="rel-head">' + head + "</div>" : "") + '<ul class="rel-list">' + s.items.map((x) => "<li>" + inline(x) + "</li>").join("") + "</ul></section>";
+      }).join("");
+    }).join("");
+    return '<div class="page"><h1>Changelog</h1><p class="sub">What changed in the widgets and in iCUE Edge Companion, newest first.</p>' +
+      (body || '<div class="group"><div class="empty">The changelog could not be read.</div></div>') +
+      (!changelogAll && total > SHOWN ? '<div class="more"><button type="button" class="btn" data-act="changelog-all"><span>Show all ' + total + " changes</span></button></div>" : "") + "</div>";
   }
 
   // ---------- AI cost (estimate from token counts) ----------
@@ -225,7 +528,7 @@
       '<div class="row-text row-right"><span class="num">' + m(p.today) + "</span><small>" + U.big(p.tokens) + " tokens</small></div></div>").join("");
     return '<div class="page"><h1>AI cost</h1><p class="sub">What today’s Claude and Codex tokens would cost at public API prices.</p>' +
       '<div class="cost-hero"><b>' + m(s.today) + "</b><small>today · " + U.big(s.tokensToday) + " tokens</small></div>" +
-      '<svg class="bars24" viewBox="0 0 240 64" preserveAspectRatio="none" aria-label="Cost per hour, last 24 hours">' + bars + "</svg>" +
+      '<div class="group chart-group"><svg class="bars24" viewBox="0 0 240 64" preserveAspectRatio="none" aria-label="Cost per hour, last 24 hours">' + bars + "</svg></div>" +
       '<div class="summary"><div><b>' + m(s.yesterday) + "</b><small>yesterday</small></div><div><b>" + (s.month === null ? "--" : m(s.month)) + "</b><small>month so far</small></div><div><b>" +
       (s.pace === null ? "--" : m(s.pace)) + "</b><small>pace for the month</small></div></div>" +
       '<div class="group-title">By provider</div><div class="group">' + per + "</div>" +
@@ -263,19 +566,23 @@
     const sw = (on, act, label) => '<button type="button" class="switch" role="switch" data-act="' + act + '" aria-checked="' + !!on + '" aria-label="' + label + '"></button>';
     const theme = document.documentElement.dataset.theme;
     const opt = (id, label) => '<button type="button" data-act="theme" data-theme="' + id + '" aria-pressed="' + (theme === id) + '">' + label + "</button>";
+    const ai = window.showAi();
     return '<div class="page"><h1>Settings</h1><p class="sub">Appearance, startup, collection and stored data.</p>' +
       '<div class="group-title">Appearance</div><div class="group">' +
       '<div class="row"><div class="row-text"><span>Theme</span><small>OLED keeps every surface true black</small></div><div class="seg" role="group" aria-label="Theme">' +
       opt("light", "Light") + opt("dark", "Dark") + opt("oled", "OLED") + "</div></div></div>" +
+      '<div class="group-title">AI usage</div><div class="group">' +
+      '<div class="row"><div class="row-text"><span>Show AI usage</span><small>Claude and Codex limits, tokens and estimated cost, in this window and the tray menu. For people who use AI coding tools (Claude Code, Codex) a lot; off by default.</small></div>' +
+      sw(ai, "show-ai", "Show AI usage") + "</div></div>" +
       '<div class="group-title">Startup</div><div class="group">' +
       '<div class="row"><div class="row-text"><span>Start with Windows</span><small>iCUE Edge Companion opens in the notification area</small></div>' + sw(i.autostart, "autostart", "Start with Windows") + "</div></div>" +
       '<div class="group-title">Collection</div><div class="group">' +
       '<div class="row"><div class="row-text"><span>Collect data</span><small>Turn off to pause everything</small></div>' + sw(!v.paused, "collect", "Collect data") + "</div>" +
-      '<div class="row"><div class="row-text"><span>Refresh limits now</span><small>At most once every 30 seconds</small></div><button type="button" class="btn" data-act="refresh">Refresh</button></div>' +
-      '<div class="row"><div class="row-text"><span>Renew the Claude sign-in</span><small>When Claude Code has not renewed it, the companion does and rewrites ~/.claude/.credentials.json</small></div>' + sw(i.renewClaudeToken, "renew", "Renew the Claude sign-in") + "</div></div>" +
-      '<div class="group-title">Data</div><div class="group">' +
+      (ai ? '<div class="row"><div class="row-text"><span>Refresh limits now</span><small>At most once every 30 seconds</small></div><button type="button" class="btn" data-act="refresh">Refresh</button></div>' +
+      '<div class="row"><div class="row-text"><span>Renew the Claude sign-in</span><small>When Claude Code has not renewed it, the companion does and rewrites ~/.claude/.credentials.json</small></div>' + sw(i.renewClaudeToken, "renew", "Renew the Claude sign-in") + "</div>" : "") + "</div>" +
+      (ai ? '<div class="group-title">Data</div><div class="group">' +
       '<div class="row"><div class="row-text"><span>Stored history</span><small>90 days, on this computer only. Nothing is sent elsewhere.</small></div></div>' +
-      '<div class="row"><div class="row-text"><span>Clear history</span><small>Ongoing sessions will not be counted again</small></div><button type="button" class="btn danger" data-act="clear">Clear…</button></div></div>' +
+      '<div class="row"><div class="row-text"><span>Clear history</span><small>Ongoing sessions will not be counted again</small></div><button type="button" class="btn danger" data-act="clear">Clear…</button></div></div>' : "") +
       '<div class="group-title">About</div><div class="group">' +
       '<div class="row"><div class="row-text"><span>iCUE Edge Companion ' + esc(i.version || "") + "</span><small>MIT license</small></div></div>" +
       '<div class="row"><div class="row-text"><span>Project</span><small>github.com/inerthel-agi/icue-edge-widgets</small></div><button type="button" class="btn" data-act="link" data-link="repo">Open</button></div>' +
@@ -376,6 +683,8 @@
     else if (page === "screentime") html = screenTime();
     else if (page === "spotify") html = spotifyPage(sp);
     else if (page === "settings") html = settings(v);
+    else if (page === "changelog") html = changelogPage();
+    else if (page === "community") html = communityPage();
     else html = overview(v);
     // Where you are, one click from the Overview.
     if (page !== "overview" && html.startsWith('<div class="page">'))
@@ -427,6 +736,42 @@
     content.querySelectorAll(".hero-figure b, .limit-right b").forEach((el) => { if (/^\d+%/.test(el.textContent.trim())) countUp(el); });
   }
 
+  // Widgets page after a filter, order or screen change: focus stays on the pressed control, cards that stay
+  // glide to their new place and new ones rise in.
+  function reorder(pressed) {
+    const before = new Map([...content.querySelectorAll("[data-id]")].map((el) => [el.dataset.id, el.getBoundingClientRect()]));
+    render();
+    const b = content.querySelector(pressed);
+    if (b) b.focus();
+    if (still.matches) return;
+    if (b) b.animate([{ transform: "scale(.94)" }, { transform: "none" }], { duration: 200, easing: "cubic-bezier(.2,.7,.2,1)" });
+    let n = 0;
+    content.querySelectorAll("[data-id]").forEach((el) => {
+      const r = before.get(el.dataset.id);
+      if (r) {
+        const a = el.getBoundingClientRect();
+        const dx = r.left - a.left, dy = r.top - a.top;
+        if (dx || dy) el.animate([{ transform: "translate(" + dx + "px," + dy + "px)" }, { transform: "none" }], { duration: 420, easing: "cubic-bezier(.2,.75,.2,1)" });
+      } else {
+        el.animate([{ opacity: 0, transform: "translateY(10px) scale(.98)" }, { opacity: 1, transform: "none" }],
+          { duration: 300, delay: Math.min(n++, 14) * 18, easing: "cubic-bezier(.2,.7,.2,1)", fill: "backwards" });
+      }
+    });
+  }
+
+  // Sidebar: how many widgets sit on each screen.
+  function devices() {
+    const list = (info && info.widgets) || [];
+    for (const s of ["edge", "pump"]) {
+      const n = list.filter((w) => screenOf(w) === s && (w.placed || w.live)).length;
+      const el = document.getElementById("dev-" + s);
+      const b = el.querySelector("b");
+      b.textContent = info ? String(n) : "–";
+      b.classList.toggle("zero", !n);
+      el.title = n + (n === 1 ? " widget" : " widgets") + " placed on " + SCREEN_NAME[s];
+    }
+  }
+
   function moveNav(instant) {
     const ind = document.getElementById("navInd");
     const cur = document.querySelector('.nav[aria-current="page"]');
@@ -438,6 +783,7 @@
     if (instant) requestAnimationFrame(() => ind.classList.remove("instant"));
   }
   window.addEventListener("resize", () => moveNav(true));
+  window.addEventListener("ai-change", () => { lastHtml = ""; render(); moveNav(true); });
 
   function chrome(v) {
     const side = document.getElementById("side-status");
@@ -451,19 +797,68 @@
       document.querySelector('.nav[data-page="' + p.id + '"]').setAttribute("aria-label", p.name + ": " + p.stateText);
     }
     if (sp) document.getElementById("dot-spotify").className = "dot " + (sp.status === "connected" ? "live" : sp.status === "not_configured" ? "" : "warn");
-    const problem = [v.claude, v.codex].find((p) => p.state === "danger");
+    const problem = window.showAi() ? [v.claude, v.codex].find((p) => p.state === "danger") : null;
     msg.classList.toggle("warn", v.paused || !!problem);
     const last = Math.max(v.claude.lastEventAt || 0, v.codex.lastEventAt || 0, v.claude.limitsAt || 0, v.codex.limitsAt || 0);
     msg.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
       (v.paused ? '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>' : problem ? '<path d="M12 8v5M12 16h.01"/>' : '<path d="M20 6 9 17l-5-5"/>') + "</svg>" +
-      esc(v.paused ? "Collection paused" : problem ? problem.name + ": something needs attention" : "Data up to date · last activity " + U.ago(last));
+      esc(v.paused ? "Collection paused" : problem ? problem.name + ": something needs attention" : window.showAi() ? "Data up to date · last activity " + U.ago(last) : "iCUE Edge Companion is running");
   }
 
+  // Pump install sheet: what was sent, and whether iCUE has added it (the installed files change).
+  // phase: "wait" (not sent), "sent", "installed" (files arrived), "placed" (chosen on the pump's screen).
+  let pumpJob = null;
+  function pumpSheet(w) {
+    pumpJob = { id: w.id, before: w.update, sentAt: 0, phase: "wait" };
+    document.getElementById("pump-sheet").classList.remove("done", "placed");
+    document.getElementById("pump-sheet-title").textContent = "Install " + w.name + " on the pump";
+    const send = document.getElementById("pump-send");
+    send.dataset.id = w.id;
+    send.querySelector("span").textContent = w.update === "outdated" ? "Update" : w.update === "current" ? "Reinstall" : "Install";
+    const st = document.getElementById("pump-status");
+    st.className = "sheet-status";
+    st.textContent = "";
+    document.getElementById("pump-sheet").showModal();
+  }
+  function pumpStatus() {
+    if (!pumpJob) return;
+    const w = ((info && info.widgets) || []).find((x) => x.id === pumpJob.id);
+    if (!w) return;
+    const sheet = document.getElementById("pump-sheet");
+    const st = document.getElementById("pump-status");
+    if (pumpJob.phase === "sent") {
+      if (pumpJob.before !== "current" && w.update === "current") {
+        pumpJob.phase = "installed";
+        sheet.classList.add("done");
+        st.className = "sheet-status ok";
+        st.textContent = w.name + " is installed in iCUE. Last step: choose it on the pump's screen.";
+      } else if (Date.now() - pumpJob.sentAt > 20000) {
+        pumpJob.phase = "wait";
+        st.className = "sheet-status warn";
+        st.textContent = pumpJob.before === "current" ? "Sent. The same version gives no visible change."
+          : "iCUE has not added it yet. Check that the pump's screen is open in iCUE and press Install again, or import the file from that screen.";
+      }
+    }
+    if (pumpJob.phase === "installed" && (w.placed || w.live)) {
+      pumpJob.phase = "placed";
+      sheet.classList.add("placed");
+      st.textContent = w.name + " is on the pump. You can close this sheet.";
+    }
+  }
+
+  // When the XENEON EDGE layout changes in iCUE, the map redraws and its tiles settle in.
+  let lastLayout = null;
   async function loadInfo() {
     try { info = await U.invoke("app_info"); } catch (_) { info = null; }
     const ver = document.getElementById("version");
     if (info) ver.textContent = "Version " + info.version;
+    devices();
     render();
+    const layout = info ? JSON.stringify(info.edgeLayout) : null;
+    if (lastLayout !== null && layout !== lastLayout && !still.matches)
+      content.querySelectorAll(".glass .tile").forEach((el) => el.animate([{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "none" }], { duration: 380, easing: "cubic-bezier(.2,.75,.2,1)" }));
+    if (layout) lastLayout = layout;
+    pumpStatus();
   }
 
   function go(next, how) {
@@ -483,6 +878,8 @@
     if (page === "widgets" || page === "settings") loadInfo();
     if (page === "spotify") loadSpotify();
     if (page === "screentime") loadScreen();
+    if (page === "changelog" && changelogText === null) loadChangelog();
+    if (page === "community") loadCommunity();
     if (page === "overview") { loadMedia(); loadInfo(); }
   }
 
@@ -521,6 +918,40 @@
         lastHtml = "";
         return render();
       }
+      case "changelog-all": changelogAll = true; return render();
+      case "cfilter": communityFilter = act.dataset.f; store("community.filter", communityFilter); return reorder('[data-f="' + communityFilter + '"]');
+      case "csort": communitySort = act.dataset.s; store("community.sort", communitySort); return reorder('[data-s="' + communitySort + '"]');
+      case "community-open": return communitySheet(act.dataset.key);
+      case "mfilter": marketFilter = act.dataset.f; store("market.filter", marketFilter); return reorder('[data-act="mfilter"][data-f="' + marketFilter + '"]');
+      case "msort": marketSort = act.dataset.s; store("market.sort", marketSort); return reorder('[data-act="msort"][data-s="' + marketSort + '"]');
+      case "market-open":
+        try { await U.invoke("marketplace_open", { id: act.dataset.id }); flash(act.querySelector("span") || act, "Opened in your browser", 2500); } catch (_) { flash(act.querySelector("span") || act, "Unavailable"); }
+        return;
+      case "csource": communitySource = act.dataset.src; store("community.source", communitySource); lastHtml = ""; return render();
+      case "community-source":
+        try { await U.invoke("community_source", { key: act.dataset.key }); } catch (_) { flash(act.querySelector("span") || act, "Unavailable"); }
+        return;
+      case "community-install": {
+        const st = document.getElementById("community-status");
+        st.className = "sheet-status";
+        st.textContent = "Downloading and checking every file…";
+        flash(act.querySelector("span") || act, "Checking…", 4000);
+        try {
+          await U.invoke("community_install", { key: act.dataset.key });
+          communityJob = { ...(communityJob || {}), key: act.dataset.key, sentAt: Date.now(), phase: "sent" };
+          st.textContent = "Checked and sent to iCUE. Confirm there; this line updates when iCUE has it.";
+        } catch (e) {
+          st.className = "sheet-status warn";
+          st.textContent = String(e);
+        }
+        return;
+      }
+      case "show-ai":
+        window.setShowAi(!window.showAi());
+        lastHtml = "";
+        if (!window.showAi() && (page === "claude" || page === "codex" || page === "aicost")) return go("overview");
+        render();
+        return moveNav(true);
       case "autostart":
         await U.invoke("set_autostart", { enabled: act.getAttribute("aria-checked") !== "true" });
         return loadInfo();
@@ -534,7 +965,13 @@
         if (!confirm("Clear usage history? Today's totals restart from zero; nothing is counted again.")) return;
         await U.invoke("clear_history");
         return flash(act, "Cleared");
-      case "wfilter": widgetFilter = act.dataset.f; return render();
+      case "wfilter": widgetFilter = act.dataset.f; store("widgets.filter", widgetFilter); return reorder('[data-f="' + widgetFilter + '"]');
+      case "wsort": widgetSort = act.dataset.s; store("widgets.sort", widgetSort); return reorder('[data-s="' + widgetSort + '"]');
+      case "wscreen":
+        widgetScreen = widgetScreen === act.dataset.screen ? "all" : act.dataset.screen;
+        store("widgets.screen", widgetScreen);
+        return reorder('.map [data-screen="' + act.dataset.screen + '"]');
+      case "wscreen-go": widgetScreen = act.dataset.screen; store("widgets.screen", widgetScreen); return go("widgets");
       case "np": {
         const s = media && media.session;
         if (!s) return;
@@ -542,9 +979,28 @@
         return setTimeout(loadMedia, 350);
       }
       case "st-start": return loadScreen(true);
+      case "install-pump": {
+        const w = ((info && info.widgets) || []).find((x) => x.id === act.dataset.id);
+        return w && pumpSheet(w);
+      }
+      case "open-icue":
+        try { await U.invoke("open_icue"); } catch (_) { flash(act.querySelector("span") || act, "iCUE not found"); }
+        return;
+      case "show-package":
+        if (!pumpJob) return;
+        try { await U.invoke("show_package", { id: pumpJob.id }); } catch (_) { flash(act, "Unavailable"); }
+        return;
+      case "sheet-close": return act.closest("dialog").close();
       case "install":
-        flash(act, "Opening iCUE…", 4000);
-        try { await U.invoke("install_widget", { id: act.dataset.id }); } catch (e) { flash(act, "Failed"); }
+        if (act.id === "pump-send" && pumpJob) {
+          pumpJob.sentAt = Date.now();
+          pumpJob.phase = "sent";
+          const st = document.getElementById("pump-status");
+          st.className = "sheet-status";
+          st.textContent = "Sent to iCUE. Confirm there; this line updates when the pump has it.";
+        }
+        flash(act.querySelector("span") || act, "Opening iCUE…", 4000);
+        try { await U.invoke("install_widget", { id: act.dataset.id }); } catch (e) { flash(act.querySelector("span") || act, "Failed"); }
         return;
       case "link":
         try { await U.invoke("open_link", { link: act.dataset.link }); } catch (_) { flash(act, "Unavailable"); }
@@ -572,6 +1028,32 @@
   });
   document.addEventListener("mouseup", (e) => { if (e.button === 3 || e.button === 4) { e.preventDefault(); go(null, e.button === 3 ? "back" : "fwd"); } });
 
+  content.addEventListener("input", (e) => {
+    if (e.target.id !== "market-q") return;
+    marketQuery = e.target.value;
+    const shown = marketShown();
+    document.getElementById("market-results").innerHTML = marketResults(shown);
+    document.getElementById("market-shown").textContent = shown.length + " of " + community.marketplace.length + " shown";
+    lastHtml = communityPage().replace(/^<div class="page">/, '<div class="page"><p class="crumb"><button type="button" data-page="overview">Overview</button><span aria-hidden="true">›</span><span>Community</span></p>');
+  });
+  content.addEventListener("input", (e) => {
+    if (e.target.id !== "community-q") return;
+    communityQuery = e.target.value;
+    const shown = communityShown();
+    document.getElementById("community-results").innerHTML = communityResults(shown);
+    document.getElementById("community-shown").textContent = shown.length + " of " + community.widgets.length + " shown";
+    lastHtml = communityPage().replace(/^<div class="page">/, '<div class="page"><p class="crumb"><button type="button" data-page="overview">Overview</button><span aria-hidden="true">›</span><span>Community</span></p>');
+  });
+  // A community icon that does not load becomes the widget's initial.
+  document.addEventListener("error", (e) => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || !img.classList.contains("cicon")) return;
+    const s = document.createElement("span");
+    s.className = "cicon mono";
+    s.textContent = img.dataset.letter || "?";
+    img.replaceWith(s);
+  }, true);
+
   // Typing a Client ID only toggles the button: the page is not re-rendered under the caret.
   content.addEventListener("input", (e) => {
     if (e.target.id !== "sp-client-id") return;
@@ -594,7 +1076,8 @@
   loadInfo();
   loadSpotify();
   // Connected widget count and autostart can change outside this window.
-  setInterval(() => { if (page === "widgets" || page === "settings" || page === "overview") loadInfo(); }, 5000);
+  setInterval(loadInfo, 5000);
+  setInterval(() => { if (communityJob && communityJob.phase === "sent") loadCommunity(); }, 5000);
   setInterval(() => { if (page === "overview") loadMedia(); }, 2000);
   setInterval(() => { if (page === "screentime") loadScreen(); }, 15000);
   loadMedia();

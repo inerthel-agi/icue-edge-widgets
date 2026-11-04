@@ -86,7 +86,7 @@ const PACKAGES: &str = "https://raw.githubusercontent.com/inerthel-agi/icue-edge
 
 /// The widget's `.icuewidget` file, ready for iCUE to open. A build of this repository next to the
 /// companion (a developer checkout) wins; otherwise the package is downloaded from the repository's main
-/// branch into `%LOCALAPPDATA%\icue-edge-companion\packages`. Only our own ids are accepted.
+/// branch into `%TEMP%\icue-edge-companion\packages` (see `util::handoff_dir`). Only our own ids are accepted.
 pub fn package_file(id: &str) -> Result<PathBuf, String> {
     let (folder, stem) = package_name(id).ok_or("unknown widget")?;
     if let Some(local) = local_dist().map(|d| d.join(folder).join(format!("{stem}.icuewidget"))).filter(|p| p.is_file()) {
@@ -98,7 +98,7 @@ pub fn package_file(id: &str) -> Result<PathBuf, String> {
     if !bytes.starts_with(b"PK\x03\x04") {
         return Err("the download is not a widget package".into());
     }
-    let dir = crate::util::app_dir().join("packages");
+    let dir = crate::util::handoff_dir("packages");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     crate::util::ensure_no_links(&dir).map_err(|e| e.to_string())?;
     let path = dir.join(format!("{stem}.icuewidget"));
@@ -200,6 +200,19 @@ pub fn update_state(installed: bool, build: Option<&str>, latest: Option<&str>) 
     }
 }
 
+/// Where iCUE keeps an installed widget: `html_widgets/com/vendor/name` for the id `com.vendor.name`.
+pub fn installed_dir(id: &str) -> Option<PathBuf> {
+    let parts: Vec<&str> = id.split('.').collect();
+    if parts.len() < 2 || parts.len() > 6 || parts.iter().any(|p| p.is_empty() || !p.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')) {
+        return None;
+    }
+    let mut dir = cue_dir()?.join("html_widgets");
+    for p in parts {
+        dir.push(p);
+    }
+    Some(dir)
+}
+
 fn cue_dir() -> Option<PathBuf> {
     Some(Path::new(&std::env::var_os("APPDATA")?).join(r"Corsair\CUE5"))
 }
@@ -221,6 +234,60 @@ pub fn ids_in(text: &str) -> Vec<String> {
 
 fn ids_in_file(path: &Path) -> Vec<String> {
     std::fs::read(path).map(|b| ids_in(&String::from_utf8_lossy(&b))).unwrap_or_default()
+}
+
+/// Text between `<name>` and `</name>` (first one), and the index just past the closing tag.
+fn tag<'a>(s: &'a str, name: &str) -> Option<(&'a str, usize)> {
+    let open = format!("<{name}>");
+    let close = format!("</{name}>");
+    let i = s.find(&open)? + open.len();
+    let j = s[i..].find(&close)? + i;
+    Some((s[i..j].trim(), j + close.len()))
+}
+
+/// The XENEON EDGE page iCUE shows (`activeScreenId`, else the first page), from `dashlcd\storage`.
+/// Each widget has a slot on the 3 × 2 grid, column by column (slot = column × 2 + row), and a size
+/// in cells: 1 S, 2 M (one column), 4 L (two columns), 6 XL. Read-only, like the rest of this file.
+// ponytail: reads the first XENEON EDGE only and assumes the horizontal grid; vertical needs its own grid.
+pub fn edge_layout(text: &str) -> Value {
+    // Each page has one `<widgets>` block and one `<screenId>` (iCUE writes the block first): paired by order.
+    let ids: Vec<&str> = text.match_indices("<screenId>").filter_map(|(i, _)| tag(&text[i..], "screenId").map(|(v, _)| v)).collect();
+    let mut blocks = Vec::new();
+    let mut rest = text;
+    while let Some(i) = rest.find("<widgets") {
+        let after = &rest[i..];
+        let open = after.find('>').map_or(after.len(), |k| k + 1);
+        if after[..open].ends_with("/>") {
+            blocks.push("");
+            rest = &after[open..];
+            continue;
+        }
+        let close = after.find("</widgets>").unwrap_or(after.len());
+        blocks.push(&after[open.min(close)..close]);
+        rest = &after[close..];
+    }
+    let active = tag(text, "activeScreenId").map(|(v, _)| v);
+    let page = active.and_then(|a| ids.iter().position(|v| *v == a)).filter(|&k| k < blocks.len()).unwrap_or(0);
+    let mut widgets = Vec::new();
+    if let Some(mut rest) = blocks.get(page).copied() {
+        while let Some((slot, end)) = tag(rest, "slotIndex") {
+            rest = &rest[end..];
+            let Some((size, end)) = tag(rest, "size") else { break };
+            rest = &rest[end..];
+            let ty = tag(rest, "typeId").map(|(v, _)| v).unwrap_or("");
+            let (Ok(slot), Ok(size)) = (slot.parse::<u8>(), size.parse::<u8>()) else { continue };
+            if slot < 6 && matches!(size, 1 | 2 | 4 | 6) {
+                let ours = ty.strip_prefix("com.stealthsrc.").filter(|id| OURS.iter().any(|w| w.id == *id));
+                widgets.push(json!({ "slot": slot, "size": size, "id": ours }));
+            }
+        }
+    }
+    json!({ "pages": blocks.len(), "page": page, "widgets": widgets })
+}
+
+pub fn edge_layout_now() -> Value {
+    let text = cue_dir().and_then(|c| std::fs::read(c.join(r"dashlcd\storage")).ok()).map(|b| String::from_utf8_lossy(&b).into_owned()).unwrap_or_default();
+    edge_layout(&text)
 }
 
 pub fn inventory() -> Value {
@@ -257,6 +324,26 @@ pub fn inventory() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Same shape as iCUE's `dashlcd\storage`: four pages (the last one empty), the second one shown.
+    #[test]
+    fn edge_layout_reads_the_shown_page() {
+        let page = |id: &str, ws: &str| format!("<value><widgets size=\"dynamic\">{ws}</widgets><screenId>{id}</screenId><name>x</name></value>");
+        let w = |slot: u8, size: u8, ty: &str| format!("<value0><id>a</id><slotIndex>{slot}</slotIndex><size>{size}</size><attachment><base><typeId>{ty}</typeId></base></attachment></value0>");
+        let text = format!("<dashLCDScreens>{}{}{}<value><widgets size=\"dynamic\"/><screenId>{{D}}</screenId></value></dashLCDScreens><activeScreenId>{{B}}</activeScreenId>",
+            page("{A}", &w(3, 1, "com.corsair.digitalclock1")),
+            page("{B}", &(w(0, 4, "com.stealthsrc.nowplaying") + &w(4, 2, "com.stealthsrc.rigpet"))),
+            page("{C}", &w(0, 6, "com.stealthsrc.nowplaying")));
+        let l = edge_layout(&text);
+        assert_eq!(l["pages"], 4);
+        assert_eq!(l["page"], 1);
+        assert_eq!(l["widgets"], json!([{ "slot": 0, "size": 4, "id": "nowplaying" }, { "slot": 4, "size": 2, "id": "rigpet" }]));
+        // Someone else's widget keeps its place but has no id; a missing or unknown active page falls back to the first.
+        let first = edge_layout(&text.replace("{B}</activeScreenId>", "{Z}</activeScreenId>"));
+        assert_eq!(first["widgets"], json!([{ "slot": 3, "size": 1, "id": null }]));
+        assert_eq!(edge_layout(&text.replace("{B}</activeScreenId>", "{D}</activeScreenId>"))["widgets"], json!([]));
+        assert_eq!(edge_layout("")["widgets"], json!([]));
+    }
 
     /// The value the packaging script gives this folder (checked once with its PowerShell function).
     #[test]

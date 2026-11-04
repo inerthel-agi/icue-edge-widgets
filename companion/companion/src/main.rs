@@ -147,6 +147,7 @@ async fn app_info(app: AppHandle) -> serde_json::Value {
         "port": http::PORT,
         "pumpRelay": media::relay::status(),
         "widgets": icue_edge_companion::widgets::inventory(),
+        "edgeLayout": icue_edge_companion::widgets::edge_layout_now(),
     })
 }
 
@@ -274,6 +275,66 @@ async fn install_widget(id: String) -> Result<(), String> {
     hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).arg("url.dll,FileProtocolHandler").arg(&path).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
+/// Brings iCUE to the front (it keeps a single instance), so a pump widget can be sent while the pump's
+/// screen is open: iCUE ignores pump widgets opened from the XENEON EDGE page.
+#[tauri::command]
+fn open_icue() -> Result<(), String> {
+    let exe = std::env::var_os("ProgramFiles").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from(r"C:\Program Files"))
+        .join(r"Corsair\Corsair iCUE5 Software\iCUE.exe");
+    if !exe.is_file() {
+        return Err("iCUE was not found".into());
+    }
+    std::process::Command::new(exe).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// Shows one of our packages selected in File Explorer, for the Import button of iCUE's pump screen.
+#[tauri::command]
+async fn show_package(id: String) -> Result<(), String> {
+    let path = tauri::async_runtime::spawn_blocking(move || icue_edge_companion::widgets::package_file(&id)).await.map_err(|e| e.to_string())??;
+    let explorer = std::env::var_os("SystemRoot").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from(r"C:\Windows")).join("explorer.exe");
+    let mut cmd = std::process::Command::new(explorer);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // The path is ours (package_file only knows our ids); quoted for spaces.
+        cmd.raw_arg(format!("/select,\"{}\"", path.display()));
+    }
+    cmd.spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// The community widget list for the Community page (installed ones marked).
+#[tauri::command]
+async fn community() -> serde_json::Value {
+    tauri::async_runtime::spawn_blocking(icue_edge_companion::community::page).await.unwrap_or_else(|e| serde_json::json!({ "error": e.to_string() }))
+}
+
+/// Installs a listed community widget: checked download, then iCUE opens it and asks to confirm.
+#[tauri::command]
+async fn community_install(key: String) -> Result<(), String> {
+    let path = tauri::async_runtime::spawn_blocking(move || icue_edge_companion::community::package(&key)).await.map_err(|e| e.to_string())??;
+    hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).arg("url.dll,FileProtocolHandler").arg(&path).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// Opens a listed community widget's source on GitHub (the address comes from the list, not from the page).
+#[tauri::command]
+async fn community_source(key: String) -> Result<(), String> {
+    let url = tauri::async_runtime::spawn_blocking(move || icue_edge_companion::community::source_url(&key)).await.map_err(|e| e.to_string())??;
+    hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).args(["url.dll,FileProtocolHandler", &url]).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// Opens a listed Elgato Marketplace widget's page: free ones are taken there with an Elgato account, paid ones bought.
+#[tauri::command]
+async fn marketplace_open(id: String) -> Result<(), String> {
+    let url = tauri::async_runtime::spawn_blocking(move || icue_edge_companion::community::marketplace_url(&id)).await.map_err(|e| e.to_string())??;
+    hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).args(["url.dll,FileProtocolHandler", &url]).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// The repository's CHANGELOG.md, built into the companion: the window's Changelog page shows it.
+#[tauri::command]
+fn changelog() -> &'static str {
+    include_str!("../../../CHANGELOG.md")
+}
+
 /// Opens one of the About links in the default browser. The page names a link; it never supplies a URL.
 #[tauri::command]
 async fn open_link(link: String) -> Result<(), String> {
@@ -281,6 +342,9 @@ async fn open_link(link: String) -> Result<(), String> {
         "repo" => "https://github.com/inerthel-agi/icue-edge-widgets/",
         "profile" => "https://github.com/inerthel-agi",
         "packages" => "https://github.com/inerthel-agi/icue-edge-widgets/tree/main/dist/icuewidgets",
+        "marketplace" => "https://marketplace.elgato.com/icue",
+        "marketplace-widgets" => "https://marketplace.elgato.com/icue/widgets",
+        "marketplace-library" => "https://marketplace.elgato.com/account/products",
         _ => return Err("unknown link".into()),
     };
     hidden(&mut std::process::Command::new(util::system_exe("rundll32.exe"))).args(["url.dll,FileProtocolHandler", url]).spawn().map(|_| ()).map_err(|e| e.to_string())
@@ -442,6 +506,13 @@ fn main() {
             clear_history,
             open_main,
             install_widget,
+            open_icue,
+            changelog,
+            community,
+            community_install,
+            community_source,
+            marketplace_open,
+            show_package,
             open_link,
             quit_app,
             spotify_page,

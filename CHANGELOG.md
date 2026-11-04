@@ -6,6 +6,27 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Added - Community widgets
+- iCUE Edge Companion has a Community page. It lists the widgets other people share on GitHub, with author, avatar, screens, what they use, stars and licence. Filters: All, XENEON EDGE, Pump LCD, Packages, Installed. Search by name or author. Sort by stars, date or name.
+- Install downloads exactly what the list pinned: a release package checked against its SHA-256, or a folder at one commit with every file checked against its git blob id and packed by the companion. iCUE asks for confirmation. Pump widgets get the pump step. A widget that needs files outside its folder is marked Source only.
+- Packages are handed to iCUE from `%TEMP%\icue-edge-companion`. iCUE ignored packages opened from `%LOCALAPPDATA%` and showed no message. This also affected the Install button for our own widgets when the companion downloads them.
+- An Elgato Marketplace tab lists the Marketplace's iCUE widgets (138 on the first run, 33 free), with picture, maker, devices and price. Filters: All, Free, Paid. Search, and sort by name, date or price. "Get it free" and "Buy" open the widget's page in the browser. Even free widgets need an Elgato account there, so the companion downloads none of them. The daily script reads the list from the Marketplace's public pages, which its robots.txt allows, at one request a second.
+- Each widget appears once, even when copies of it sit in several repositories or a release ships one package per version. The list prefers the published package, then the most stars, then the oldest repository.
+- `community/index.json` is rebuilt every day by `scripts/community-index.py`, through the workflow `.github/workflows/community-index.yml`. To be listed, add the topic `icue-widget` to a public repository. Nobody reviews community widgets, and the page says so.
+
+### Changed - Pump widgets pick their sensor themselves
+- Cooling Sensor Pump, Racing Gauge Pump and FPS Gauge Pump no longer show the Automatic sensor and Manual sensor settings: they always choose the sensor themselves. A manual choice saved before is ignored.
+
+### Changed - iCUE Edge Companion "Bench" design
+- The companion window is redrawn as an instrument bench: recessed panels, raised keys that travel when pressed, LEDs for every state, segmented meters, a mono readout and DIN lettering (Windows' Bahnschrift and Cascadia Mono; nothing is downloaded). Light, Dark and OLED themes keep working, and so does the tray card.
+- The sidebar shows your two screens and how many widgets sit on each; a click opens the Widgets page on that screen.
+- Widgets page: counters, a map of the XENEON EDGE drawn from iCUE's own layout (the page it shows, each widget in its slot at its size S, M, L or XL, free cells hatched; it follows your changes within 5 seconds) and of the pump (a click on a screen keeps only its widgets), filters (All, Installed, Not installed, To update, On screen, Companion) with their counts, names A → Z or Z → A, and one card per widget. Cards glide to their new place when the filter or the order changes. The filter, the order and the screen are remembered.
+- The Overview shows the same map of the screens instead of the status rows.
+- A Changelog page (above Settings) shows this file, built into the companion: the latest changes first, all of them on request.
+- In a maximized or full-screen window the pages use the width and everything grows a little.
+- AI usage (Claude and Codex limits, tokens, AI cost) is now off by default and turns on in Settings > AI usage, for people who use AI coding tools a lot. Off, the window and the tray menu hide its pages, cards, refresh key and history settings.
+- Pump widgets install through a short guide: iCUE adds a pump widget only while the pump's screen is open in iCUE (from the XENEON EDGE page it ignores it without a word). The guide opens iCUE, then sends the package, lights a notice when iCUE has installed it, ticks the finished steps, then shows the last one (choose it on the pump's screen) and ticks it when the pump shows it. It can also show the file for iCUE's own Import button.
+
 ### Added - Signature designs, Grid Pulse, Patch Radar, CI Radar, Sky and Hearth
 - A Signature style, now the default for new placements, turns widgets into real objects: Focus Timer (kitchen tomato timer), Audio Mixer (mixing console), System Pulse (airliner engine display), World Clock (newsroom clocks), Countdowns (departure board), Habit Rings (stamp cards), AI Cost (taxi meter), Network Pulse (oscilloscope), Cooling Sensor Pump (nixie tubes). The previous look stays in the Style setting.
 - One state plate for offline, refused and empty states across the widgets that share it: what happened, what to do, and that it keeps trying.

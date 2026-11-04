@@ -22,14 +22,19 @@
 <div class="layout">
   <aside class="side">
     <span class="nav-ind" id="navInd" aria-hidden="true"></span>
-    <div class="brand" data-tauri-drag-region><strong><svg class="mark-logo" aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><g transform="translate(-6.0 0)"><path d="M150.9 178.9A72 72 0 1 1 170.8 141.0L145.2 136.3A46 46 0 1 0 132.5 160.5Z"/><rect x="48" y="115.0" width="192" height="26" rx="13.0"/></g></svg>iCUE Edge Companion</strong><span class="status" id="side-status">Connecting…</span></div>
+    <div class="brand" data-tauri-drag-region><strong><svg class="mark-logo" aria-hidden="true" viewBox="0 0 256 256" fill="currentColor"><g transform="translate(-6.0 0)"><path d="M150.9 178.9A72 72 0 1 1 170.8 141.0L145.2 136.3A46 46 0 1 0 132.5 160.5Z"/><rect x="48" y="115.0" width="192" height="26" rx="13.0"/></g></svg>Edge Companion</strong><span class="status" id="side-status">Connecting…</span></div>
+    <div class="devices" role="group" aria-label="Your screens">
+      <p class="cap">Devices</p>
+      <button type="button" class="dev" data-act="wscreen-go" data-screen="edge" id="dev-edge"><span class="dev-edge" aria-hidden="true"></span><span>XENEON EDGE</span><b>–</b></button>
+      <button type="button" class="dev" data-act="wscreen-go" data-screen="pump" id="dev-pump"><span class="dev-pump" aria-hidden="true"></span><span>Pump LCD</span><b>–</b></button>
+    </div>
     <button type="button" class="nav" data-page="overview" aria-current="page">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
       Overview</button>
-    <div class="nav-label">AI usage</div>
-    <button type="button" class="nav" data-page="claude"><span class="mark sm claude" data-logo="claude"></span>Claude<span class="dot" id="dot-claude"></span></button>
-    <button type="button" class="nav" data-page="codex"><span class="mark sm codex" data-logo="codex"></span>Codex<span class="dot" id="dot-codex"></span></button>
-    <button type="button" class="nav" data-page="aicost"><span class="wico sm" data-icon="ai-cost"><i></i></span>AI cost</button>
+    <div class="nav-label ai-only">AI usage</div>
+    <button type="button" class="nav ai-only" data-page="claude"><span class="mark sm claude" data-logo="claude"></span>Claude<span class="dot" id="dot-claude"></span></button>
+    <button type="button" class="nav ai-only" data-page="codex"><span class="mark sm codex" data-logo="codex"></span>Codex<span class="dot" id="dot-codex"></span></button>
+    <button type="button" class="nav ai-only" data-page="aicost"><span class="wico sm" data-icon="ai-cost"><i></i></span>AI cost</button>
     <div class="nav-label">Activity</div>
     <button type="button" class="nav" data-page="screentime"><span class="wico sm" data-icon="screen-time"><i></i></span>Screen time</button>
     <div class="nav-label">Media</div>
@@ -38,7 +43,13 @@
     <button type="button" class="nav" data-page="widgets">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="10" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
       Widgets</button>
+    <button type="button" class="nav" data-page="community">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16.5 14.2c2.4.2 4 1.7 4.5 4.3"/></svg>
+      Community</button>
     <div class="spacer"></div>
+    <button type="button" class="nav" data-page="changelog">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h7"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>
+      Changelog</button>
     <button type="button" class="nav" data-page="settings">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
       Settings</button>
@@ -46,9 +57,22 @@
   </aside>
   <main class="content" id="content"></main>
 </div>
+<dialog class="sheet" id="pump-sheet" aria-labelledby="pump-sheet-title">
+  <p class="cap">Pump LCD</p>
+  <h2 id="pump-sheet-title">Install on the pump</h2>
+  <p class="sub">iCUE adds a pump widget only while the pump's screen is open in iCUE. From the XENEON EDGE page it ignores it without a word.</p>
+  <ol class="sheet-steps">
+    <li class="s-open"><span class="step">1</span><div><b>Show the pump in iCUE</b><small>Open iCUE, choose your iCUE LINK cooler, then its LCD screen.</small></div><button type="button" class="btn" data-act="open-icue"><span>Open iCUE</span></button></li>
+    <li class="s-send"><span class="step">2</span><div><b>Send the widget</b><small>iCUE asks you to confirm and adds it to the pump.</small></div><button type="button" class="btn amber" data-act="install" id="pump-send"><span>Install</span></button><span class="ok-tag"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Installed</span></li>
+    <li class="s-place"><span class="step">3</span><div><b>Choose it on the pump</b><small>In iCUE, on the pump's LCD screen, pick it in the widget list. This sheet sees it within a few seconds.</small></div><span class="ok-tag"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>On the pump</span></li>
+  </ol>
+  <p class="sheet-status" id="pump-status" role="status"></p>
+  <div class="sheet-foot"><button type="button" class="link" data-act="show-package">Show the file for iCUE's Import button</button><button type="button" class="btn ghost" data-act="sheet-close"><span>Close</span></button></div>
+</dialog>
+<dialog class="sheet" id="community-sheet" aria-labelledby="community-sheet-title"></dialog>
 <footer class="actions">
   <span class="msg" id="footer-msg" role="status"></span>
-  <button type="button" class="btn" id="refresh">
+  <button type="button" class="btn ai-only" id="refresh">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg>
     <span id="refresh-label">Refresh limits</span></button>
 </footer>
