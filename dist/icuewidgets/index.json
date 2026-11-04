@@ -1,0 +1,141 @@
+{
+    "version":  "1.3.0",
+    "widgets":  {
+                    "isshorizon":  {
+                                       "package":  "xeneon-edge/iss-horizon.icuewidget",
+                                       "build":  "0ae093dd35d311e7"
+                                   },
+                    "weathernow":  {
+                                       "package":  "xeneon-edge/weather-now.icuewidget",
+                                       "build":  "e05d83f4f84aac04"
+                                   },
+                    "githubrepomonitor":  {
+                                              "package":  "xeneon-edge/github-repo-monitor.icuewidget",
+                                              "build":  "21b70c7b8204aa88"
+                                          },
+                    "windowsmediapump":  {
+                                             "package":  "corsair-watercooling/windows-media-pump.icuewidget",
+                                             "build":  "4b7905025617b582"
+                                         },
+                    "coolingsensorpump":  {
+                                              "package":  "corsair-watercooling/cooling-sensor-pump.icuewidget",
+                                              "build":  "254e145ec93af4fa"
+                                          },
+                    "worldclock":  {
+                                       "package":  "xeneon-edge/world-clock.icuewidget",
+                                       "build":  "ef5fbad7bdd1d80f"
+                                   },
+                    "focustimer":  {
+                                       "package":  "xeneon-edge/focus-timer.icuewidget",
+                                       "build":  "e78bc4733e335f98"
+                                   },
+                    "dailybrief":  {
+                                       "package":  "xeneon-edge/daily-brief.icuewidget",
+                                       "build":  "7e593b38f4f11700"
+                                   },
+                    "countdowns":  {
+                                       "package":  "xeneon-edge/countdowns.icuewidget",
+                                       "build":  "e422e4a1a5a4a970"
+                                   },
+                    "habitrings":  {
+                                       "package":  "xeneon-edge/habit-rings.icuewidget",
+                                       "build":  "b1f793a4548ab4d6"
+                                   },
+                    "claudeusage":  {
+                                        "package":  "xeneon-edge/claude-usage.icuewidget",
+                                        "build":  "bd274aa17b37fd92"
+                                    },
+                    "codexusage":  {
+                                       "package":  "xeneon-edge/codex-usage.icuewidget",
+                                       "build":  "3ae8a3bdf5e31b19"
+                                   },
+                    "nowplaying":  {
+                                       "package":  "xeneon-edge/now-playing.icuewidget",
+                                       "build":  "3c691f406b6f8eb3"
+                                   },
+                    "spotify":  {
+                                    "package":  "xeneon-edge/spotify.icuewidget",
+                                    "build":  "2ea28a25c58cdc15"
+                                },
+                    "aicost":  {
+                                   "package":  "xeneon-edge/ai-cost.icuewidget",
+                                   "build":  "df2af5e574ae719e"
+                               },
+                    "screentime":  {
+                                       "package":  "xeneon-edge/screen-time.icuewidget",
+                                       "build":  "2b0c420f567a392a"
+                                   },
+                    "audiomixer":  {
+                                       "package":  "xeneon-edge/audio-mixer.icuewidget",
+                                       "build":  "187d10bdd79a724e"
+                                   },
+                    "agentactivity":  {
+                                          "package":  "xeneon-edge/agent-activity.icuewidget",
+                                          "build":  "a68960ad87f092c8"
+                                      },
+                    "controldeck":  {
+                                        "package":  "xeneon-edge/control-deck.icuewidget",
+                                        "build":  "034e5b8fbf94d76b"
+                                    },
+                    "stocks":  {
+                                   "package":  "xeneon-edge/stocks.icuewidget",
+                                   "build":  "1823191d418cdaaa"
+                               },
+                    "networkpulse":  {
+                                         "package":  "xeneon-edge/network-pulse.icuewidget",
+                                         "build":  "fdf8cabeb4bd3c5f"
+                                     },
+                    "energycost":  {
+                                       "package":  "xeneon-edge/energy-cost.icuewidget",
+                                       "build":  "53e2a23195c7af58"
+                                   },
+                    "gamesession":  {
+                                        "package":  "xeneon-edge/game-session.icuewidget",
+                                        "build":  "4ef2981b198c350c"
+                                    },
+                    "freegames":  {
+                                      "package":  "xeneon-edge/free-games.icuewidget",
+                                      "build":  "42defa2a34308d7d"
+                                  },
+                    "gridpulse":  {
+                                      "package":  "xeneon-edge/grid-pulse.icuewidget",
+                                      "build":  "32b9fe5b6db7fec7"
+                                  },
+                    "patchradar":  {
+                                       "package":  "xeneon-edge/patch-radar.icuewidget",
+                                       "build":  "c98904d3307e5002"
+                                   },
+                    "ciradar":  {
+                                    "package":  "xeneon-edge/ci-radar.icuewidget",
+                                    "build":  "1c734c4d4772291c"
+                                },
+                    "systempulse":  {
+                                        "package":  "xeneon-edge/system-pulse.icuewidget",
+                                        "build":  "fdcdea365bd05f93"
+                                    },
+                    "rigpet":  {
+                                   "package":  "xeneon-edge/rig-pet.icuewidget",
+                                   "build":  "1366188c98a80f76"
+                               },
+                    "flipclock":  {
+                                      "package":  "xeneon-edge/flip-clock.icuewidget",
+                                      "build":  "22c2ab446a2e1fd6"
+                                  },
+                    "rainwindow":  {
+                                       "package":  "xeneon-edge/rain-window.icuewidget",
+                                       "build":  "09f561571b5c4e80"
+                                   },
+                    "racinggaugepump":  {
+                                            "package":  "corsair-watercooling/racing-gauge-pump.icuewidget",
+                                            "build":  "5f55395460700504"
+                                        },
+                    "pumpfaces":  {
+                                      "package":  "corsair-watercooling/pump-faces.icuewidget",
+                                      "build":  "73ac4aafa5ec6a8e"
+                                  },
+                    "fpsgaugepump":  {
+                                         "package":  "corsair-watercooling/fps-gauge-pump.icuewidget",
+                                         "build":  "41b761e88247aba6"
+                                     }
+                }
+}
