@@ -1,6 +1,6 @@
 # icue-edge-widgets
 
-Widgets for CORSAIR iCUE on Windows: 23 for the XENEON EDGE touch screen and 4 for pump LCDs, plus [iCUE Edge Companion](companion/README.md), the tray application that feeds twelve of them with local data (AI usage, music, network, mixer, stocks, screen time).
+Widgets for CORSAIR iCUE on Windows: 29 for the XENEON EDGE touch screen and 5 for pump LCDs, plus [iCUE Edge Companion](companion/README.md), the tray application that feeds sixteen of them with local data (AI usage, music, games, network, mixer, stocks, screen time).
 
 <img src="docs/screenshots/rig-pet.png" width="820" alt="Rig Pet, 2536 × 696" />
 
@@ -8,7 +8,7 @@ Widgets for CORSAIR iCUE on Windows: 23 for the XENEON EDGE touch screen and 4 f
 
 - Windows 10 or 11 and iCUE 5.47 or later.
 - A XENEON EDGE (`dashboard_lcd`) or a pump LCD (`pump_lcd`).
-- For the twelve companion widgets: [iCUE Edge Companion](https://github.com/inerthel-agi/icue-edge-widgets/releases) running on the same PC (WebView2 runtime).
+- For the sixteen companion widgets: [iCUE Edge Companion](https://github.com/inerthel-agi/icue-edge-widgets/releases) running on the same PC (WebView2 runtime).
 - To rebuild the packages: PowerShell 5.1 and the iCUE Widget CLI (tested with 0.2.3). To build the companion: Rust 1.95 or later.
 
 ## Install
@@ -48,10 +48,16 @@ The packaging script finds `icuewidget` on PATH or under `%LOCALAPPDATA%\Program
 | `now-playing` | Any player's track, cover, synced lyrics, controls, visualiser | Companion (title only without it) |
 | `spotify` | Spotify with queue and lyrics; advanced option, needs your own Spotify app and Premium | Companion |
 | `claude-usage`, `codex-usage`, `ai-cost` | Claude and Codex tokens, quotas and an estimated cost | Companion |
-| `agent-activity` | What Claude Code is doing (tool and file names only) | Companion |
+| `agent-activity` | What Claude Code is doing (tool and file names only); a full-screen card when it waits for your permission or reply (optional hook) | Companion |
+| `game-session` | The game you play, its time, frame rate (average, 1 % low), CPU and GPU peaks, a debrief and a break reminder | Companion for the game's name; iCUE Sensors plugin |
+| `free-games` | This week's free Epic games and the price of the Steam games you watch | Companion |
+| `grid-pulse` | France's electricity mix and carbon intensity, live (RTE eco2mix) | Internet (ODRE open data) |
+| `patch-radar` | Official announcements and patch notes of your Steam games | Companion |
+| `ci-radar` | One lamp per GitHub repository for its last Actions run, and your review queue | Internet (GitHub API) |
+| `energy-cost` | What the PC costs in electricity: watts now, today, this month and a projection | iCUE Sensors plugin |
 | `audio-mixer`, `control-deck` | Per-app volume; ten system actions | Companion |
 | `network-pulse`, `stocks`, `screen-time` | Network rates and ping; quotes; time per application | Companion |
-| `windows-media-pump`, `cooling-sensor-pump`, `racing-gauge-pump`, `fps-gauge-pump` | Pump LCD: music, a coolant sensor, gauges | Companion for the media pump |
+| `windows-media-pump`, `cooling-sensor-pump`, `racing-gauge-pump`, `fps-gauge-pump`, `pump-faces` | Pump LCD: music, a coolant sensor, gauges, six animated faces (coolant tank, aquarium, iris, chronograph, vinyl, carousel) | Companion for the media pump and the Vinyl face |
 
 Use `now-playing` for music, including Spotify: it reads the Windows media sessions, needs no account and is not subject to Spotify's request limits. While Spotify makes the companion wait, `spotify` follows the Spotify app on this PC.
 

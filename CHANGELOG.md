@@ -6,6 +6,27 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ## [Unreleased]
 
+### Added - Signature designs, Grid Pulse, Patch Radar, CI Radar, Sky and Hearth
+- A Signature style, now the default for new placements, turns widgets into real objects: Focus Timer (kitchen tomato timer), Audio Mixer (mixing console), System Pulse (airliner engine display), World Clock (newsroom clocks), Countdowns (departure board), Habit Rings (stamp cards), AI Cost (taxi meter), Network Pulse (oscilloscope), Cooling Sensor Pump (nixie tubes). The previous look stays in the Style setting.
+- One state plate for offline, refused and empty states across the widgets that share it: what happened, what to do, and that it keeps trying.
+- `grid-pulse`: France's electricity mix and carbon intensity, live from RTE eco2mix, with the cleanest hour of the last day.
+- `patch-radar` (companion): official Steam announcements of your games as telex strips. New companion route `/api/patches/state`.
+- `ci-radar`: GitHub Actions lamps per repository and the pull requests waiting for your review.
+- `pump-faces`: Sky (an astrolabe of the day, from latitude and longitude) and Hearth (flames that follow the CPU).
+
+### Added - Energy Cost, Game Session, Free Games, Claude Code waiting card
+- `energy-cost`: the PC drawn as a house electricity meter (turning disc, mechanical counter): watts now, today's kWh and cost, this month and a projection, from the iCUE CPU and GPU power sensors plus a fixed "rest of the PC".
+- `game-session` (companion): the game in front, its time, frame rate (average, 1 % low, trace), CPU and GPU peaks, a debrief when you quit and a break reminder; styled as a motorsport broadcast graphic. New companion route `/api/game/state`.
+- `free-games` (companion): Epic's free games as tickets and the Steam games you watch as price tags; tap to open the store page. New companion route `/api/deals/state`.
+- `agent-activity`: a full-screen card when Claude Code waits for your permission or reply, through an optional `Notification` hook (see the companion README).
+
+### Added - Pump Faces, five gauge designs
+- `pump-faces`: one pump LCD widget with six faces (coolant tank, Rig Pet aquarium, iris, chronograph, vinyl, carousel), a liquid temperature alert and FPS while a game runs. `shared/sensor-reader.js` now also finds liquid, pump and ambient sensors.
+- Racing Gauge Pump and FPS Gauge Pump: Vintage (1960s roadster), Cockpit (aircraft instrument), 80s Digital (amber fluorescent bars), Marine (boat helm) and Superbike (TFT bars) designs.
+
+### Removed
+- FPS Gauge Pump: the frame-generation setting. iCUE never says whether frame generation is on, so the split it showed was a guess.
+
 ### Added - Network Pulse, System Pulse, Rig Pet, Flip Clock, Rain Window
 - `network-pulse` (needs iCUE Edge Companion): download and upload rate of the hardware adapters, the last minute as a chart, and an optional ping to Cloudflare, Google or Quad9. Units in Mbit/s or MB/s.
 - `system-pulse`: CPU, GPU, RAM and VRAM load rings with temperatures and the last minute, from the iCUE Sensors plugin (`shared/sensor-reader.js` picks the sensors by name).
