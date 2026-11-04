@@ -50,6 +50,7 @@
             const b = deck.querySelector(`[data-id="${a.id}"]`);
             const off = a.kind === "toggle" && a.on === false;
             b.classList.toggle("off", off);
+            b.classList.toggle("tog", a.kind === "toggle");
             b.querySelector("span").textContent = off ? OFF_LABEL[a.id] || a.label : a.label;
             b.setAttribute("aria-label", b.querySelector("span").textContent);
         }
@@ -81,6 +82,11 @@
     }
 
     async function update() {
+        if (/[?&]demo\b/.test(location.search)) {
+            const ids = ["mic", "mute", "playPause", "next", "snip", "lock", "calc", "explorer", "taskmgr", "nightlight"];
+            const labels = { mic: "Mic", mute: "Sound", playPause: "Play", next: "Next", snip: "Snip", lock: "Lock", calc: "Calc", explorer: "Files", taskmgr: "Tasks", nightlight: "Night" };
+            return render({ actions: ids.map(id => ({ id, label: labels[id], kind: ["mic", "mute", "nightlight"].includes(id) ? "toggle" : "action", on: id !== "mic" })) });
+        }
         if (request) request.abort();
         request = new AbortController();
         try {
@@ -92,7 +98,7 @@
             $("overlay").classList.remove("visible");
         } catch (error) {
             if (error && error.name === "AbortError") return;
-            if (!failed) show("Companion offline", "Start iCUE Edge Companion; it runs the deck's actions on this PC.");
+            if (!failed) show("Companion not running", "Start iCUE Edge Companion; it runs the deck's actions on this PC.");
             failed = true;
         }
     }

@@ -1,0 +1,60 @@
+/* Energy Cost, drawn as a house electricity meter: a black faceplate with the turning disc seen through its
+   window, a mechanical counter (red hundredths), and the money on the right. Bahnschrift is Windows' DIN face. */
+:root { --meter-red: #d8382b; --plate: #121314; --plate-edge: #2a2c2f; --drum: #f1ede4; --drum-ink: #121212; }
+#widget { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--x-gap); }
+.x-top .x-kicker, .x-top .x-status { margin: 0; }
+.body { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: var(--x-gap) calc(var(--x-gap) * 2); min-height: 0; }
+p { margin: 0; }
+
+/* Faceplate */
+.plate { display: grid; align-content: center; justify-items: center; gap: calc(var(--x-gap) * 0.8); min-width: 0; padding: calc(var(--x-gap) * 1.2); border-radius: 14px;
+    background: radial-gradient(120% 90% at 30% 10%, #1d1f22, var(--plate)); box-shadow: inset 0 0 0 2px var(--plate-edge), inset 0 18px 40px rgba(255,255,255,.03), 0 10px 30px rgba(0,0,0,.4); }
+.meter { width: min(100%, 420px); height: clamp(18px, 4.2vmin, 34px); border-radius: 999px; overflow: hidden; position: relative;
+    background: linear-gradient(#050505, #1b1b1b 45%, #050505); box-shadow: inset 0 0 0 2px #000, 0 0 0 3px #303236; }
+.disc { position: absolute; inset: 22% 4%; border-radius: 999px; overflow: hidden; background: linear-gradient(#cfd2d6, #8d9196 55%, #c3c6ca); }
+.mark { position: absolute; top: 0; bottom: 0; width: 7%; left: -8%; background: var(--meter-red); animation: turn var(--turn, 0s) linear infinite; }
+:root.idle .mark, :root[style*="--turn: 0s"] .mark { animation: none; left: 46%; }
+@keyframes turn { from { left: -8%; } to { left: 100%; } }
+
+.odo { display: flex; align-items: flex-end; gap: 4px; font-family: Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif; font-weight: 600; font-size: clamp(34px, 12vmin, 118px); line-height: 1; }
+.drum { display: block; height: 1em; width: 0.78em; overflow: hidden; border-radius: 4px; background: linear-gradient(#d9d4c9, var(--drum) 30%, var(--drum) 70%, #cfc9bd); color: var(--drum-ink);
+    box-shadow: inset 0 6px 6px -4px rgba(0,0,0,.45), inset 0 -6px 6px -4px rgba(0,0,0,.45); text-align: center; }
+.drum.frac { background: linear-gradient(#a8261c, var(--meter-red) 30%, var(--meter-red) 70%, #a8261c); color: #fff; }
+.reel { display: block; width: min-content; margin: 0 auto; white-space: normal; transition: transform 0.6s cubic-bezier(.3,1.4,.5,1); font-variant-numeric: tabular-nums; }
+.dot { color: var(--x-muted); align-self: flex-end; }
+.odo-unit { color: var(--x-muted); font-size: var(--x-label-size); letter-spacing: 0.24em; text-transform: uppercase; font-family: Bahnschrift, "Segoe UI", sans-serif; }
+
+/* Money */
+.cost { display: grid; align-content: center; gap: 6px; min-width: 0; }
+.today b { font-family: Bahnschrift, "Segoe UI", sans-serif; font-size: clamp(48px, 18vmin, 190px); font-weight: 700; line-height: 0.95; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--x-accent); letter-spacing: -0.02em; }
+.sub { color: var(--x-muted); font-size: var(--x-label-size); letter-spacing: 0.2em; text-transform: uppercase; }
+.now { margin-top: calc(var(--x-gap) * 0.6); font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.now b { font-family: Bahnschrift, "Segoe UI", sans-serif; font-size: clamp(26px, 7.5vmin, 80px); font-weight: 600; }
+.now small { color: var(--x-muted); font-size: var(--x-label-size); }
+.parts { flex-basis: 100%; color: var(--x-muted); font-size: var(--x-label-size); }
+.month { font-size: var(--x-label-size); line-height: 1.35; font-variant-numeric: tabular-nums; }
+
+/* Today, hour by hour */
+.strip { grid-column: 1 / -1; display: grid; gap: 4px; min-height: 0; }
+.bars { width: 100%; height: clamp(40px, 16vh, 150px); }
+.bars rect { fill: var(--x-track); }
+.bars rect.on { fill: color-mix(in srgb, var(--x-accent) 55%, transparent); }
+.bars rect.now { fill: var(--meter-red); }
+.hours { display: flex; justify-content: space-between; color: var(--x-dim); font-size: calc(var(--x-label-size) * 0.75); font-variant-numeric: tabular-nums; }
+
+/* S (840 x 344): plate and money only. */
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) {
+    .strip, .month, .x-top .x-status { display: none; }
+    .body { grid-template-rows: minmax(0, 1fr); }
+    .odo { font-size: clamp(30px, 15vmin, 64px); }
+    .today b { font-size: clamp(40px, 22vmin, 100px); }
+    .plate { padding: 12px; }
+}
+/* Portrait: stacked. */
+@media (max-aspect-ratio: 1/1) {
+    .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+    .odo { font-size: clamp(34px, 14vw, 110px); }
+    .today b { font-size: clamp(48px, 18vw, 160px); }
+    .strip { align-self: end; }
+}
+@media (prefers-reduced-motion: reduce) { .mark { animation: none !important; left: 46% !important; } .reel { transition: none; } }

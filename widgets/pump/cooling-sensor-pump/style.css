@@ -31,3 +31,18 @@ body { display: grid; place-items: center; }
 :root[data-style]:not([data-style="instrument"]) { font-family: var(--s-font, "Segoe UI Variable", "Segoe UI", sans-serif); }
 :root[data-style]:not([data-style="instrument"]) .label, :root[data-style]:not([data-style="instrument"]) .device { font-family: var(--s-label-font, inherit); letter-spacing: var(--s-track, 0.08em); text-transform: var(--s-case, uppercase); }
 :root[data-style]:not([data-style="instrument"]) .value { font-weight: var(--s-num-w, 700); font-family: var(--s-num-font, inherit); letter-spacing: var(--s-num-track, 0); }
+
+/* Signature: nixie tubes behind smoked glass. Warm orange digits with a wire-mesh glass, readable from
+   across the room; the label and units sit on the bezel below. */
+.tubes { display: none; }
+:root[data-style="signature"] body { background: radial-gradient(circle at 50% 40%, #2a2522, #090807 70%); }
+:root[data-style="signature"] .ring { border: 0; outline: 0; width: 100%; padding: 6%; border-radius: 50%; box-shadow: inset 0 0 0 calc(var(--layout-unit) * 3) #1a1714, inset 0 0 0 calc(var(--layout-unit) * 3.4) #4a3f33; }
+:root[data-style="signature"] .value { display: none; }
+:root[data-style="signature"] .tubes { display: flex; justify-content: center; align-items: flex-end; gap: calc(var(--layout-unit) * 1.4); margin: 6% 0 4%; }
+.tube { display: grid; place-items: center; width: calc(var(--layout-unit) * 18); height: calc(var(--layout-unit) * 32); border-radius: calc(var(--layout-unit) * 9) calc(var(--layout-unit) * 9) calc(var(--layout-unit) * 3) calc(var(--layout-unit) * 3);
+    background: radial-gradient(circle at 50% 40%, rgba(255,140,40,.18), rgba(30,24,20,.92) 70%), repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 3px, transparent 3px 6px);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); font: 300 calc(var(--layout-unit) * 24) / 1 "Segoe UI", sans-serif; color: #ff9a3c; text-shadow: 0 0 10px #ff7a1a, 0 0 26px #ff5a00; }
+.tubes .dot { width: calc(var(--layout-unit) * 4); font: 700 calc(var(--layout-unit) * 10) / 1 "Segoe UI", sans-serif; color: #ff9a3c; text-shadow: 0 0 8px #ff5a00; }
+:root[data-style="signature"] .label { color: #c9a77a; font-family: Bahnschrift, sans-serif; letter-spacing: .3em; }
+:root[data-style="signature"] .device { color: #8a7a64; }
+:root[data-style="signature"] #widget[data-state="offline"] .tube, :root[data-style="signature"] #widget[data-state="empty"] .tube { color: #5a3a20; text-shadow: none; }

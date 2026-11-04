@@ -206,7 +206,7 @@
         const g = ensureGauge(scale || (KIND === "fps" ? scaleFor({}, 100) : scaleFor({ units: "°C", type: "temperature" }, 30)));
         g.info(label, "", device);
         g.set(NaN, "--");
-        if (KIND === "fps") g.fps(0, "", device);   // 0: no frame rate to show
+        if (KIND === "fps") g.fps(false, "", device);
     }
 
     function renderValue(value) {
@@ -228,20 +228,9 @@
             recent.push(number);
             if (recent.length > 60) recent.shift();
             const avg = Math.round(recent.reduce((a, b) => a + b, 0) / recent.length);
-            const choice = String(setting("fpsFrameGen", "auto"));
-            const dynamic = !/^[1-4]$/.test(choice);
-            const n = dynamic ? dynamicMultiplier(avg) : Number(choice);
-            const est = dynamic && n > 1 ? "≈ " : "";
-            const sub = n > 1 ? `${est}Rendered ${Math.round(number / n)} · +${Math.round(number - number / n)} generated` : `Average ${avg} · last minute`;
-            g.fps(n, sub, `Low ${Math.round(Math.min(...recent))} · last minute`, dynamic);
+            g.fps(true, `Average ${avg} · last minute`, `Low ${Math.round(Math.min(...recent))} · last minute`);
         }
         $("widget").dataset.state = "ready";
-    }
-
-    /** Dynamic mode: iCUE cannot say whether frame generation is on, so the multiplier is guessed from the
-        last minute's average frame rate. ponytail: fixed bands; a fast esports game at 200+ native FPS reads as 2x. */
-    function dynamicMultiplier(avg) {
-        return avg <= 165 ? 1 : avg <= 300 ? 2 : avg <= 420 ? 3 : 4;
     }
 
     async function update() {
@@ -304,7 +293,7 @@
         pollTimer = setInterval(update, POLL_MS);
     }
 
-    // The design and frame-generation settings apply at the next reading; onDataUpdated asks for one now.
+    // The design setting applies at the next reading; onDataUpdated asks for one now.
     window.GaugePump = { start, update, scaleFor };
     window.RacingGaugePump = window.GaugePump;
     window.icueEvents = { onICUEInitialized: start, onDataUpdated: update };

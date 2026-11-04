@@ -17,7 +17,16 @@
         ram: m => part(m) !== "gpu" && kind(m) === "memory",
         vram: m => part(m) === "gpu" && (kind(m) === "framebuffer" || (kind(m) === "memory" && has(m, "vram", "dedicated"))),
         fps: m => kind(m) === "fps",
+        // Watercooling: coolant temperature, pump speed and a room probe, when the hardware has them.
+        liquid: m => has(m, "coolant", "liquid", "water") && isTemp(m),
+        pump: m => has(m, "pump") && (/rpm/i.test(String(m.units)) || has(m, "speed")),
+        air: m => has(m, "ambient", "room", "intake") && isTemp(m),
+        // Power draw in watts, for Energy Cost.
+        cpuPower: m => part(m) === "cpu" && isPower(m),
+        gpuPower: m => part(m) === "gpu" && isPower(m),
     };
+    const isPower = m => !has(m, "limit", "voltage") && (senstype(m).startsWith("power") || has(m, "power", "watt") || /^\s*w\s*$/i.test(String(m.units)));
+    const isTemp = m => senstype(m).startsWith("temp") || has(m, "temperature", "temp") || /°|^\s*[cf]\s*$/i.test(String(m.units));
 
     const hay = m => `${m.id} ${m.name} ${m.device} ${m.type} ${m.kind}`.toLowerCase();
     const has = (m, ...words) => words.some(w => hay(m).includes(w));
@@ -115,7 +124,9 @@
         const temp = (b, a, s) => ({ value: wave(b, a, s), units: "°C", name: "Demo" });
         const params = new URLSearchParams(location.search);
         const hot = params.get("demo") === "hot" ? 24 : 0;
-        return { plugin: true, fps: params.get("demo") === "game" ? { value: 144, units: "FPS", name: "Demo" } : null, cpuLoad: load(38 + hot, 22, 0.35), cpuTemp: temp(56 + hot, 8, 0.12), gpuLoad: load(62 + hot, 30, 0.22), gpuTemp: temp(64 + hot, 9, 0.09), ram: load(54, 4, 0.05), vram: load(41, 6, 0.07) };
+        const watts = (b, a, s) => ({ value: Math.max(5, wave(b, a, s)), units: "W", name: "Demo" });
+        return { plugin: true, cpuPower: watts(70 + hot * 3, 30, 0.2), gpuPower: watts(160 + hot * 6, 90, 0.13), liquid: temp(33 + hot / 3, 3, 0.1), pump: { value: wave(2600, 400, 0.15), units: "RPM", name: "Demo" }, air: null,
+            fps: params.get("demo") === "game" ? { value: 144, units: "FPS", name: "Demo" } : null, cpuLoad: load(38 + hot, 22, 0.35), cpuTemp: temp(56 + hot, 8, 0.12), gpuLoad: load(62 + hot, 30, 0.22), gpuTemp: temp(64 + hot, 9, 0.09), ram: load(54, 4, 0.05), vram: load(41, 6, 0.07) };
     }
 
     let busy = false, timer = null;

@@ -1906,3 +1906,16 @@ html:root[data-theme="light"] { --text-2: rgba(10, 10, 10, 0.72); --text-3: rgba
    light background (and on a light style such as Paper) while a dark theme keeps it bright. */
 :root { --accent-ink: color-mix(in srgb, var(--accent) 52%, var(--text-1)); }
 html.legible .device-line, .mini-lyric, .up-next-head, #lyricsAutoBtn, .lyric-line.active::before { color: var(--accent-ink) !important; }
+
+/* State plate (shared look across widgets): readable sizes instead of 11 to 14 px. */
+#stateOverlay { align-items: flex-start; padding: 0 9%; }
+#stateOverlay .state-icon { font: 800 16px Bahnschrift, sans-serif; letter-spacing: .2em; color: #1ed760; }
+#stateOverlay .state-title { font: 700 clamp(26px, 4vw, 40px) / 1.1 Bahnschrift, "Segoe UI", sans-serif; }
+#stateOverlay .state-sub { max-width: 40ch; font-size: clamp(16px, 2.2vw, 22px); text-align: left; }
+#stateOverlay::after {
+    content: ""; position: absolute; left: 8%; right: 8%; bottom: 7%; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #e8c477, transparent) no-repeat -40% 0 / 40% 100%, rgba(255,255,255,.12);
+    animation: plate-retry 2.4s ease-in-out infinite;
+}
+@keyframes plate-retry { to { background-position: 140% 0, 0 0; } }
+@media (prefers-reduced-motion: reduce) { #stateOverlay::after { animation: none; } }

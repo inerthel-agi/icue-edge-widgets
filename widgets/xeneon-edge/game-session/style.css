@@ -1,0 +1,63 @@
+/* Game Session, as a motorsport broadcast graphic: slanted tags, a timing-tower clock in condensed DIN
+   (Bahnschrift, built into Windows), one hot accent, and a telemetry trace of the frame rate. */
+:root { --hot: var(--x-accent, #ff3d2e); --slant: polygon(0 0, 100% 0, calc(100% - 0.55em) 100%, 0 100%); --cond: Bahnschrift, "DIN Condensed", "Arial Narrow", sans-serif; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: color-mix(in srgb, var(--x-bg) calc(var(--x-bg-opacity) * 100%), transparent); color: var(--x-text); font-family: "Segoe UI Variable", "Segoe UI", sans-serif; }
+p, h1 { margin: 0; }
+#widget { width: 100%; height: 100%; padding: var(--x-pad, 24px); display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.3fr) minmax(0, 0.8fr); grid-template-rows: minmax(0, 1fr) auto; gap: var(--x-gap) calc(var(--x-gap) * 1.6); }
+
+/* Timing tower */
+.tower { display: grid; align-content: center; gap: calc(var(--x-gap) * 0.5); min-width: 0; }
+.tag span { display: inline-block; padding: 0.18em 1.1em 0.18em 0.6em; clip-path: var(--slant); background: var(--hot); color: #fff; font: 700 var(--x-label-size) var(--cond); letter-spacing: 0.22em; }
+#widget[data-view="debrief"] .tag span { background: var(--x-text); color: var(--x-bg, #080a0b); }
+#widget[data-view="idle"] .tag span { background: var(--x-track); color: var(--x-muted); }
+.game { font: 700 clamp(22px, 6vmin, 58px) / 1.05 var(--cond); font-stretch: condensed; text-transform: uppercase; letter-spacing: 0.01em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.clock { font: 600 clamp(46px, 19vmin, 200px) / 0.9 var(--cond); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.brk { --done: 0; position: relative; padding-top: 10px; color: var(--x-muted); font-size: var(--x-label-size); }
+.brk:not(:empty)::before { content: ""; position: absolute; left: 0; top: 0; height: 4px; width: 100%; background: linear-gradient(90deg, var(--hot) calc(var(--done) * 100%), var(--x-track) 0); }
+#widget.break .brk { color: var(--hot); font-weight: 700; }
+#widget.break .brk::before { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+/* Frame rate */
+.fps { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; min-width: 0; min-height: 0; padding: calc(var(--x-gap) * 0.8); background: linear-gradient(180deg, color-mix(in srgb, var(--x-text) 5%, transparent), transparent); border-top: 2px solid var(--hot); }
+.fps-now { display: flex; align-items: baseline; gap: 10px; }
+.fps-now b { font: 700 clamp(40px, 15vmin, 160px) / 0.9 var(--cond); font-variant-numeric: tabular-nums; }
+.fps-now small { font: 700 var(--x-label-size) var(--cond); letter-spacing: 0.24em; color: var(--hot); }
+.trace { width: 100%; height: 100%; min-height: 0; }
+.trace .line { fill: none; stroke: var(--hot); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.trace .area { fill: color-mix(in srgb, var(--hot) 14%, transparent); }
+
+/* Stat chips */
+.stats { display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 8px; min-width: 0; min-height: 0; }
+.chip { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 14px 0 18px; clip-path: var(--slant); background: color-mix(in srgb, var(--x-text) 7%, transparent); position: relative; }
+.chip::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--hot); }
+.chip span { font: 700 calc(var(--x-label-size) * 0.8) var(--cond); letter-spacing: 0.2em; color: var(--x-muted); }
+.chip b { font: 700 clamp(22px, 6vmin, 60px) var(--cond); font-variant-numeric: tabular-nums; }
+.foot { grid-column: 1 / -1; color: var(--x-muted); font-size: var(--x-label-size); min-height: 1em; }
+.foot:empty { display: none; }
+
+/* Idle: only the tower */
+#widget[data-view="idle"] .fps, #widget[data-view="idle"] .stats { opacity: 0.25; }
+#widget[data-view="idle"] .clock { color: var(--x-muted); }
+
+/* S (840 x 344): tower and frame rate, no chips. */
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) {
+    #widget { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); padding: 18px; }
+    .stats, .foot { display: none; }
+    .clock { font-size: clamp(40px, 24vmin, 110px); }
+    .fps-now b { font-size: clamp(36px, 20vmin, 96px); }
+}
+/* M (840 x 696): chips under, two by two. */
+@media (min-height: 451px) and (max-aspect-ratio: 3/2) and (min-aspect-ratio: 1/1) {
+    #widget { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
+    .stats { grid-column: 1 / -1; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: 88px; }
+    .chip { flex-direction: column; justify-content: center; align-items: flex-start; gap: 0; }
+}
+/* Portrait */
+@media (max-aspect-ratio: 1/1) {
+    #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, 72px); }
+    .clock { font-size: clamp(56px, 22vw, 180px); }
+}
+@media (prefers-reduced-motion: reduce) { #widget.break .brk::before { animation: none; } }

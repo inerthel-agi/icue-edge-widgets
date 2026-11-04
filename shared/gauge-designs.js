@@ -13,6 +13,7 @@
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
     function arc(r, t0, t1) {
+        if (t0 >= t1) return "M0 0";   // nothing to draw, e.g. the redline of a scale without one (FPS)
         const s = P(r, ang(t0)), e = P(r, ang(t1));
         return `M${f(s[0])} ${f(s[1])}A${r} ${r} 0 ${SWEEP * (t1 - t0) > 180 ? 1 : 0} 1 ${f(e[0])} ${f(e[1])}`;
     }
@@ -34,7 +35,7 @@
         `<text id="u" class="u" x="240" y="${y[2]}"></text><text id="dv" class="dv" x="240" y="${y[3]}"></text>`;
 
     /* Each design is a function of the scale (sc.red is a 0..1 ratio). Ids the controller drives:
-       n needle, a / a2 filled arcs, v value, u units, lb label, dv device, seg* segments,
+       n needle, a filled arc, v value, u units, lb label, dv device, seg* segments,
        sl* shift lights, heat glow, hist history line, sub / bt FPS lines. */
     const DESIGNS = {
         classic: sc => `
@@ -44,7 +45,7 @@
             ${ticks(20, 196, 182, t => `tick${t >= sc.red ? " red" : ""}`)}${ticks(sc.majors.length - 1, 196, 168, t => `tick major${t >= sc.red ? " red" : ""}`)}
             ${numbers(sc, 140, "num")}
             ${needle(170, 26, 8, "needle")}<circle class="hub" cx="240" cy="240" r="14"/>
-            ${texts([402, 318, 352, 430])}`,
+            ${texts([408, 306, 360, 436])}`,
 
         race: sc => `
             <g class="g-race"><rect width="480" height="480" fill="#050505"/>
@@ -98,10 +99,61 @@
             ${texts([304, 355, 392, 0])}
             ${needle(204, 30, 10, "nd")}<circle cx="240" cy="240" r="22" fill="#111"/><circle cx="240" cy="240" r="8" fill="#333"/></g>`,
 
+        // 1960s roadster: chrome bezel, cream face, thin black needle with a red tip.
+        vintage: sc => `
+            <g class="g-vi"><linearGradient id="viChrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset=".5" stop-color="#7d8188"/><stop offset="1" stop-color="#e3e5e8"/></linearGradient>
+            <radialGradient id="viFace"><stop offset=".6" stop-color="#f3ebd6"/><stop offset="1" stop-color="#d9ccaa"/></radialGradient>
+            <rect width="480" height="480" fill="#000"/><circle cx="240" cy="240" r="238" fill="url(#viChrome)"/><circle cx="240" cy="240" r="222" fill="url(#viFace)"/>
+            <circle cx="240" cy="240" r="214" fill="none" stroke="#1b1b1b" stroke-width="2"/>
+            <path d="${arc(196, sc.red, 1)}" stroke="#b3261e" stroke-width="10" fill="none"/>
+            ${ticks(60, 200, 210, "t")}${ticks(sc.majors.length - 1, 186, 210, "t big")}
+            ${numbers(sc, 158, "num")}
+            ${texts([300, 346, 372, 0])}
+            ${needle(196, 40, 6, "nd")}<circle cx="240" cy="240" r="16" fill="#1b1b1b"/><circle cx="240" cy="240" r="6" fill="url(#viChrome)"/></g>`,
+
+        // Aircraft instrument: matte black, screws, green / yellow / red bands, wide white needle.
+        cockpit: sc => `
+            <g class="g-co"><rect width="480" height="480" fill="#0d0e0f"/><circle cx="240" cy="240" r="226" fill="#141517" stroke="#2a2c2f" stroke-width="6"/>
+            ${[[64, 64], [416, 64], [64, 416], [416, 416]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="11" fill="#2a2c30"/><path d="M${x - 7} ${y}H${x + 7}" stroke="#0d0e0f" stroke-width="3"/>`).join("")}
+            <path d="${arc(204, 0, Math.min(1, sc.red * 0.8))}" stroke="#2fb34a" stroke-width="12" fill="none"/>
+            ${sc.red < 1 ? `<path d="${arc(204, sc.red * 0.8, sc.red)}" stroke="#f2c230" stroke-width="12" fill="none"/>` : ""}
+            ${sc.red < 1 ? (([a, b], [c, d]) => `<line class="rl" x1="${f(a)}" y1="${f(b)}" x2="${f(c)}" y2="${f(d)}"/>`)(P(184, ang(sc.red)), P(216, ang(sc.red))) : ""}
+            ${ticks(40, 190, 200, "t")}${ticks(sc.majors.length - 1, 178, 200, "t big")}
+            ${numbers(sc, 146, "num")}
+            <rect x="182" y="318" width="116" height="52" rx="4" fill="#050505" stroke="#33363a" stroke-width="2"/>
+            ${texts([290, 346, 392, 0])}
+            ${needle(188, 46, 16, "nd")}<circle cx="240" cy="240" r="22" fill="#26282b"/><circle cx="240" cy="240" r="7" fill="#0d0e0f"/></g>`,
+
+        // 1980s digital dash: amber vacuum-fluorescent bars under large digits.
+        eighties: sc => `
+            <g class="g-ei"><rect width="480" height="480" fill="#030201"/>
+            ${Array.from({ length: 24 }, (_, i) => `<rect id="seg${i}" class="seg" x="${78 + i * 13.5}" y="${330 - i * 3}" width="9" height="${18 + i * 3}"/>`).join("")}
+            <line class="grid" x1="78" x2="402" y1="362" y2="362"/>
+            ${texts([112, 172, 246, 400])}</g>`,
+
+        // Boat helm: white face, polished bezel, navy needle and numbers.
+        marine: sc => `
+            <g class="g-mr"><linearGradient id="mrBezel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9edf1"/><stop offset=".5" stop-color="#8a939c"/><stop offset="1" stop-color="#f5f7f9"/></linearGradient>
+            <rect width="480" height="480" fill="#0a1424"/><circle cx="240" cy="240" r="236" fill="url(#mrBezel)"/><circle cx="240" cy="240" r="218" fill="#fbfcfd"/>
+            <path class="track" d="${arc(200, 0, 1)}"/>${fill(200, "fl")}
+            <path d="${arc(200, sc.red, 1)}" stroke="#d23b2e" stroke-width="6" fill="none"/>
+            ${ticks(40, 182, 192, "t")}${ticks(sc.majors.length - 1, 172, 192, "t big")}
+            ${numbers(sc, 142, "num")}
+            <path d="M190 392q12-10 25 0t25 0 25 0 25 0" fill="none" stroke="#1f4e8c" stroke-width="3"/>
+            ${texts([300, 346, 372, 0])}
+            ${needle(186, 36, 9, "nd")}<circle cx="240" cy="240" r="18" fill="#0f2747"/></g>`,
+
+        // Superbike TFT: thickening bars around the dial, big italic number, yellow then red.
+        superbike: sc => `
+            <g class="g-sb"><rect width="480" height="480" fill="#000"/>
+            ${Array.from({ length: 36 }, (_, i) => `<path id="seg${i}" class="seg" stroke-width="${f(8 + i * 0.9)}" d="${arc(200 - i * 0.45, i / 36 + 0.003, (i + 1) / 36 - 0.003)}"/>`).join("")}
+            ${numbers(sc, 146, "num")}
+            <path d="M120 356H360" stroke="#262626" stroke-width="2"/>
+            ${texts([168, 250, 326, 384])}</g>`,
+
         fps: sc => `
             <g class="g-fp" id="fp"><rect width="480" height="480" fill="#050606"/>
             <path class="trk" d="${arc(198, 0, 1)}"/>${fill(198, "disp")}
-            <path class="trk2" d="${arc(170, 0, 1)}"/>${fill(170, "rend", "a2")}
             ${numbers(sc, 140, "num")}
             <rect class="badge" x="140" y="128" width="200" height="34" rx="17"/><text id="bt" class="bt" x="240" y="146">FPS</text>
             ${texts([0, 236, 304, 420])}<text id="sub" class="sub" x="240" y="394"></text></g>`,
@@ -114,17 +166,16 @@
         const make = DESIGNS[design] || DESIGNS.classic;
         svg.innerHTML = make(sc);
         const q = id => svg.querySelector("#" + id);
-        const el = { n: q("n"), a: q("a"), a2: q("a2"), v: q("v"), u: q("u"), lb: q("lb"), dv: q("dv"), heat: q("heat"), hist: q("hist"), sub: q("sub"), bt: q("bt"), fp: q("fp") };
+        const el = { n: q("n"), a: q("a"), v: q("v"), u: q("u"), lb: q("lb"), dv: q("dv"), heat: q("heat"), hist: q("hist"), sub: q("sub"), bt: q("bt"), fp: q("fp") };
         const segs = [...svg.querySelectorAll("[id^=seg]")], sls = [...svg.querySelectorAll("[id^=sl]")];
         const history = [];
-        let x = 0, vel = 0, goal = 0, text = "--", frame = 0, last = 0, multiplier = 1, value = NaN;
+        let x = 0, vel = 0, goal = 0, text = "--", frame = 0, last = 0, value = NaN;
         let sweepUntil = reduced() ? 0 : performance.now() + 1500;   // start-up sweep: 0 → max → reading
 
         function draw(t, settled) {
             const c = Math.max(0, Math.min(1, t));
             if (el.n) el.n.setAttribute("transform", `rotate(${f(ang(Math.max(-0.01, Math.min(1.02, t))))} 240 240)`);
             if (el.a) el.a.setAttribute("stroke-dasharray", `${c.toFixed(4)} 1`);
-            if (el.a2) el.a2.setAttribute("stroke-dasharray", `${(c / multiplier).toFixed(4)} 1`);
             if (el.v) el.v.textContent = settled ? text : sc.label(sc.min + (sc.max - sc.min) * c, true);
             if (el.heat) el.heat.setAttribute("opacity", (0.15 + c * 0.85).toFixed(2));
             const hot = c >= sc.red;
@@ -175,12 +226,9 @@
                 if (el.u) el.u.textContent = units;
                 if (el.dv) el.dv.textContent = device;
             },
-            /** FPS only: frame-generation multiplier (1 = native), and the lines under the number. */
-            fps(n, sub, low, dynamic) {
-                multiplier = Math.max(1, n);
-                if (el.fp) el.fp.classList.toggle("gen", multiplier > 1);
-                const mode = n === 0 ? "NO GAME" : multiplier === 1 ? "NATIVE" : multiplier === 2 ? "FG 2×" : `MFG ${multiplier}×`;
-                if (el.bt) el.bt.textContent = dynamic && n ? `DYNAMIC · ${mode}` : mode;
+            /** FPS only: whether a game runs, and the lines under the number. */
+            fps(playing, sub, low) {
+                if (el.bt) el.bt.textContent = playing ? "FPS" : "NO GAME";
                 if (el.sub) el.sub.textContent = sub;
                 if (el.dv) el.dv.textContent = low;
                 wake();

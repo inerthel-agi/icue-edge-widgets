@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Game Session</title>
+    <meta name="x-icue-property" content="sessionBreak" data-label="tr('Break reminder')" data-type="slider"
+        data-default="90" data-min="0" data-max="240" data-step="15" data-unit-label="' min'" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#ff3d2e'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('Game Session')","properties":["sessionBreak"],"info":"tr('The game in front comes from iCUE Edge Companion (Steam, Epic, Xbox, Riot, EA, Ubisoft, GOG, Battle.net libraries); frame rate and temperatures from iCUE sensors. 0 turns the break reminder off.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency"]}]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body data-endpoint="http://127.0.0.1:47821">
+    <main id="widget" data-view="idle">
+        <header class="tower">
+            <p class="tag"><span id="kind">LIVE</span></p>
+            <h1 class="game" id="game">No game running</h1>
+            <p class="clock" id="clock">0:00:00</p>
+            <p class="brk" id="brk"></p>
+        </header>
+        <section class="fps">
+            <p class="fps-now"><b id="fps">--</b><small>FPS</small></p>
+            <svg class="trace" id="trace" viewBox="0 0 300 80" preserveAspectRatio="none" aria-label="Frame rate over the session">
+                <path class="area" id="area" d="" /><path class="line" id="line" d="" />
+            </svg>
+        </section>
+        <section class="stats">
+            <div class="chip"><span>AVG</span><b id="avg">--</b></div>
+            <div class="chip"><span>1% LOW</span><b id="low">--</b></div>
+            <div class="chip"><span>CPU PEAK</span><b id="cpu">--</b></div>
+            <div class="chip"><span>GPU PEAK</span><b id="gpu">--</b></div>
+        </section>
+        <p class="foot" id="foot"></p>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="../../../shared/sensor-reader.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

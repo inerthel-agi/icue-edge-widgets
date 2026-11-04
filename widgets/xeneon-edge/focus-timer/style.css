@@ -44,6 +44,7 @@ header > div { flex: 1; min-width: 0; }
 .ring-center b { font-size: calc(var(--ring-size) * 0.25); font-weight: 600; letter-spacing: -0.05em; }
 .ring-center small { font-size: clamp(18px, calc(var(--ring-size) * 0.065), 24px); }
 .cycle-dots { display: flex; gap: 8px; }
+.tomato, .next { display: none; }
 .cd { width: 8px; height: 8px; border: 1px solid var(--x-muted); border-radius: 50%; }
 .cd.done, .cd.active { background: var(--x-accent); border-color: var(--x-accent); }
 .cd.active { outline: 1px solid var(--x-accent); outline-offset: 3px; }
@@ -66,3 +67,35 @@ header > div { flex: 1; min-width: 0; }
     .controls { flex-direction: row; }
     .ctrl { flex: 1; }
 }
+
+/* Signature: the kitchen tomato timer the Pomodoro method is named after. The dial turns as time runs. */
+:root[data-style="signature"] #widget { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; column-gap: calc(var(--x-gap) * 2);
+    background: radial-gradient(70% 120% at 18% 50%, #2b1410, transparent 70%); }
+:root[data-style="signature"] header { grid-column: 2; grid-row: 1; }
+:root[data-style="signature"] header .x-stack { display: none; }
+:root[data-style="signature"] #modeBadge { border: 0; padding: 0; overflow: visible; max-width: none; white-space: nowrap; font: 700 var(--x-label-size) Bahnschrift, sans-serif; letter-spacing: .24em; color: #ff8a6b; }
+:root[data-style="signature"] .stage { grid-column: 1; grid-row: 1 / 4; container-type: normal; place-items: center start; }
+:root[data-style="signature"] .tomato { display: block; height: 100%; max-height: 520px; aspect-ratio: 1; filter: drop-shadow(0 18px 24px rgba(0,0,0,.5)); }
+:root[data-style="signature"] .ring-wrap { display: none; }
+:root[data-style="signature"] .ring-center { display: none; }
+:root[data-style="signature"] .readout { display: grid; }
+:root[data-style="signature"] .controls { grid-column: 2; grid-row: 3; flex-direction: row; justify-content: flex-start; }
+:root[data-style="signature"] .ctrl { min-width: 150px; border-radius: 999px; border: 2px solid #5a3a30; font-family: Bahnschrift, sans-serif; letter-spacing: .06em; }
+:root[data-style="signature"] .ctrl.primary { background: #e2321f; border-color: #e2321f; color: #fff; }
+.readout { display: none; grid-column: 2; grid-row: 2; align-content: center; gap: 6px; min-width: 0; }
+.readout b { font: 600 clamp(64px, 30vh, 220px) / 0.95 Bahnschrift, sans-serif; color: #fbeee0; font-variant-numeric: tabular-nums; }
+.readout small { color: #c9b7aa; font-size: var(--x-label-size); }
+.tomato .band { fill: #fbeee0; } .tomato .core { fill: #c92b1a; }
+.tomato .mk { stroke: #8e1608; stroke-width: 1.5; } .tomato .mk.big { stroke-width: 3; }
+.tomato text { font: 700 15px Bahnschrift, sans-serif; fill: #8e1608; text-anchor: middle; dominant-baseline: central; }
+.tomato .pointer { fill: #fbeee0; stroke: #8e1608; stroke-width: 2; } .tomato .leaf { fill: #3f8d2f; }
+#dialFace { transition: transform 0.6s ease; }
+body[data-mode="break"] .tomato .band, body[data-mode="long"] .tomato .band { fill: #e3f3df; }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { :root[data-style="signature"] .readout b { font-size: clamp(56px, 32vh, 120px); } }
+@media (max-aspect-ratio: 1/1) {
+    :root[data-style="signature"] #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto; justify-items: center; }
+    :root[data-style="signature"] header, :root[data-style="signature"] .stage, :root[data-style="signature"] .readout, :root[data-style="signature"] .controls { grid-column: 1; grid-row: auto; }
+    :root[data-style="signature"] .tomato { height: auto; width: min(80vw, 420px); }
+    :root[data-style="signature"] .readout { justify-items: center; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) { #dialFace { transition: none; } }

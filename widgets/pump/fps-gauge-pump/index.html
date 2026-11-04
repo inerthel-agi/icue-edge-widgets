@@ -7,12 +7,10 @@
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
     <title>FPS Gauge Pump</title>
-    <meta name="x-icue-property" content="fpsFrameGen" data-label="tr('Frame generation')" data-type="combobox"
-        data-default="'auto'" data-values="[{'key':'auto','value':'Dynamic (estimated)'},{'key':'1','value':'Off (native)'},{'key':'2','value':'Frame Gen 2x'},{'key':'3','value':'Multi Frame Gen 3x'},{'key':'4','value':'Multi Frame Gen 4x'}]" />
     <meta name="x-icue-property" content="gaugeAuto" data-label="tr('Automatic sensor')" data-type="switch" data-default="true" />
     <meta name="x-icue-property" content="gaugeSensor" data-label="tr('Manual sensor')" data-type="sensors-combobox" data-default="''" />
     <meta name="x-icue-property" content="gaugeDesign" data-label="tr('Design')" data-type="combobox"
-        data-default="'fps'" data-values="[{'key':'fps','value':'FPS'},{'key':'race','value':'Race'},{'key':'munich','value':'Munich'},{'key':'stuttgart','value':'Stuttgart'},{'key':'gr','value':'GR'},{'key':'gtr','value':'GT-R'},{'key':'maranello','value':'Maranello'},{'key':'classic','value':'Classic (Style colours)'}]" />
+        data-default="'fps'" data-values="[{'key':'fps','value':'FPS'},{'key':'race','value':'Race'},{'key':'munich','value':'Munich'},{'key':'stuttgart','value':'Stuttgart'},{'key':'gr','value':'GR'},{'key':'gtr','value':'GT-R'},{'key':'maranello','value':'Maranello'},{'key':'vintage','value':'Vintage'},{'key':'cockpit','value':'Cockpit'},{'key':'eighties','value':'80s Digital'},{'key':'marine','value':'Marine'},{'key':'superbike','value':'Superbike'},{'key':'classic','value':'Classic (Style colours)'}]" />
     <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
         data-default="'#f2f3ed'" />
     <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
@@ -24,7 +22,7 @@
     <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
         data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
     <script type="application/json" id="x-icue-groups">
-        [{"title":"tr('FPS Gauge Pump')","properties":["gaugeDesign","fpsFrameGen","gaugeAuto","gaugeSensor"],"info":"tr('iCUE does not say whether frame generation is on. Dynamic guesses it from the frame rate; choose the setting you use in game for exact figures.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency","widgetStyle"]}]
+        [{"title":"tr('FPS Gauge Pump')","properties":["gaugeDesign","gaugeAuto","gaugeSensor"],"info":"tr('Disable automatic selection to use the manual sensor.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency","widgetStyle"]}]
     </script>
     <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
     <link rel="stylesheet" href="../../../shared/widget-styles.css" />

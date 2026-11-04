@@ -15,3 +15,24 @@
 @media (max-aspect-ratio: 3/2) and (min-aspect-ratio: 1/1) { .deck { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-aspect-ratio: 3/1) { .deck { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .key { transition: none; } }
+
+/* Signature: an airliner's overhead panel. Grey panel with screws, square lit push-buttons with an engraved
+   label and a legend bar: RUN for actions, ON in green for a toggle that is on, OFF in amber when it is off. */
+:root[data-style="signature"] #widget { background: radial-gradient(circle at 14px 14px, #2a2c2f 3px, transparent 4px), radial-gradient(circle at calc(100% - 14px) 14px, #2a2c2f 3px, transparent 4px),
+    radial-gradient(circle at 14px calc(100% - 14px), #2a2c2f 3px, transparent 4px), radial-gradient(circle at calc(100% - 14px) calc(100% - 14px), #2a2c2f 3px, transparent 4px), linear-gradient(180deg, #5d6166, #4a4e53); }
+:root[data-style="signature"] .x-kicker { color: #e8e8e4; letter-spacing: .3em; font-family: Bahnschrift, sans-serif; }
+:root[data-style="signature"] #badge { color: #d4d6d2; }
+:root[data-style="signature"] .x-status { color: #d4d6d2; }
+:root[data-style="signature"] .key { position: relative; grid-template-rows: minmax(0, 1fr) auto auto; gap: 4px; padding: 10px 6px 6px; border-radius: 4px; background: linear-gradient(180deg, #1d1e20, #111214);
+    box-shadow: 0 0 0 3px #3a3d41, 0 4px 0 #2a2c2f, inset 0 1px 0 rgba(255,255,255,.08); color: #f2f2ee; font-family: Bahnschrift, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+:root[data-style="signature"] .key svg { stroke: #f2f2ee; width: clamp(26px, calc(var(--layout-unit) * 8), 44px); height: clamp(26px, calc(var(--layout-unit) * 8), 44px); }
+:root[data-style="signature"] .key span { font-size: calc(var(--x-label-size) * 0.75); }
+:root[data-style="signature"] .key::after { content: "RUN"; display: block; width: 100%; padding: 2px 0; border-radius: 2px; background: #1a1b1d; color: #5d6166; font: 800 calc(var(--x-label-size) * 0.6) Bahnschrift, sans-serif; letter-spacing: .2em; text-align: center; }
+:root[data-style="signature"] .key.tog::after { content: "ON"; background: #0f2a17; color: #3cff7a; text-shadow: 0 0 8px rgba(60,255,122,.7); }
+:root[data-style="signature"] .key.tog.off::after { content: "OFF"; background: #2e2208; color: #ffb000; text-shadow: 0 0 8px rgba(255,176,0,.8); }
+:root[data-style="signature"] .key.off { background: linear-gradient(180deg, #1d1e20, #111214); color: #ffb000; }
+:root[data-style="signature"] .key.off svg { stroke: #ffb000; }
+:root[data-style="signature"] .key.press { transform: translateY(3px); box-shadow: 0 0 0 3px #3a3d41, 0 1px 0 #2a2c2f; }
+:root[data-style="signature"] .key.done::after { content: "DONE"; background: #0f2a17; color: #3cff7a; }
+:root[data-style="signature"] .key.fail::after { content: "FAIL"; background: #2e0e0a; color: #ff5a3d; }
+@media (max-height: 380px) { :root[data-style="signature"] .key { padding: 6px 4px 4px; } :root[data-style="signature"] .key span { display: none; } }

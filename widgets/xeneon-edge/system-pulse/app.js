@@ -27,6 +27,16 @@
         return n;
     }
 
+    // Point of the dial at ratio t (0..1): -120 to +120 degrees from straight up.
+    function arcPoint(t, r = 56) {
+        const a = (-120 + 240 * t) * Math.PI / 180;
+        return [80 + r * Math.sin(a), 92 - r * Math.cos(a)];
+    }
+    function arcPath(t0, t1) {
+        const [x0, y0] = arcPoint(t0), [x1, y1] = arcPoint(t1);
+        return `M${x0.toFixed(1)} ${y0.toFixed(1)}A56 56 0 ${(t1 - t0) * 240 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    }
+
     for (const g of GAUGES) {
         const card = el("article", "g", $("gauges"));
         card.dataset.role = g.key;
@@ -39,10 +49,15 @@
         const text = el("div", "txt", card);
         el("p", "lbl", text, g.label);
         const temp = el("p", "tmp", text, g.temp ? "--" : "");
+        const dial = svg("svg", { class: "eicas", viewBox: "0 4 160 122", "aria-hidden": "true" }, card);
+        svg("path", { class: "e-arc", d: arcPath(0, 1) }, dial);
+        svg("path", { class: "e-amb", d: arcPath(0.85, 1) }, dial);
+        const needle = svg("line", { class: "e-nd", x1: 80, y1: 92, x2: 80, y2: 36 }, dial);
+        const box = el("span", "e-box", card, "--");
         const spark = svg("svg", { class: "spark", viewBox: "0 0 100 30", preserveAspectRatio: "none" }, card);
         const area = svg("path", { class: "area" }, spark);
         const line = svg("path", { class: "line" }, spark);
-        cards[g.key] = { card, arc, num, temp, area, line, history: [] };
+        cards[g.key] = { card, arc, num, temp, area, line, needle, box, history: [] };
     }
 
     function heat(c) { return !Number.isFinite(c) ? "" : c >= 85 ? "bad" : c >= 72 ? "warn" : ""; }
@@ -74,6 +89,9 @@
             c.card.classList.toggle("missing", !load);
             c.num.textContent = load ? String(Math.round(v)) : "--";
             c.arc.setAttribute("stroke-dasharray", `${load ? v.toFixed(1) : 0} 100`);
+            c.needle.setAttribute("transform", `rotate(${(-120 + 240 * (load ? v : 0) / 100).toFixed(1)} 80 92)`);
+            c.box.textContent = load ? v.toFixed(1) : "--";
+            c.card.classList.toggle("over", load && v >= 85);
             if (load) { found++; c.history.push(v); if (c.history.length > HISTORY) c.history.shift(); }
             if (g.temp) {
                 const t = r[g.temp];
@@ -83,6 +101,10 @@
             } else if (!load) c.temp.textContent = "Not in iCUE";
             draw(c);
         }
+        // Caution line: only what is amber, as on an airliner's engine display.
+        const caution = GAUGES.filter(g => cards[g.key].card.dataset.heat || cards[g.key].card.classList.contains("over"))
+            .map(g => `${g.label} ${cards[g.key].card.dataset.heat ? "TEMP" : "LOAD"}`);
+        $("caution").textContent = caution.join("  ·  ");
         $("status").textContent = found ? `${found} of 4 from iCUE sensors` : "No load sensor found in iCUE";
     }
 

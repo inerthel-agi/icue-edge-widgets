@@ -2,6 +2,8 @@
 
 The pixel pets shipped in `widgets/xeneon-edge/rig-pet/` and where they come from.
 
+Pump Faces (`widgets/pump/pump-faces/`) ships copies of three of them: Clawd (drawn by the author), Clippy and Luo Xiaohei, credited below.
+
 The `rig-pet` mascot Jennie (`widgets/xeneon-edge/rig-pet/pet-jennie.webp`) is unofficial, non-commercial fan art drawn by the author. It has no affiliation with the person it depicts and is not endorsed by her or her agency.
 
 The `rig-pet` mascot Claire (`widgets/xeneon-edge/rig-pet/pet-claire.webp`) is unofficial, non-commercial fan art of Claire Redfield from Capcom's Resident Evil series, made by the author. Resident Evil and its characters belong to Capcom.

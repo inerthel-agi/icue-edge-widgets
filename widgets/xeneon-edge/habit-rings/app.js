@@ -28,6 +28,7 @@
     }
 
     function load() {
+        if (/[?&]demo\b/.test(location.search)) return { day: todayKey(), values: [5, 20, 20] };
         try {
             const data = storage.read();
             if (data && data.day === todayKey() && Array.isArray(data.values)) return data;
@@ -86,6 +87,8 @@
                 </div>
                 <button type="button" class="add" data-index="${index}">+</button>
             </div>
+            <div class="stamps-row" aria-hidden="true"></div>
+            <em class="done-stamp" aria-hidden="true">DONE</em>
         `;
         return article;
     }
@@ -104,6 +107,10 @@
             article.querySelector("p").textContent = item.label;
             article.querySelector(".habit-footer span").textContent = `${current} / ${item.goal}`;
             article.querySelector("button").setAttribute("aria-label", `Add ${item.label}`);
+            const boxes = Math.min(10, item.goal), per = item.goal / boxes, row = article.querySelector(".stamps-row");
+            if (row.children.length !== boxes) row.replaceChildren(...Array.from({ length: boxes }, () => document.createElement("i")));
+            [...row.children].forEach((b, i) => b.classList.toggle("on", current >= (i + 1) * per - 1e-9));
+            article.classList.toggle("full", ratio >= 1);
         });
     }
 
@@ -116,9 +123,11 @@
     }
 
     $("rings").addEventListener("click", event => {
+        // The + button, or in the Signature style the whole card (a bigger target).
         const button = event.target.closest("button[data-index]");
-        if (!button) return;
-        increment(Number(button.dataset.index));
+        const card = document.documentElement.dataset.style === "signature" ? event.target.closest(".habit") : null;
+        const index = button ? Number(button.dataset.index) : card ? [...$("rings").children].indexOf(card) : -1;
+        if (index >= 0) increment(index);
     });
 
     $("reset").addEventListener("click", () => {

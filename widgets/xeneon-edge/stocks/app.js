@@ -123,8 +123,8 @@
             $("overlay").classList.remove("visible");
         } catch (error) {
             if (error && error.name === "AbortError") return;
-            if (!last) show("Companion offline", "Start iCUE Edge Companion; it fetches the quotes from Yahoo Finance.");
-            else $("updated").textContent = "Companion offline · last quotes shown";
+            if (!last) show("Companion not running", "Start iCUE Edge Companion; it fetches the quotes from Yahoo Finance.");
+            else $("updated").textContent = "Companion not running · last quotes shown";
             failed = true;
         }
     }

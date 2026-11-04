@@ -32,3 +32,32 @@
 }
 /* Portrait: figures stacked. */
 @media (max-aspect-ratio: 1/1) { .rates { flex-direction: column; gap: 6px; } }
+
+/* Signature: an oscilloscope. A phosphor screen with its graticule; download on channel 1 (yellow, solid),
+   upload on channel 2 (cyan, dashed: told apart by shape too); the readouts are the scope's channel boxes. */
+:root[data-style="signature"] #widget { --down: #ffe23a; --up: #36e0ff; background: linear-gradient(180deg, #2b2e2b, #1b1d1b);
+    grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "top top" "chart rates" "stat stat"; }
+:root[data-style="signature"] .x-top { grid-area: top; }
+:root[data-style="signature"] .x-kicker { color: #c9d1c9; font-family: Consolas, monospace; letter-spacing: .12em; }
+:root[data-style="signature"] .ping { font-family: Consolas, monospace; }
+:root[data-style="signature"] .chart { grid-area: chart; border-radius: 8px; overflow: hidden;
+    background: repeating-linear-gradient(90deg, rgba(120,255,170,.13) 0 1px, transparent 1px 10%), repeating-linear-gradient(0deg, rgba(120,255,170,.13) 0 1px, transparent 1px 12.5%),
+        radial-gradient(120% 100% at 50% 50%, #0d1f14, #030805); box-shadow: inset 0 0 0 2px #000, inset 0 0 40px rgba(0,255,120,.06); }
+:root[data-style="signature"] .chart .area { display: none; }
+:root[data-style="signature"] .chart .line { stroke-width: 3; filter: drop-shadow(0 0 4px currentColor); }
+:root[data-style="signature"] .chart .line.down { stroke: var(--down); color: var(--down); }
+:root[data-style="signature"] .chart .line.up { stroke: var(--up); color: var(--up); stroke-dasharray: 10 6; }
+:root[data-style="signature"] .rates { grid-area: rates; flex-direction: column; justify-content: center; gap: 12px; min-width: 15em; }
+:root[data-style="signature"] .rate { flex-wrap: wrap; padding: 10px 14px; border-radius: 6px; background: #101210; box-shadow: inset 0 0 0 1px #2f342f; }
+:root[data-style="signature"] .rate::before { flex-basis: 100%; font: 700 calc(var(--x-label-size) * 0.75) Bahnschrift, sans-serif; letter-spacing: .14em; }
+:root[data-style="signature"] .rate.down::before { content: "CH1 · DOWNLOAD"; color: var(--down); }
+:root[data-style="signature"] .rate.up::before { content: "CH2 · UPLOAD (dashed)"; color: var(--up); }
+:root[data-style="signature"] .rate b { font: 600 clamp(28px, calc(var(--layout-unit) * 9), 72px) Consolas, monospace; color: #e8eee8; }
+:root[data-style="signature"] .rate small { font-family: Consolas, monospace; }
+:root[data-style="signature"] .arrow { font-size: clamp(22px, calc(var(--layout-unit) * 6), 52px); }
+:root[data-style="signature"] .x-status { font-family: Consolas, monospace; color: #7f8a7f; }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { :root[data-style="signature"] .rate::before { display: none; } :root[data-style="signature"] .rates { min-width: 11em; gap: 8px; } :root[data-style="signature"] .rate { padding: 6px 10px; } }
+@media (max-aspect-ratio: 1/1) {
+    :root[data-style="signature"] #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "top" "rates" "chart" "stat"; }
+    :root[data-style="signature"] .rates { flex-direction: row; min-width: 0; } :root[data-style="signature"] .rate { flex: 1; }
+}

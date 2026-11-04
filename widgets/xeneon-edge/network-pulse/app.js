@@ -75,7 +75,7 @@
             render(data);
         } catch (error) {
             if (error && error.name === "AbortError") return;
-            if (!last || Date.now() - last > 10000) show("Companion offline", "Start iCUE Edge Companion; it reads the network counters of this PC.");
+            if (!last || Date.now() - last > 10000) show("Companion not running", "Start iCUE Edge Companion; it reads the network counters of this PC.");
         }
     }
 

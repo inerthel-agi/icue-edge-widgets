@@ -18,3 +18,32 @@ header > div { flex: 1; min-width: 0; }
 @media (max-aspect-ratio: 4/5) {
     .grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); }
 }
+
+/* Signature: the clock wall of a newsroom. Analog faces, white by day and black by night, each over a
+   brass name plate; the first city is the big one, so the local time is not shown twice. */
+.clock-card .face { display: none; }
+:root[data-style="signature"] #widget { grid-template-rows: minmax(0, 1fr); background: linear-gradient(180deg, #3a2f26, #211a14); }
+:root[data-style="signature"] header { display: none; }
+:root[data-style="signature"] .grid { grid-template-columns: 1.35fr 1fr 1fr 1fr; grid-template-rows: minmax(0, 1fr); gap: var(--x-gap); align-items: center; }
+:root[data-style="signature"] .clock-card { background: none; border: 0; padding: 0; display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 0; }
+:root[data-style="signature"] .clock-card .face { display: block; order: 0; width: 100%; max-width: 100%; max-height: 64vh; aspect-ratio: 1; filter: drop-shadow(0 8px 10px rgba(0,0,0,.5)); }
+:root[data-style="signature"] .clock-card .row { order: 1; justify-content: center; }
+:root[data-style="signature"] .clock-card [data-name] { padding: 3px 14px; border-radius: 3px; background: linear-gradient(180deg, #f1d58e, #b48a3a); color: #2a1d08; font: 700 calc(var(--x-label-size) * 0.8) Bahnschrift, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+:root[data-style="signature"] .clock-card .dot { display: none; }
+:root[data-style="signature"] .clock-card [data-time] { order: 2; font: 600 calc(var(--x-label-size) * 0.95) Bahnschrift, sans-serif; color: #e5d8c4; }
+:root[data-style="signature"] .clock-card [data-date] { display: none; }
+.face .rim { fill: #12151b; stroke: #c9a45a; stroke-width: 3; }
+.face .tk { stroke: #f2efe6; stroke-width: 1; } .face .tk.big { stroke-width: 2.4; }
+.face .hh, .face .mh { stroke: #f2efe6; stroke-linecap: round; } .face .hh { stroke-width: 4; } .face .mh { stroke-width: 2.6; }
+.face .sh { stroke: #d8382b; stroke-width: 1; } .face .hub { fill: #d8382b; }
+.clock-card.is-day .face .rim { fill: #f6f3ea; stroke: #1b1b1b; }
+.clock-card.is-day .face .tk, .clock-card.is-day .face .hh, .clock-card.is-day .face .mh { stroke: #111; }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { :root[data-style="signature"] .clock-card [data-time] { display: none; } :root[data-style="signature"] .clock-card .face { max-height: 72vh; } }
+@media (max-aspect-ratio: 1/1) {
+    :root[data-style="signature"] .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+    :root[data-style="signature"] .clock-card .face { max-height: 32vh; }
+}
+@media (min-aspect-ratio: 1/1) {
+    :root[data-style="signature"] .clock-card:not(:first-child) .face { max-height: 52vh; }
+    :root[data-style="signature"] .clock-card:first-child .face { max-height: 78vh; }
+}

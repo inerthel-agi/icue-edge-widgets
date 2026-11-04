@@ -109,12 +109,20 @@
     }
 
     function renderStatus() {
-        const t = failed ? "Companion offline · showing the last data" : lastOk ? "Application names, icons and times only, kept on this PC." : "Waiting for the companion";
+        const t = failed ? "Companion not running · showing the last data" : lastOk ? "Application names, icons and times only, kept on this PC." : "Waiting for the companion";
         if ($("status").textContent !== t) $("status").textContent = t;
         $("badge").textContent = failed ? "Offline" : "Today";
     }
 
     async function update() {
+        if (/[?&]demo\b/.test(location.search)) {
+            const h = [0, 0, 0, 0, 0, 0, 0, 0, 1200, 3000, 3300, 2400, 1500, 2800, 3400, 3100, 900, 0, 0, 0, 0, 0, 0, 0];
+            render({ schema: "screentime/1", enabled: true, todaySecs: 21600, yesterdaySecs: 25200,
+                apps: [{ name: "Claude", secs: 8400, cat: "Work" }, { name: "VS Code", secs: 5400, cat: "Work" }, { name: "GTA V", secs: 3600, cat: "Games" }, { name: "Spotify", secs: 2400, cat: "Media" }, { name: "Discord", secs: 1800, cat: "Other" }],
+                categories: { Work: 13800, Games: 3600, Media: 2400, Other: 1800 }, hours: h, week: [] });
+            $("overlay").classList.remove("visible");
+            return;
+        }
         if (request) request.abort();
         request = new AbortController();
         try {
@@ -130,7 +138,7 @@
             if (error && error.name === "AbortError") return;
             failed = true;
             if (lastData) render(lastData);
-            else show("Companion offline", "Start iCUE Edge Companion (version with Screen Time).");
+            else show("Companion not running", "Start iCUE Edge Companion (version with Screen Time).");
         }
         renderStatus();
     }

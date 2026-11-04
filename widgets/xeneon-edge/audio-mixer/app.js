@@ -75,11 +75,16 @@
         else icon.textContent = app === null ? "♪" : name.charAt(0).toUpperCase();
         const { track, fill, knob, lvl } = fader(name, app);
         const label = make("span", "name", name), val = make("small", "val", "");
-        el.append(icon, track, label, val);
+        const key = make("button", "mkey", "M");
+        key.type = "button";
+        key.setAttribute("aria-label", `Mute ${name}`);
+        el.append(icon, track, label, val, key);
         const ch = { el, fill, knob, lvl, val, muted: false, app };
+        key.addEventListener("click", () => icon.click());
         icon.addEventListener("click", () => {
             ch.muted = !ch.muted;
             el.classList.toggle("muted", ch.muted);
+            key.setAttribute("aria-pressed", String(ch.muted));
             paint(ch, ch.volume || 0);
             send(app === null ? { cmd: "mute", value: ch.muted } : { cmd: "mute", app, value: ch.muted });
         });
@@ -113,6 +118,14 @@
     }
 
     async function update() {
+        if (/[?&]demo\b/.test(location.search)) {
+            const t = Date.now() / 300, lv = (b, a) => Math.max(0, Math.min(100, b + a * Math.sin(t) + a * 0.6 * Math.sin(t * 2.7)));
+            render({ device: { name: "Speakers (Realtek)", volume: 62, muted: false }, apps: [
+                { name: "Spotify", volume: 70, muted: false, level: lv(60, 18) }, { name: "Discord", volume: 55, muted: false, level: lv(30, 20) },
+                { name: "GTA V", volume: 85, muted: false, level: lv(78, 14) }, { name: "Chrome", volume: 40, muted: true, level: 0 }] });
+            $("status").textContent = "4 apps playing sound · tap M to mute";
+            return;
+        }
         if (request) request.abort();
         request = new AbortController();
         try {
@@ -126,7 +139,7 @@
             $("status").textContent = `${data.apps.length} ${data.apps.length === 1 ? "app" : "apps"} playing sound · tap an icon to mute`;
         } catch (error) {
             if (error && error.name === "AbortError") return;
-            if (!failed) show("Companion offline", "Start iCUE Edge Companion; it reads the Windows audio sessions on this PC.");
+            if (!failed) show("Companion not running", "Start iCUE Edge Companion; it reads the Windows audio sessions on this PC.");
             failed = true;
         }
     }

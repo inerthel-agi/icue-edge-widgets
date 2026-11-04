@@ -148,7 +148,35 @@
         renderDots(d.cycles, state.cycle, state.mode);
         document.body.dataset.mode = state.mode === "long" ? "long" : state.mode === "break" ? "break" : "work";
         $("btnStart").textContent = state.running ? "Pause" : "Start";
+        // Tomato timer: the dial turns so the minutes left sit under the fixed pointer.
+        $("dialFace").setAttribute("transform", `rotate(${(-remaining / 60000 * 6).toFixed(2)} 150 168)`);
+        const at = new Date(Date.now() + remaining).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        $("sigTime").textContent = $("time").textContent;
+        $("sigNext").textContent = `${modeLabel()} · ${state.cycle} / ${d.cycles} · ` + (state.running ? `${state.mode === "work" ? "Break" : "Back to work"} at ${at}` : "Paused");
+        $("next").textContent = $("sigNext").textContent;
     }
+
+    // Minute marks of the tomato dial: a number every 5 minutes, a tick every minute (60-minute dial).
+    (function dial() {
+        const NS = "http://www.w3.org/2000/svg", g = $("dialMarks");
+        if (!g || typeof document.createElementNS !== "function") return;   // test harness without SVG
+        for (let m = 0; m < 60; m++) {
+            const a = m * 6 * Math.PI / 180, big = m % 5 === 0;
+            const p = r => [150 + Math.sin(a) * r, 168 - Math.cos(a) * r];
+            const [x1, y1] = p(big ? 80 : 86), [x2, y2] = p(92);
+            const l = document.createElementNS(NS, "line");
+            l.setAttribute("x1", x1.toFixed(1)); l.setAttribute("y1", y1.toFixed(1)); l.setAttribute("x2", x2.toFixed(1)); l.setAttribute("y2", y2.toFixed(1));
+            l.setAttribute("class", big ? "mk big" : "mk");
+            g.append(l);
+            if (big) {
+                const [tx, ty] = p(70), n = document.createElementNS(NS, "text");
+                n.setAttribute("x", tx.toFixed(1)); n.setAttribute("y", ty.toFixed(1));
+                n.setAttribute("transform", `rotate(${m * 6} ${tx.toFixed(1)} ${ty.toFixed(1)})`);
+                n.textContent = String(m);
+                g.append(n);
+            }
+        }
+    })();
 
     function toggle() {
         tick();

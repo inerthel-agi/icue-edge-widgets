@@ -26,3 +26,24 @@ header > div { flex: 1; min-width: 0; }
     #place { grid-column: 2; grid-row: 1; align-self: end; margin: 0; }
     #condition { grid-column: 2; grid-row: 2; align-self: start; margin: 0; }
 }
+
+/* The condition is named in words elsewhere; the three-letter code (CLD, SUN) is not shown. */
+#icon, #weatherIcon { display: none !important; }
+
+/* Signature: the front page of a newspaper. Newsprint, a serif masthead with the date between double
+   rules, the weather as the headline, the note as an italic pull quote, the figures as ruled columns. */
+:root[data-style="signature"] #widget { background: #efe9dc; --x-text: #1a1814; --x-muted: #4f4a40; --x-line: rgba(26,24,20,.4); color: #1a1814; font-family: Georgia, "Times New Roman", serif; }
+:root[data-style="signature"] header { border-bottom: 4px double #1a1814; padding-bottom: 6px; }
+:root[data-style="signature"] #dayName { color: #6a6253; font: italic 600 calc(var(--x-label-size) * 0.9) Georgia, serif; letter-spacing: .1em; text-transform: none; }
+:root[data-style="signature"] #dateLine { font: 900 clamp(28px, 7vmin, 60px) / 1 "Times New Roman", Georgia, serif; letter-spacing: -0.01em; }
+:root[data-style="signature"] #clock { border: 0; color: #1a1814; font: 700 var(--x-label-size) Georgia, serif; }
+:root[data-style="signature"] .weather-card { background: none; border: 0; box-shadow: none; padding: 0; }
+:root[data-style="signature"] #place { color: #9a2a1a; font: 700 calc(var(--x-label-size) * 0.8) Georgia, serif; letter-spacing: .14em; }
+:root[data-style="signature"] .temp-line { font-family: "Times New Roman", Georgia, serif; font-weight: 900; }
+:root[data-style="signature"] #condition { font: italic 600 calc(var(--x-label-size) * 1.1) Georgia, serif; color: #1a1814; }
+:root[data-style="signature"] .daily-note { border-left: 3px solid #1a1814; padding-left: 16px; font: italic calc(var(--x-label-size) * 1.15) / 1.35 Georgia, serif; color: #1a1814; }
+:root[data-style="signature"] .daily-note::before { content: "Thought of the day — "; font-style: normal; font-weight: 700; color: #9a2a1a; }
+:root[data-style="signature"] .metrics article { background: none; border: 0; border-top: 1px solid #1a1814; border-radius: 0; }
+:root[data-style="signature"] .metrics b { font-family: "Times New Roman", Georgia, serif; font-weight: 700; color: #1a1814; }
+:root[data-style="signature"] .metrics small { color: #6a6253; font-family: Georgia, serif; font-style: italic; }
+:root[data-style="signature"] .x-status { color: #6a6253; font-family: Georgia, serif; font-style: italic; }

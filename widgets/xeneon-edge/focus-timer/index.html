@@ -24,7 +24,7 @@
     <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
         data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
     <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
-        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
+        data-default="'signature'" data-values="[{'key':'signature','value':'Signature (tomato timer)'},{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
     <script type="application/json" id="x-icue-groups">
         [{ "title": "tr('Focus Timer')", "properties": ["focusWork","focusBreak","focusLong","focusCycles"] },
         { "title": "tr('Widget Personalization')", "properties": ["textColor", "accentColor", "backgroundColor", "transparency", "widgetStyle"] }]
@@ -44,6 +44,14 @@
             <span id="modeBadge" class="x-badge">Work</span>
         </header>
         <section class="stage">
+            <svg class="tomato" viewBox="0 0 300 300" aria-hidden="true">
+                <defs><radialGradient id="tomBody" cx=".38" cy=".32"><stop offset="0" stop-color="#ff7a5c"/><stop offset=".55" stop-color="#e2321f"/><stop offset="1" stop-color="#8e1608"/></radialGradient></defs>
+                <ellipse cx="150" cy="160" rx="134" ry="126" fill="url(#tomBody)"/>
+                <g id="dialFace"><circle cx="150" cy="168" r="94" class="band"/><g id="dialMarks"></g></g>
+                <path d="M150 80l-11-20h22z" class="pointer"/>
+                <path d="M150 34c-14 10-38 6-50 0 10 14 26 20 42 18-8 10-10 22-6 32 8-10 14-18 14-28 0 10 6 18 14 28 4-10 2-22-6-32 16 2 32-4 42-18-12 6-36 10-50 0z" class="leaf" transform="translate(0 -24)"/>
+                <circle cx="150" cy="168" r="64" class="core"/>
+            </svg>
             <div class="ring-wrap">
                 <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
                     <circle class="ring-track" cx="60" cy="60" r="52" />
@@ -53,9 +61,11 @@
                     <b id="time" class="x-value">25:00</b>
                     <small id="cycle" class="x-label">Cycle 1 / 4</small>
                     <div id="cycleDots" class="cycle-dots" aria-hidden="true"></div>
+                    <small id="next" class="next"></small>
                 </div>
             </div>
         </section>
+        <section class="readout" aria-live="off"><b id="sigTime">25:00</b><small id="sigNext"></small></section>
         <section class="controls">
             <button type="button" id="btnStart" class="ctrl primary">Start</button>
             <button type="button" id="btnReset" class="ctrl">Reset</button>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Energy Cost</title>
+    <meta name="x-icue-property" content="energyPrice" data-label="tr('Price per kWh')" data-type="textfield" data-default="'0.25'" />
+    <meta name="x-icue-property" content="energyCurrency" data-label="tr('Currency')" data-type="combobox"
+        data-default="'€'" data-values="[{'key':'€','value':'€'},{'key':'$','value':'$'},{'key':'£','value':'£'},{'key':'CHF','value':'CHF'}]" />
+    <meta name="x-icue-property" content="energyBase" data-label="tr('Rest of the PC')" data-type="slider"
+        data-default="60" data-min="0" data-max="300" data-step="5" data-unit-label="' W'" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#a8d5ba'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <meta name="x-icue-property" content="widgetStyle" data-label="tr('Style')" data-type="combobox"
+        data-default="'instrument'" data-values="[{'key':'instrument','value':'Instrument'},{'key':'apple','value':'Apple'},{'key':'openai','value':'OpenAI'},{'key':'spacex','value':'SpaceX'},{'key':'nothing','value':'Nothing'},{'key':'anthropic','value':'Anthropic'},{'key':'google','value':'Google'},{'key':'terminal','value':'Terminal'},{'key':'corsair','value':'Corsair'},{'key':'aurora','value':'Aurora'},{'key':'paper','value':'Paper'},{'key':'brutalist','value':'Brutalist'},{'key':'synthwave','value':'Synthwave'},{'key':'abyss','value':'Abyss'},{'key':'sunset','value':'Sunset'},{'key':'newsprint','value':'Newsprint'},{'key':'blueprint','value':'Blueprint'},{'key':'forest','value':'Forest'},{'key':'pastel','value':'Pastel'},{'key':'amber','value':'Amber'},{'key':'hud','value':'HUD'},{'key':'bloomberg','value':'Bloomberg'}]" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('Energy Cost')","properties":["energyPrice","energyCurrency","energyBase"],"info":"tr('CPU and GPU power come from iCUE sensors. Rest of the PC adds the parts iCUE cannot measure (motherboard, memory, drives, fans); the screens are not counted. Only time while the widget runs is counted.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency","widgetStyle"]}]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="../../../shared/widget-styles.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget">
+        <header class="x-top">
+            <p class="x-kicker">Energy cost</p>
+            <p class="x-status" id="status">Reading iCUE sensors</p>
+        </header>
+        <section class="body">
+            <div class="plate">
+                <div class="meter" aria-hidden="true"><div class="disc"><i class="mark"></i></div></div>
+                <div class="odo" id="odo" aria-label="Energy used today"></div>
+                <p class="odo-unit">kWh today</p>
+            </div>
+            <div class="cost">
+                <p class="today"><b id="today">--</b></p>
+                <p class="sub" id="todaySub">spent today</p>
+                <p class="now"><b id="watts">--</b><small> W</small><span class="parts" id="parts"></span></p>
+                <p class="month" id="month"></p>
+            </div>
+            <div class="strip">
+                <svg class="bars" id="bars" viewBox="0 0 240 60" preserveAspectRatio="none" aria-label="Energy per hour today"></svg>
+                <div class="hours" aria-hidden="true"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
+            </div>
+        </section>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle"></strong>
+            <span id="overlaySub"></span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="../../../shared/sensor-reader.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

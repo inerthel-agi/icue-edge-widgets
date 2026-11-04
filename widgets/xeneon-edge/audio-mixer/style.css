@@ -15,6 +15,7 @@
 .ch.muted .fill { background: var(--x-dim); }
 .ch.muted .val { color: var(--x-bad); }
 .ch.muted .ico { opacity: 0.55; }
+.mkey { display: none; }
 /* Portrait slots: one row per app, faders lying down. */
 @media (max-aspect-ratio: 1/1) {
     .mix { grid-auto-flow: row; grid-auto-rows: minmax(0, 1fr); grid-auto-columns: auto; }
@@ -28,3 +29,43 @@
 }
 @media (max-height: 380px) { .x-status { display: none; } #widget { grid-template-rows: auto minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .fill, .knob, .lvl { transition: none; } }
+
+/* Signature: a mixing console. One channel strip per app: icon, a segmented VU meter beside a grooved
+   fader cap you drag, a lit mute key. The output is the master strip, in brass. */
+:root[data-style="signature"] #widget { background: linear-gradient(180deg, #2a2b2e, #151618); }
+:root[data-style="signature"] .x-kicker { color: #c9c9c4; letter-spacing: .24em; font-family: Bahnschrift, sans-serif; }
+:root[data-style="signature"] .mix { gap: 10px; }
+:root[data-style="signature"] .ch { grid-template-rows: auto auto minmax(0, 1fr) auto auto; padding: 12px 6px 10px; border-radius: 8px;
+    background: linear-gradient(90deg, #1f2023, #2c2d31 50%, #1f2023); box-shadow: inset 0 0 0 1px #393b40; }
+:root[data-style="signature"] .ch:first-child { order: 99; background: linear-gradient(90deg, #2a2216, #3b301c 50%, #2a2216); box-shadow: inset 0 0 0 1px #5a4824; }
+:root[data-style="signature"] .ico { order: 0; width: 44px; height: 44px; border-radius: 8px; background: #121314; }
+:root[data-style="signature"] .name { order: 1; font: 700 calc(var(--x-label-size) * 0.75) Bahnschrift, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #d9dad5; }
+:root[data-style="signature"] .fader { order: 2; width: 10px; min-height: 80px; border-radius: 5px; background: #0a0a0b; box-shadow: inset 0 0 0 1px #3c3e43; margin-right: 22px; }
+:root[data-style="signature"] .fill { display: none; }
+:root[data-style="signature"] .knob { width: 48px; height: 26px; border-radius: 4px; background: repeating-linear-gradient(0deg, #8f9195 0 2px, #dcdee1 2px 5px); box-shadow: 0 6px 10px rgba(0,0,0,.6); }
+:root[data-style="signature"] .ch:first-child .knob { background: repeating-linear-gradient(0deg, #8a6a2a 0 2px, #f2c46d 2px 5px); }
+:root[data-style="signature"] .lvl { right: auto; left: 34px; width: 12px; height: 100%; border-radius: 2px;
+    background: linear-gradient(0deg, #0b0c0d calc(100% - var(--l, 0%)), transparent 0) top / 100% 100% no-repeat,
+        repeating-linear-gradient(0deg, transparent 0 6px, #0b0c0d 6px 8px),
+        linear-gradient(0deg, #3fd06a 0 60%, #f2c94c 60% 82%, #ff4d3d 82%);
+    background: repeating-linear-gradient(0deg, transparent 0 6px, #0b0c0d 6px 8px), linear-gradient(0deg, #3fd06a 0 60%, #f2c94c 60% 82%, #ff4d3d 82%);
+    -webkit-mask: linear-gradient(0deg, #000 var(--l, 0%), rgba(0,0,0,.12) 0); mask: linear-gradient(0deg, #000 var(--l, 0%), rgba(0,0,0,.12) 0); transition: none; }
+:root[data-style="signature"] .val { order: 3; font: 600 calc(var(--x-label-size) * 0.72) Bahnschrift, sans-serif; color: #a9aba6; }
+:root[data-style="signature"] .mkey { order: 4; display: grid; place-items: center; width: 64px; height: 44px; border: 0; border-radius: 6px; background: #17181a; box-shadow: inset 0 0 0 1px #3c3e43;
+    font: 800 18px Bahnschrift, sans-serif; color: #8e9094; cursor: pointer; }
+:root[data-style="signature"] .mkey:active { transform: translateY(1px); }
+:root[data-style="signature"] .ch.muted .mkey { background: #ff4d3d; color: #fff; box-shadow: 0 0 14px rgba(255,77,61,.6); }
+:root[data-style="signature"] .ch.muted .name, :root[data-style="signature"] .ch.muted .val { color: #ff8a7d; }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) {
+    :root[data-style="signature"] .ch { grid-template-rows: auto minmax(0, 1fr) auto; padding: 8px 4px; }
+    :root[data-style="signature"] .ico, :root[data-style="signature"] .val { display: none; }
+    :root[data-style="signature"] .mkey { height: 40px; width: 56px; }
+}
+@media (max-aspect-ratio: 1/1) {
+    :root[data-style="signature"] .ch { padding: 8px 12px; } :root[data-style="signature"] .ch:first-child { order: -1; }
+    :root[data-style="signature"] .fader { width: 100%; height: 10px; margin: 0; min-height: 0; }
+    :root[data-style="signature"] .knob { width: 26px; height: 40px; background: repeating-linear-gradient(90deg, #8f9195 0 2px, #dcdee1 2px 5px); }
+    :root[data-style="signature"] .lvl { display: none; }
+    :root[data-style="signature"] .mkey { grid-area: val; justify-self: end; }
+    :root[data-style="signature"] .val { display: none; }
+}

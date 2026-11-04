@@ -1,0 +1,27 @@
+/* CI Radar, a railway signal box: one lamp per repository on a dark lever-frame panel, and the pull requests
+   waiting for you as paper flight strips (blue edge, red once three days old). */
+:root { --cond: Bahnschrift, "Arial Narrow", sans-serif; }
+#widget { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: calc(var(--x-gap) * 1.2); background: linear-gradient(180deg, color-mix(in srgb, var(--x-bg) 75%, #3a382f), var(--x-bg)); }
+#widget[data-queue="off"] { grid-template-columns: minmax(0, 1fr); } #widget[data-queue="off"] .strips { display: none; }
+.lamps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 12px; min-height: 0; }
+#widget[data-queue="off"] .lamps { grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); }
+.l { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; align-content: center; align-items: center; padding: 10px 14px; border-radius: 8px;
+    background: #121210; box-shadow: inset 0 0 0 2px #3a3830; cursor: pointer; min-width: 0; }
+.l i { grid-row: 1 / 3; width: clamp(40px, 8vh, 64px); aspect-ratio: 1; border-radius: 50%; background: #2a2a28; box-shadow: inset 0 0 0 5px #0a0a09; }
+.l.green i { background: radial-gradient(circle at 40% 35%, #b7ffc8, #22d35a 60%); box-shadow: inset 0 0 0 5px #0a0a09, 0 0 18px rgba(34,211,90,.6); }
+.l.amber i { background: radial-gradient(circle at 40% 35%, #fff1b8, #ffb21a 60%); box-shadow: inset 0 0 0 5px #0a0a09, 0 0 18px rgba(255,178,26,.6); animation: ci-blink 1.2s ease-in-out infinite; }
+.l.red i { background: radial-gradient(circle at 40% 35%, #ffc2b8, #ff3a24 60%); box-shadow: inset 0 0 0 5px #0a0a09, 0 0 18px rgba(255,58,36,.7); }
+@keyframes ci-blink { 50% { opacity: .45; } }
+.l span { font: 700 calc(var(--x-label-size) * 0.9) var(--cond); color: var(--x-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l small { font-size: calc(var(--x-label-size) * 0.7); color: var(--x-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.strips { display: grid; align-content: start; gap: 8px; min-height: 0; overflow: hidden; }
+.t { margin: 0 0 4px; font: 700 calc(var(--x-label-size) * 0.8) var(--cond); letter-spacing: .2em; color: var(--x-accent); }
+#queue { display: grid; gap: 8px; }
+.fs { display: grid; grid-template-columns: 4.2em minmax(0, 1fr) auto; align-items: center; min-height: 56px; padding: 0 14px; border-radius: 3px; background: #f3efe2; color: #1c1a14; border-left: 10px solid #4a8fe0; cursor: pointer; }
+.fs b { font: 700 calc(var(--x-label-size) * 0.8) Consolas, monospace; } .fs span { font: 600 calc(var(--x-label-size) * 0.85) var(--cond); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fs em { font: 700 calc(var(--x-label-size) * 0.75) var(--cond); font-style: normal; color: #6a6352; margin-left: 10px; }
+.fs.old { border-left-color: #e0503f; } .fs.old em { color: #c4372b; }
+.none { margin: 0; color: var(--x-muted); font-size: var(--x-label-size); }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { .l small { display: none; } .fs { min-height: 48px; } }
+@media (max-aspect-ratio: 1/1) { #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); } #widget[data-queue="off"] .lamps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .l.amber i { animation: none; } }

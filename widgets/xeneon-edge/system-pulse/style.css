@@ -36,3 +36,32 @@
     .spark { grid-column: 2; grid-row: 2; max-height: none; }
 }
 @media (prefers-reduced-motion: reduce) { .arc { transition: none; } }
+
+/* Signature: an airliner's engine display (EICAS). White needles on black, a boxed digital readout,
+   cyan labels; amber appears only when something needs attention, and the caution line names it. */
+.eicas, .e-box, .caution { display: none; }
+:root[data-style="signature"] #widget { background: #000; grid-template-rows: auto minmax(0, 1fr) auto; }
+:root[data-style="signature"] .x-kicker { color: #39c9ff; font-family: Consolas, monospace; letter-spacing: .2em; }
+:root[data-style="signature"] .x-status { color: #6b7075; font-family: Consolas, monospace; }
+:root[data-style="signature"] .g { background: none; padding: 0; grid-template-rows: auto auto auto; align-content: center; }
+:root[data-style="signature"] .ring, :root[data-style="signature"] .val, :root[data-style="signature"] .spark { display: none; }
+:root[data-style="signature"] .eicas { display: block; grid-row: 2; width: 100%; height: auto; max-height: 34vh; }
+:root[data-style="signature"] .e-box { display: block; position: static; grid-row: 1; justify-self: end; margin: 0 8% -6% 0; z-index: 1; padding: 0 .3em; border: 2px solid #e6e6e6; font: 600 clamp(20px, 5.4vmin, 44px) Consolas, monospace; color: #3cff5a; font-variant-numeric: tabular-nums; }
+:root[data-style="signature"] .txt { grid-row: 3; gap: 14px; }
+:root[data-style="signature"] .lbl { color: #39c9ff; font-family: Bahnschrift, sans-serif; letter-spacing: .16em; }
+:root[data-style="signature"] .tmp { color: #3cff5a; font-family: Consolas, monospace; }
+.e-arc { fill: none; stroke: #e6e6e6; stroke-width: 3.5; } .e-amb { fill: none; stroke: #ffb000; stroke-width: 6; }
+.e-nd { stroke: #fff; stroke-width: 4.5; stroke-linecap: round; transition: transform .6s ease; }
+:root[data-style="signature"] .g.over .e-nd, :root[data-style="signature"] .g[data-heat] .e-nd { stroke: #ffb000; }
+:root[data-style="signature"] .g.over .e-box { color: #ffb000; border-color: #ffb000; }
+:root[data-style="signature"] .g[data-heat] .tmp { color: #ffb000; }
+:root[data-style="signature"] .g[data-heat="bad"] .tmp, :root[data-style="signature"] .g[data-heat="bad"] .e-nd { color: #ff3b30; stroke: #ff3b30; }
+:root[data-style="signature"] .caution { display: block; margin: 0; min-height: 1.3em; font: 700 var(--x-label-size) Consolas, monospace; letter-spacing: .12em; color: #ffb000; }
+:root[data-style="signature"] .g.missing .eicas { opacity: .35; }
+@media (max-aspect-ratio: 1/1) {
+    :root[data-style="signature"] .g { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; }
+    :root[data-style="signature"] .eicas { grid-row: 1 / 3; grid-column: 1; max-height: 18vh; }
+    :root[data-style="signature"] .txt { grid-row: 1; grid-column: 2; align-self: end; }
+    :root[data-style="signature"] .e-box { position: static; grid-row: 2; grid-column: 2; justify-self: start; align-self: start; margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .e-nd { transition: none; } }

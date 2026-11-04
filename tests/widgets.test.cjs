@@ -29,6 +29,8 @@ function runtime(widget, globals = {}, storage = new Map()) {
             })(),
             get childElementCount() { return this.children.length; },
             appendChild(child) { this.children.push(child); },
+            append(...kids) { this.children.push(...kids); },
+            replaceChildren(...kids) { this.children = kids; },
             setAttribute(key, value) { this.attributes[key] = value; },
             removeAttribute(key) { delete this.attributes[key]; },
             remove() {},
@@ -48,6 +50,7 @@ function runtime(widget, globals = {}, storage = new Map()) {
         Date: Clock, URL, Intl, console, AbortController, TextDecoder,
         addEventListener: (name, fn) => { events[name] = fn; },
         document: { getElementById: get, createElement: element, body: element(), documentElement: element(), addEventListener: (name, fn) => { events[name] = fn; } },
+        location: { search: '' },
         localStorage: {
             getItem: key => storage.get(key) || null,
             setItem: (key, value) => { storage.set(key, value); writes++; }
@@ -532,6 +535,12 @@ test('sensor reader picks each role from iCUE ids and names, never a fan or a cl
     assert.ok(roles.ram(m('Memory Usage', '%')));
     assert.ok(!roles.cpuLoad(m('CPU Fan', '%')));
     assert.ok(!roles.gpuLoad(m('GPU Core Clock', 'MHz')));
+    // Watercooling.
+    assert.ok(roles.liquid(m('Coolant Temp', '°C', 'iCUE LINK H150i')));
+    assert.ok(roles.pump(m('Pump', 'RPM', 'iCUE LINK H150i')));
+    assert.ok(!roles.pump(m('Pump Fan', '%')));
+    assert.ok(!roles.liquid(m('Pump', 'RPM')));
+    assert.ok(!roles.cpuTemp(m('Coolant Temp', '°C', 'iCUE LINK H150i')));
 });
 
 test('rig pet mood keeps its state near a threshold instead of flickering', () => {
@@ -565,4 +574,65 @@ test('rig pet names a song cleanly from music players and video sites', () => {
     assert.deepEqual(cleanSong('Royalty [Lyrics]', 'Egzod - Topic'), ['Royalty', 'Egzod']);
     assert.deepEqual(cleanSong('Some vlog - part 2', 'A Channel'), ['Some vlog - part 2', 'A Channel']);
     assert.deepEqual(cleanSong('Midnight City', ''), ['Midnight City', '']);
+});
+
+test('energy cost counts watt-hours per hour and day, skips gaps, and prices them', () => {
+    const window = { location: { search: '' }, addEventListener() {} };
+    vm.runInNewContext(fs.readFileSync(path.join(widgetDir('energy-cost'), 'app.js'), 'utf8'), { window, location: window.location, document: { getElementById: () => ({ append() {} }), createElementNS: () => ({ setAttribute() {} }), createElement: () => ({ append() {}, style: {} }), documentElement: { style: { setProperty() {} }, classList: { toggle() {} } } }, setInterval() {}, setTimeout() {} });
+    const { account, costs } = window.EnergyCost;
+    const t0 = new Date(2026, 10, 4, 10, 0, 0).getTime();
+    let s = account(null, 300, t0);                     // first reading: nothing measured yet
+    for (let i = 1; i <= 720; i++) s = account(s, 300, t0 + i * 5000);   // one hour at 300 W
+    assert.ok(Math.abs(s.hours[10] + s.hours[11] - 300) < 0.01 && s.hours[10] > 299, String(s.hours[10]));   // the last step ends at 11:00
+    s = account(s, 300, t0 + 720 * 5000 + 3600000);     // an hour asleep: not counted
+    assert.ok(Math.abs(s.days['2026-11-04'] - 300) < 0.01);
+    const c = costs(s, 0.25, t0 + 3600000);
+    assert.ok(Math.abs(c.today - 0.075) < 1e-6, String(c.today));
+    s = account(s, 300, new Date(2026, 10, 5, 0, 0, 1).getTime());     // next day: today's hours start again
+    assert.equal(s.hours.reduce((a, b) => a + b, 0), 0);
+    assert.ok(s.days['2026-11-04'] > 0);
+});
+
+test('game session averages the frame rate, finds the 1 % low and thins long sessions', () => {
+    const window = { location: { search: '' }, addEventListener() {} };
+    const sandbox = { window, location: window.location, document: { body: { dataset: {} }, getElementById: () => ({ textContent: '', dataset: {}, classList: { toggle() {} }, style: { setProperty() {} }, setAttribute() {} }) }, setInterval() {}, setTimeout() {}, Promise };
+    sandbox.window.WidgetRuntime = { storage: () => ({ read: () => null, write() {} }), requestJson: () => new Promise(() => {}) };
+    vm.runInNewContext(fs.readFileSync(path.join(widgetDir('game-session'), 'app.js'), 'utf8'), sandbox);
+    const { summarize, thin } = window.GameSession;
+    const samples = Array.from({ length: 200 }, (_, i) => (i < 2 ? 30 : 144));
+    const r = summarize(samples);
+    assert.equal(Math.round(r.avg), Math.round((2 * 30 + 198 * 144) / 200));
+    assert.equal(r.low, 30);
+    assert.equal(summarize([]).avg, null);
+    assert.ok(thin(Array(2401).fill(100)).length < 2401);
+});
+
+test('grid pulse grades carbon intensity and splits the mix; ci radar picks a lamp per run', () => {
+    const run = (name, extra = {}) => {
+        const window = { location: { search: '' }, addEventListener() {}, ...extra };
+        const el = () => ({ textContent: '', dataset: {}, style: {}, classList: { add() {}, remove() {}, toggle() {} }, setAttribute() {}, replaceChildren() {}, append() {}, addEventListener() {} });
+        vm.runInNewContext(fs.readFileSync(path.join(widgetDir(name), 'app.js'), 'utf8'), { window, location: window.location, document: { body: { dataset: {} }, getElementById: el, createElement: el }, WidgetRuntime: { requestJson: () => new Promise(() => {}), onResume() {}, storage: () => ({ read: () => null, write() {} }) }, setInterval() {}, setTimeout() {} });
+        return window;
+    };
+    const { level, shares, cleanerThan } = run('grid-pulse').GridPulse;
+    assert.equal(level(20)[0], 'vlow'); assert.equal(level(60)[0], 'low'); assert.equal(level(100)[0], 'mid'); assert.equal(level(200)[0], 'high');
+    const s = shares({ nucleaire: 60, eolien: 20, solaire: 20, gaz: 0, fioul: -5 });
+    assert.equal(s.length, 3); assert.equal(s[0].name, 'Nuclear'); assert.equal(Math.round(s[0].pct), 60);
+    assert.equal(cleanerThan([10, 50, 90, 120], 60), 50);
+    const { lamp } = run('ci-radar').CiRadar;
+    assert.equal(lamp({ status: 'completed', conclusion: 'success' }), 'green');
+    assert.equal(lamp({ status: 'in_progress' }), 'amber');
+    assert.equal(lamp({ status: 'completed', conclusion: 'failure' }), 'red');
+    assert.equal(lamp({ status: 'completed', conclusion: 'cancelled' }), 'off');
+    assert.equal(lamp(undefined), 'off');
+    const { merge } = run('patch-radar').PatchRadar;
+    const m = merge([{ name: 'A', items: [{ at: 1 }, { at: 5 }] }, { name: 'B', items: [{ at: 3 }] }], 2);
+    assert.equal(m.map(x => x.game + x.at).join(','), 'A5,B3');
+});
+
+test('companion window scripts parse (a broken quote leaves the whole window blank)', () => {
+    const dir = path.join(root, 'companion/web');
+    for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.js'))) {
+        assert.doesNotThrow(() => new vm.Script(fs.readFileSync(path.join(dir, f), 'utf8'), { filename: f }), f);
+    }
 });

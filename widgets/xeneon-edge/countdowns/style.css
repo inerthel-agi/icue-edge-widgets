@@ -15,3 +15,34 @@ header > div { flex: 1; min-width: 0; }
     #widget { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(240px, 35%); }
     .hero { align-items: center; text-align: center; padding: 0; }
 }
+
+/* Signature: an airport departure board. Each event is a flight; letters and days sit on split-flap tiles;
+   the status reads like a flight's (ON TIME, SOON within a week, BOARDING on the day, DEPARTED after). */
+.board { display: none; }
+:root[data-style="signature"] #widget { display: block; background: #0f1012; }
+:root[data-style="signature"] header, :root[data-style="signature"] .hero, :root[data-style="signature"] .cards { display: none; }
+:root[data-style="signature"] .board { display: grid; align-content: center; gap: 6px; height: 100%; }
+.bd-head { display: flex; justify-content: space-between; margin: 0 0 6px; font: 700 calc(var(--x-label-size) * 1.05) Bahnschrift, sans-serif; letter-spacing: .3em; color: #ffd23f; }
+.bd-head span { color: #e6e6e6; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.bd-cols, .bd-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 8.5em; align-items: center; gap: 14px; }
+.bd-cols { font: 700 calc(var(--x-label-size) * 0.6) Bahnschrift, sans-serif; letter-spacing: .2em; color: #8a8c8f; }
+.bd-row { padding: 7px 0; border-top: 1px solid #26282b; }
+.flaps { display: flex; gap: 3px; min-width: 0; overflow: hidden; }
+.board { --t: clamp(24px, min(15vh, 6.4vw), 110px); }
+.flaps i { position: relative; flex: none; display: grid; place-items: center; width: calc(var(--t) * 0.68); height: var(--t); border-radius: 3px;
+    background: linear-gradient(180deg, #25272a 50%, #1b1d1f 50%); font: 700 calc(var(--t) * 0.66) Consolas, monospace; font-style: normal; color: #ffd23f; }
+.flaps i::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #000; }
+.bd-row .flaps:last-of-type i { color: #fff; }
+.bd-row::before { content: ""; position: absolute; }
+.bd-date { font: 600 max(calc(var(--x-label-size) * 0.85), calc(var(--t) * 0.4)) Bahnschrift, sans-serif; color: #bfc1bc; letter-spacing: .06em; }
+.bd-st { font: 700 max(calc(var(--x-label-size) * 0.75), calc(var(--t) * 0.34)) Bahnschrift, sans-serif; letter-spacing: .14em; color: #3cd36a; }
+.bd-row.today .bd-st { color: #ffd23f; animation: bd-blink 1s steps(2, start) infinite; }
+.bd-row.done .bd-st, .bd-row.done .flaps i { color: #6a6c70; }
+@keyframes bd-blink { to { visibility: hidden; } }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { .bd-cols { display: none; } .bd-row { padding: 4px 0; } }
+@media (max-aspect-ratio: 1/1) {
+    .bd-cols { display: none; }
+    .bd-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "ev in" "date st"; row-gap: 6px; }
+    .bd-row .flaps:first-child { grid-area: ev; } .bd-row .flaps:last-of-type { grid-area: in; } .bd-date { grid-area: date; } .bd-st { grid-area: st; justify-self: end; }
+}
+@media (prefers-reduced-motion: reduce) { .bd-row.today .bd-st { animation: none; } }

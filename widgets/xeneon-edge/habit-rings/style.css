@@ -11,7 +11,7 @@ header > div { flex: 1; min-width: 0; }
     font-weight: 600;
     cursor: pointer;
 }
-.reset { padding: 0 16px; }
+.reset { padding: 0 16px; min-height: var(--x-touch-size); min-width: var(--x-touch-size); }
 .reset:hover { border-color: var(--x-muted); }
 .rings { min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--x-gap); }
 .habit {
@@ -58,3 +58,29 @@ header > div { flex: 1; min-width: 0; }
     .ring-wrap { width: min(34%, 180px); flex-shrink: 0; }
     .habit-footer { flex: 1; }
 }
+
+/* Signature: loyalty stamp cards. Each habit is a paper card; tapping it (or +) inks the next box; a full card
+   gets a DONE stamp. Boxes group units when the goal is above ten. */
+.stamps-row, .done-stamp { display: none; }
+:root[data-style="signature"] #widget { background: #1a1714; }
+:root[data-style="signature"] .x-kicker { color: #d8c8ad; }
+:root[data-style="signature"] .x-title { display: none; }
+:root[data-style="signature"] .reset { border-color: #5a4e3e; color: #d8c8ad; }
+:root[data-style="signature"] .habit { --ink: var(--habit-color); position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); align-content: start; gap: 12px; padding: 18px;
+    border: 0; border-radius: 10px; background: #f4ecdc; color: #2a2016; box-shadow: 0 10px 20px rgba(0,0,0,.4); }
+:root[data-style="signature"] .habit .ring-wrap { display: none; }
+:root[data-style="signature"] .habit-footer { order: -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+:root[data-style="signature"] .habit-footer p { margin: 0; font: 800 calc(var(--x-label-size) * 1.05) Bahnschrift, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #2a2016; }
+:root[data-style="signature"] .habit-footer span { font: 600 calc(var(--x-label-size) * 0.8) Bahnschrift, sans-serif; color: #6a5c4c; }
+:root[data-style="signature"] .habit .add { min-width: 60px; min-height: 60px; border-radius: 50%; border: 3px solid var(--ink); background: transparent; color: var(--ink); font: 800 30px Bahnschrift, sans-serif; }
+:root[data-style="signature"] .stamps-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; align-content: center; }
+.stamps-row i { aspect-ratio: 1; max-height: 100%; border-radius: 50%; border: 2px dashed #b9a98f; }
+.stamps-row i.on { border: 0; background: radial-gradient(circle, transparent 36%, var(--ink) 38% 54%, transparent 56%), radial-gradient(circle, color-mix(in srgb, var(--ink) 22%, transparent) 60%, transparent 62%);
+    transform: rotate(calc(var(--r, 0) * 1deg)); animation: stamp .25s ease-out; }
+.stamps-row i:nth-child(odd).on { --r: -8; } .stamps-row i:nth-child(3n).on { --r: 11; }
+@keyframes stamp { from { transform: scale(1.5); opacity: 0; } }
+:root[data-style="signature"] .habit.full .done-stamp { display: block; position: absolute; right: 18px; bottom: 18px; padding: 2px 14px; border: 4px solid #c4372b; color: #c4372b;
+    font: 900 clamp(22px, 6vmin, 44px) Bahnschrift, sans-serif; font-style: normal; letter-spacing: .14em; transform: rotate(-12deg); opacity: .9; }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { :root[data-style="signature"] .habit { padding: 12px; gap: 8px; } :root[data-style="signature"] .stamps-row { gap: 6px; } }
+@media (prefers-reduced-motion: reduce) { .stamps-row i.on { animation: none; } }
+@media (max-aspect-ratio: 1/1) { :root[data-style="signature"] .stamps-row { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; } :root[data-style="signature"] .habit { grid-template-rows: auto auto; } }

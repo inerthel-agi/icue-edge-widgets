@@ -12,3 +12,27 @@ b { font-size: clamp(26px, calc(var(--layout-unit) * 6), 46px); font-weight: 600
     .hero { flex-direction: column; gap: 12px; }
     .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* The condition is named in words elsewhere; the three-letter code (CLD, SUN) is not shown. */
+#icon { display: none !important; }
+
+/* Signature: a brass weather station. */
+.station { display: none; }
+:root[data-style="signature"] #widget { background: radial-gradient(120% 120% at 30% 20%, #3b2c1c, #160f09 70%); --x-text: #f4e7cc; --x-muted: #cbb48c; }
+:root[data-style="signature"] #place { color: #e8c06a; font-family: Georgia, serif; letter-spacing: .2em; }
+:root[data-style="signature"] #condition { color: #f4e7cc; font-family: Georgia, serif; font-style: italic; }
+:root[data-style="signature"] .station { display: block; height: 100%; max-height: 62vh; aspect-ratio: 1; filter: drop-shadow(0 12px 18px rgba(0,0,0,.55)); }
+:root[data-style="signature"] .hero { justify-content: flex-start; gap: calc(var(--x-gap) * 2.4); }
+:root[data-style="signature"] .hero h1 { font-family: Georgia, "Iowan Old Style", serif; font-weight: 400; letter-spacing: -0.03em; color: #f4e7cc; }
+:root[data-style="signature"] .metrics article { border-top: 2px solid #8a6a2a; }
+:root[data-style="signature"] .metrics b { font-family: Georgia, serif; font-weight: 400; color: #f4e7cc; }
+:root[data-style="signature"] .metrics small { color: #cbb48c; font-family: Georgia, serif; letter-spacing: .14em; text-transform: uppercase; }
+.st-rim { fill: #b08a3e; stroke: #f1d58e; stroke-width: 4; } .st-face { fill: #f3ead6; }
+.st-tk { stroke: #3a2a14; stroke-width: 1.2; } .st-tk.big { stroke-width: 2.4; }
+.st-num { font: 600 11px Georgia, serif; fill: #3a2a14; text-anchor: middle; dominant-baseline: central; }
+.st-word { font: italic 600 7px Georgia, serif; fill: rgba(58,42,20,.35); text-anchor: middle; letter-spacing: .08em; }
+.st-word.on { fill: #9a2a1a; font-size: 8px; }
+.st-nd { fill: #1c140a; transition: transform .8s ease; } .st-hub { fill: #b08a3e; stroke: #1c140a; stroke-width: 2; }
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { :root[data-style="signature"] .station { max-height: 70vh; } }
+@media (max-aspect-ratio: 1/1) { :root[data-style="signature"] .hero { justify-content: center; } :root[data-style="signature"] .station { max-height: 34vh; } }
+@media (prefers-reduced-motion: reduce) { .st-nd { transition: none; } }

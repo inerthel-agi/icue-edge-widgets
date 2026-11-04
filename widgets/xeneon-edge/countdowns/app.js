@@ -93,6 +93,32 @@
         return card;
     }
 
+    function flaps(text, width) {
+        const box = document.createElement("span");
+        box.className = "flaps";
+        const chars = String(text).toUpperCase().slice(0, width).padEnd(width, " ");
+        for (const ch of chars) {
+            const tile = document.createElement("i");
+            tile.textContent = ch === " " ? "" : ch;
+            box.append(tile);
+        }
+        return box;
+    }
+    function boardRow(item) {
+        const days = daysLeft(item.date);
+        const row = document.createElement("div");
+        row.className = "bd-row" + (days < 0 ? " done" : days === 0 ? " today" : "");
+        const date = document.createElement("span");
+        date.className = "bd-date";
+        date.textContent = new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }).toUpperCase();
+        const st = document.createElement("span");
+        st.className = "bd-st";
+        st.textContent = days < 0 ? "DEPARTED" : days === 0 ? "BOARDING" : days <= 7 ? "SOON" : "ON TIME";
+        row.style.setProperty("--ev", item.color);
+        row.append(flaps(item.label, 14), date, flaps(days < 0 ? "" : String(days).padStart(3, " "), 3), st);
+        return row;
+    }
+
     function render() {
         const events = readEvents().sort((a, b) => daysLeft(a.date) - daysLeft(b.date));
         const upcoming = events.filter(item => daysLeft(item.date) >= 0);
@@ -114,6 +140,8 @@
         $("nextStatus").textContent = status(nextDays, next.label);
         $("nextDate").textContent = dateLabel(next.date);
         events.slice(0, 3).forEach((item, index) => cards.appendChild(renderCard(item, index)));
+        $("bdRows").replaceChildren(...events.slice(0, 3).map(boardRow));
+        $("bdClock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
 
     function start() {

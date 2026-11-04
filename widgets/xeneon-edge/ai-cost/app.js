@@ -110,8 +110,9 @@
         return { line, area: `${line} L240 58 L0 58 Z` };
     }
 
-    function render(wire) {
-        const s = summarize(wire);
+    function render(wire) { renderSummary(summarize(wire)); }
+
+    function renderSummary(s) {
         const whole = Math.floor(s.today);
         const cents = Math.round((s.today - whole) * 100);
         $("big").textContent = `$${whole}`;
@@ -130,6 +131,10 @@
         $("mYesterday").textContent = money(s.yesterday);
         $("mMonth").textContent = s.month === null ? "--" : money(s.month);
         $("mTokens").textContent = compact(s.tokensToday);
+        // Taxi roof sign: BUSY while tokens flowed in the current hour, FOR HIRE otherwise.
+        const busy = (s.series[s.series.length - 1] || 0) > 0;
+        $("roof").textContent = busy ? "BUSY" : "FOR HIRE";
+        $("roof").classList.toggle("busy", busy);
     }
 
     function show(title, sub) {
@@ -139,12 +144,18 @@
     }
 
     function renderStatus() {
-        const text = failed ? "Companion offline · showing the last data" : lastOk ? `Updated ${new Date(lastOk).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · estimate from token counts and set prices` : "Waiting for the companion";
+        const text = failed ? "Companion not running · showing the last data" : lastOk ? `Updated ${new Date(lastOk).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · estimate from token counts and set prices` : "Waiting for the companion";
         if ($("status").textContent !== text) $("status").textContent = text;
         $("badge").textContent = failed ? "Offline" : "Estimate";
     }
 
     async function update() {
+        if (/[?&]demo\b/.test(location.search)) {
+            renderSummary({ today: 4.87, tokensToday: 2.4e6, yesterday: 6.1, month: 71.4, pace: 214, byProvider: { claude: 3.62, codex: 1.25 },
+                series: Array.from({ length: 24 }, (_, i) => (i < 8 ? 0 : 0.1 + 0.4 * Math.abs(Math.sin(i / 2.3)))) });
+            $("overlay").classList.remove("visible");
+            return;
+        }
         if (request) request.abort();
         request = new AbortController();
         try {
@@ -159,7 +170,7 @@
             if (error && error.name === "AbortError") return;
             failed = true;
             if (lastData) render(lastData);
-            else show("Companion offline", "Start iCUE Edge Companion; it reads Claude and Codex usage on this PC.");
+            else show("Companion not running", "Start iCUE Edge Companion; it reads Claude and Codex usage on this PC.");
         }
         renderStatus();
     }

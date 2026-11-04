@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' file:; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' file: data: blob:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Pump Faces</title>
+    <meta name="x-icue-property" content="pumpFace" data-label="tr('Face')" data-type="combobox"
+        data-default="'tank'" data-values="[{'key':'tank','value':'Coolant tank'},{'key':'aquarium','value':'Aquarium'},{'key':'iris','value':'Iris'},{'key':'chrono','value':'Chronograph'},{'key':'vinyl','value':'Vinyl'},{'key':'sky','value':'Sky'},{'key':'hearth','value':'Hearth'},{'key':'carousel','value':'Carousel'}]" />
+    <meta name="x-icue-property" content="pumpLat" data-label="tr('Latitude')" data-type="textfield" data-default="'48.85'" />
+    <meta name="x-icue-property" content="pumpLon" data-label="tr('Longitude')" data-type="textfield" data-default="'2.35'" />
+    <meta name="x-icue-property" content="pumpMascot" data-label="tr('Mascot')" data-type="combobox"
+        data-default="'clawd'" data-values="[{'key':'clawd','value':'Clawd'},{'key':'clippy','value':'Clippy'},{'key':'xiaohei','value':'Luo Xiaohei'}]" />
+    <meta name="x-icue-property" content="pumpAlert" data-label="tr('Alert from')" data-type="slider"
+        data-default="42" data-min="30" data-max="60" data-step="1" data-unit-label="'°C'" />
+    <meta name="x-icue-property" content="pumpRoom" data-label="tr('Room temperature')" data-type="slider"
+        data-default="24" data-min="10" data-max="40" data-step="1" data-unit-label="'°C'" />
+    <meta name="x-icue-property" content="pumpEvery" data-label="tr('Carousel every')" data-type="slider"
+        data-default="8" data-min="3" data-max="60" data-step="1" data-unit-label="'s'" />
+    <meta name="x-icue-property" content="pumpGame" data-label="tr('FPS while a game runs')" data-type="switch" data-default="true" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f3ed'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#ff9a3c'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#080a0b'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('Pump Faces')","properties":["pumpFace","pumpMascot","pumpAlert","pumpRoom","pumpEvery","pumpGame","pumpLat","pumpLon"],"info":"tr('Liquid temperature and pump speed come from iCUE sensors; without a liquid sensor the CPU temperature is shown. Room temperature is used when no ambient sensor exists. Vinyl needs iCUE Edge Companion. Sky uses the latitude and longitude (Paris by default) and nothing else.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency"]}]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body data-endpoint="http://127.0.0.1:47821">
+    <main id="widget">
+        <canvas id="face" width="480" height="480" role="img" aria-label="Pump face"></canvas>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="../../../shared/sensor-reader.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

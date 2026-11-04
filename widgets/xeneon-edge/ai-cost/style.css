@@ -33,3 +33,33 @@ h1.x-num { margin: 0; font-size: calc(var(--x-hero-size) * 0.9); }
     .prov, .pace { display: none; }
     #widget { grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "top" "hero" "side" "mets"; }
 }
+
+/* Signature: a taxi meter. The day's fare in red LED digits, a roof sign (BUSY while an agent is spending
+   tokens this hour, FOR HIRE otherwise), the providers as tariff lines, and the totals on yellow-edged plates. */
+.roof { display: none; }
+:root[data-style="signature"] #widget { background: radial-gradient(90% 120% at 50% 0%, #2a2a2a, #0b0b0b); grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-areas: "top top" "hero side" "mets mets" "stat stat"; }
+:root[data-style="signature"] .x-top { justify-content: center; position: relative; }
+:root[data-style="signature"] .x-top .x-kicker, :root[data-style="signature"] #badge { display: none; }
+:root[data-style="signature"] .roof { display: block; grid-area: top; justify-self: center; margin: 0; padding: 4px 28px; border-radius: 8px 8px 2px 2px; background: #3a3420; color: #8a7d4a;
+    font: 900 var(--x-label-size) Bahnschrift, sans-serif; letter-spacing: .3em; }
+:root[data-style="signature"] .roof.busy { background: #ffcc33; color: #1a1400; box-shadow: 0 0 22px rgba(255,204,51,.5); }
+:root[data-style="signature"] .hero { padding: 10px 22px; border-radius: 10px; background: #050505; box-shadow: inset 0 0 0 3px #333, inset 0 0 30px #000; }
+:root[data-style="signature"] h1.x-num { font: italic 700 calc(var(--x-hero-size) * 0.82) / 1 Consolas, monospace; color: #ff3b2a; text-shadow: 0 0 18px rgba(255,59,42,.7); letter-spacing: -0.02em; }
+:root[data-style="signature"] h1.x-num small { font-size: 1em; color: inherit; margin: 0; }
+:root[data-style="signature"] .hero { align-content: center; justify-items: start; }
+@media (min-height: 451px) and (min-aspect-ratio: 3/2) { :root[data-style="signature"] h1.x-num { font-size: calc(var(--x-hero-size) * 1.05); } }
+:root[data-style="signature"] .delta { font: 700 calc(var(--x-label-size) * 0.8) Bahnschrift, sans-serif; letter-spacing: .2em; text-transform: uppercase; color: #8e8e8e; }
+:root[data-style="signature"] .spark { display: none; }
+:root[data-style="signature"] .prov span { font: 700 calc(var(--x-label-size) * 0.8) Bahnschrift, sans-serif; letter-spacing: .2em; text-transform: uppercase; color: #8e8e8e; }
+:root[data-style="signature"] .prov .x-bar { height: 10px; background: #1a1a1a; }
+:root[data-style="signature"] .prov .x-bar > i { background: #ffcc33; }
+:root[data-style="signature"] .prov b { font: 700 calc(var(--x-label-size) * 1.1) Consolas, monospace; color: #ff6a52; }
+:root[data-style="signature"] .pace { font-family: Bahnschrift, sans-serif; letter-spacing: .06em; }
+:root[data-style="signature"] .mets .x-m { border-left: 3px solid #ffcc33; padding-left: 12px; }
+:root[data-style="signature"] .mets .x-label { font-family: Bahnschrift, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+:root[data-style="signature"] .mets .x-value { font-family: Bahnschrift, sans-serif; }
+@media (max-height: 450px) { :root[data-style="signature"] .x-top { display: none; } :root[data-style="signature"] .roof { grid-area: hero; align-self: start; justify-self: end; margin: -6px -10px 0 0; position: relative; z-index: 1; font-size: 14px; padding: 2px 12px; } }
+@media (max-aspect-ratio: 3/2) and (min-height: 451px), (max-aspect-ratio: 1/1), (max-width: 760px) {
+    :root[data-style="signature"] #widget { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "hero" "side" "mets" "stat"; }
+}

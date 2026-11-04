@@ -21,6 +21,36 @@
 
     let status = "Loading";
 
+    // Signature: a brass weather station. A thermometer dial (-20 to 40 °C) whose needle shows the temperature,
+    // and the barometer's words, the one matching the sky lit.
+    const NS = "http://www.w3.org/2000/svg";
+    const WORDS = ["STORMY", "RAIN", "CHANGE", "FAIR", "VERY DRY"];
+    let dial = null;
+    function station(temp, code) {
+        if (typeof document.querySelector !== "function") return;   // test harness without a full DOM
+        const hero = document.querySelector(".hero");
+        if (!hero || typeof document.createElementNS !== "function") return;
+        if (!dial) {
+            const mk = (tag, a, parent) => { const n = document.createElementNS(NS, tag); for (const k in a) n.setAttribute(k, a[k]); parent.append(n); return n; };
+            const s = mk("svg", { class: "station", viewBox: "0 0 200 200", "aria-hidden": "true" }, hero);
+            mk("circle", { class: "st-rim", cx: 100, cy: 100, r: 96 }, s);
+            mk("circle", { class: "st-face", cx: 100, cy: 100, r: 84 }, s);
+            for (let v = -20; v <= 40; v += 5) {
+                const a = (-135 + (v + 20) / 60 * 270) * Math.PI / 180, big = v % 10 === 0;
+                mk("line", { class: big ? "st-tk big" : "st-tk", x1: 100 + Math.sin(a) * (big ? 66 : 70), y1: 100 - Math.cos(a) * (big ? 66 : 70), x2: 100 + Math.sin(a) * 78, y2: 100 - Math.cos(a) * 78 }, s);
+                if (big) { const t = mk("text", { class: "st-num", x: 100 + Math.sin(a) * 56, y: 100 - Math.cos(a) * 56 }, s); t.textContent = String(v); }
+            }
+            const words = WORDS.map((w, i) => { const t = mk("text", { class: "st-word", x: 100, y: 0, transform: `rotate(${-60 + i * 30} 100 100)` }, s); t.setAttribute("y", "72"); t.textContent = w; return t; });
+            const needle = mk("path", { class: "st-nd", d: "M100 30 L104 100 L100 116 L96 100 Z" }, s);
+            mk("circle", { class: "st-hub", cx: 100, cy: 100, r: 7 }, s);
+            dial = { needle, words };
+        }
+        const t = Math.max(-20, Math.min(40, Number(temp)));
+        if (Number.isFinite(t)) dial.needle.setAttribute("transform", `rotate(${(-135 + (t + 20) / 60 * 270).toFixed(1)} 100 100)`);
+        const c = Number(code), word = c >= 95 ? 0 : c >= 51 ? 1 : c >= 2 ? 2 : c === 1 ? 3 : 4;
+        dial.words.forEach((el, i) => el.classList.toggle("on", i === word));
+    }
+
     function renderStatus() {
         const text = WidgetRuntime.freshness(lastUpdated, status, notBefore);
         if ($("dataStatus").textContent !== text) $("dataStatus").textContent = text;
@@ -113,6 +143,7 @@
             $("condition").textContent = label;
             $("icon").textContent = icon;
             $("temp").textContent = Math.round(current.temperature_2m);
+            station(current.temperature_2m, current.weather_code);
             $("unit").textContent = units === "fahrenheit" ? "°F" : "°C";
             $("wind").textContent = Number.isFinite(current.wind_speed_10m) ? `${Math.round(current.wind_speed_10m)} km/h` : "--";
             $("rain").textContent = Number.isFinite(current.precipitation) ? `${current.precipitation} mm` : "--";

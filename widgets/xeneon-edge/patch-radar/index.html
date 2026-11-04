@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:47821; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Patch Radar</title>
+    <meta name="x-icue-property" content="patchApps" data-label="tr('Steam games')" data-type="textfield" data-default="'271590'" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#e7e2d4'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#ff6a4a'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#23262a'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('Patch Radar')","properties":["patchApps"],"info":"tr('Official announcements and patch notes of your Steam games: list their app ids (the number in the store address), separated by commas, up to ten. Tap a strip to read it on Steam; it is then marked read. Needs iCUE Edge Companion.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency"]}]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body data-endpoint="http://127.0.0.1:47821">
+    <main id="widget" class="x-widget">
+        <p class="hd"><b>PATCH RADAR</b><span id="unread"></span></p>
+        <section class="tapes" id="tapes" aria-label="Latest announcements"></section>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">Companion not running</strong>
+            <span id="overlaySub">Open iCUE Edge Companion; it fetches the Steam announcements.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

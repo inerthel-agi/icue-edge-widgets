@@ -52,3 +52,21 @@ h1.x-num { margin: 0; font-size: calc(var(--x-hero-size) * 0.9); }
     .app:nth-child(n + 5) { display: grid; }
 }
 .app.cut { display: none !important; }   /* rows that do not fit whole (app.js fitApps) */
+
+/* Signature: a punch-clock time card. Manila card, typewriter lines with dotted leaders, the day's total
+   stamped in violet ink as a time clock would, categories as the card's ruled columns. */
+:root[data-style="signature"] #widget { background: #e7dbbd; color: #2a2418; --x-text: #2a2418; --x-muted: #6a5d44; --x-line: rgba(42,36,24,.25); --x-track: rgba(42,36,24,.12);
+    background-image: repeating-linear-gradient(180deg, transparent 0 38px, rgba(150,40,40,.12) 38px 39px); }
+:root[data-style="signature"] .x-kicker { color: #9a2a2a; font: 800 var(--x-label-size) "Courier New", monospace; letter-spacing: .26em; }
+:root[data-style="signature"] #badge { color: #2a2418; font-family: "Courier New", monospace; }
+:root[data-style="signature"] h1.x-num { font: 700 calc(var(--x-hero-size) * 0.8) / 1 "Courier New", monospace; color: #5b2a86; letter-spacing: -0.03em; transform: rotate(-2deg); transform-origin: left center;
+    text-shadow: 0 0 1px rgba(91,42,134,.6); }
+:root[data-style="signature"] h1.x-num small { color: #5b2a86; }
+:root[data-style="signature"] .delta { font-family: "Courier New", monospace; color: #6a5d44; }
+:root[data-style="signature"] .app { font-family: "Courier New", monospace; font-weight: 700; color: #2a2418; }
+:root[data-style="signature"] .app .name { background: none; }
+:root[data-style="signature"] .app > b { color: #9a2a2a; font-family: "Courier New", monospace; }
+:root[data-style="signature"] .app .label::after { content: " ........................................"; color: rgba(42,36,24,.35); }
+:root[data-style="signature"] .app .x-bar, :root[data-style="signature"] .app .bar { display: none; }
+:root[data-style="signature"] .ico { filter: grayscale(1) contrast(1.2); opacity: .8; }
+:root[data-style="signature"] .x-status { color: #6a5d44; font-family: "Courier New", monospace; }

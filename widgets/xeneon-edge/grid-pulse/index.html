@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src https://odre.opendatasoft.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>Grid Pulse</title>
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#f2f0e6'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#3dff7a'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#141c19'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('Grid Pulse')","properties":[],"info":"tr('France\\'s electricity mix and its carbon intensity, live from RTE eco2mix (ODRE open data, no account). Updated every 15 minutes.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency"]}]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget" data-level="">
+        <section class="hero">
+            <p class="lamp"><i aria-hidden="true"></i><span id="verdict">Reading the grid</span></p>
+            <p class="co2"><b id="co2">--</b><span>g CO₂ / kWh</span></p>
+            <p class="sub" id="sub">France · RTE eco2mix</p>
+        </section>
+        <section class="mix">
+            <p class="t">MIX NOW</p>
+            <div class="bar" id="bar" role="img" aria-label="Electricity mix"></div>
+            <ul class="legend" id="legend"></ul>
+            <p class="t" id="curveTitle">LAST 24 H</p>
+            <svg class="curve" id="curve" viewBox="0 0 240 48" preserveAspectRatio="none" aria-hidden="true">
+                <rect id="best" class="best" x="0" y="0" width="0" height="48" />
+                <path id="line" d="" />
+            </svg>
+        </section>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">Grid data unavailable</strong>
+            <span id="overlaySub">RTE eco2mix did not answer. Trying again shortly.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

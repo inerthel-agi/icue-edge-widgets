@@ -104,7 +104,7 @@
     }
 
     const DEFAULT_COLORS = ["#080a0b", "#f2f3ed", "#a8d5ba"];
-    const STYLES = ["instrument", "apple", "openai", "spacex", "nothing", "anthropic", "google", "terminal", "corsair", "aurora", "paper", "brutalist", "synthwave", "abyss", "sunset", "newsprint", "blueprint", "forest", "pastel", "amber", "hud", "bloomberg"];
+    const STYLES = ["signature", "instrument", "apple", "openai", "spacex", "nothing", "anthropic", "google", "terminal", "corsair", "aurora", "paper", "brutalist", "synthwave", "abyss", "sunset", "newsprint", "blueprint", "forest", "pastel", "amber", "hud", "bloomberg"];
 
     // iCUE "Widget Personalization" globals -> shared tokens. Invalid or missing values keep the CSS defaults.
     function personalize() {

@@ -135,22 +135,53 @@ button:active { transform: translateY(1px); }
     font-weight: 600;
     line-height: 1.3;
 }
+/* State plate: the one look for offline, refused, empty and error states. It covers the whole widget
+   (no ghost of the empty layout underneath), says what happened and what to do, and shows that the
+   widget keeps trying on its own. */
 .x-overlay {
     position: absolute;
-    inset: var(--x-pad);
+    inset: 0;
     display: none;
-    place-content: center;
-    gap: 12px;
-    padding: var(--x-pad);
-    text-align: center;
-    border-top: 2px solid var(--x-accent);
-    background: color-mix(in srgb, var(--x-bg) 96%, transparent);
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    column-gap: calc(var(--x-gap) * 1.6);
+    row-gap: 8px;
+    padding: var(--x-pad) calc(var(--x-pad) * 1.8);
+    text-align: left;
+    background: var(--x-bg);
+    border-radius: inherit;
     z-index: 5;
 }
 .x-overlay.visible { display: grid; }
-.x-widget:has(> .x-status) > .x-overlay { bottom: calc(var(--x-pad) + 3em); }
-.x-overlay strong { font-size: var(--x-title-size); font-weight: 600; }
-.x-overlay span { color: var(--x-muted); font-size: var(--x-label-size); line-height: 1.5; }
+.x-overlay::before {
+    content: "";
+    grid-row: 1 / 3;
+    align-self: center;
+    width: clamp(56px, calc(var(--layout-unit) * 16), 96px);
+    aspect-ratio: 1;
+    border-radius: 24%;
+    background: color-mix(in srgb, var(--x-warn) 16%, transparent) no-repeat center / 54%
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23e8c477' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M17 6v10M31 6v10M12 16h24v8a12 12 0 0 1-24 0zM24 36v8'/%3E%3C/svg%3E");
+}
+.x-overlay strong { align-self: end; font: 700 var(--x-title-size) / 1.1 Bahnschrift, "Segoe UI", sans-serif; }
+.x-overlay span { align-self: start; max-width: 36em; color: var(--x-muted); font-size: var(--x-label-size); line-height: 1.45; }
+/* Keeps trying: a slow sweep along the plate's foot. */
+.x-overlay::after {
+    content: "";
+    position: absolute;
+    left: calc(var(--x-pad) * 1.8);
+    right: calc(var(--x-pad) * 1.8);
+    bottom: var(--x-pad);
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--x-warn), transparent) no-repeat -40% 0 / 40% 100%, var(--x-track);
+    animation: x-retry 2.4s ease-in-out infinite;
+}
+@keyframes x-retry { to { background-position: 140% 0, 0 0; } }
+@media (max-height: 380px) { .x-overlay::before { width: 56px; } }
+@media (max-aspect-ratio: 1/1) { .x-overlay { grid-template-columns: minmax(0, 1fr); text-align: left; } .x-overlay::before { grid-row: auto; } }
+@media (prefers-reduced-motion: reduce) { .x-overlay::after { animation: none; background: var(--x-track); } }
 .x-status {
     margin: 0;
     color: var(--x-muted);

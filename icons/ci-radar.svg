@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32px" height="32px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <title>CI Radar</title>
+    <g fill="#ffffff"><circle cx="9" cy="10" r="5"/><circle cx="23" cy="10" r="5" opacity=".6"/><circle cx="9" cy="23" r="5" opacity=".6"/><circle cx="23" cy="23" r="5"/></g>
+</svg>

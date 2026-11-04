@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <title>CI Radar</title>
+    <meta name="x-icue-property" content="ciRepos" data-label="tr('Repositories')" data-type="textfield" data-default="'inerthel-agi/icue-edge-widgets'" />
+    <meta name="x-icue-property" content="ciUser" data-label="tr('GitHub user (review queue)')" data-type="textfield" data-default="''" />
+    <meta name="x-icue-property" content="ciToken" data-label="tr('GitHub token (optional)')" data-type="textfield" data-default="''" />
+    <meta name="x-icue-property" content="textColor" data-label="tr('Text Color')" data-type="color"
+        data-default="'#ece8dc'" />
+    <meta name="x-icue-property" content="accentColor" data-label="tr('Accent Color')" data-type="color"
+        data-default="'#f2c46d'" />
+    <meta name="x-icue-property" content="backgroundColor" data-label="tr('Background Color')" data-type="color"
+        data-default="'#1a1916'" />
+    <meta name="x-icue-property" content="transparency" data-label="tr('Background Transparency')" data-type="slider"
+        data-default="100" data-min="0" data-max="100" data-step="1" data-unit-label="'%'" />
+    <script type="application/json" id="x-icue-groups">
+        [{"title":"tr('CI Radar')","properties":["ciRepos","ciUser","ciToken"],"info":"tr('Up to four owner/repo, separated by commas: one lamp each for the last GitHub Actions run (green passed, amber running, red failed). With your GitHub user, the pull requests waiting for your review. Public repositories need no token; a fine-grained read-only token allows private ones and more requests. Tap a lamp or a strip to open it.')"},{"title":"tr('Widget Personalization')","properties":["textColor","accentColor","backgroundColor","transparency"]}]
+    </script>
+    <link rel="stylesheet" href="../../../shared/xeneon-widget.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main id="widget" class="x-widget" data-queue="off">
+        <section class="lamps" id="lamps" aria-label="Last run per repository"></section>
+        <section class="strips" aria-label="Pull requests waiting for your review">
+            <p class="t" id="queueTitle">REVIEW QUEUE</p>
+            <div id="queue"></div>
+        </section>
+        <section class="overlay x-overlay" id="overlay" role="status">
+            <strong id="overlayTitle">GitHub unreachable</strong>
+            <span id="overlaySub">Trying again shortly.</span>
+        </section>
+    </main>
+    <script src="../../../shared/widget-runtime.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>

@@ -163,10 +163,24 @@
 
     let currentMeta = null;
 
+    function tubes(text) {
+        const host = $("tubes");
+        const chars = String(text).replace(/[^0-9.\-]/g, "").slice(0, 5) || "--";
+        if (host.dataset.text === chars) return;
+        host.dataset.text = chars;
+        host.replaceChildren(...[...chars].map(ch => {
+            const t = document.createElement("span");
+            t.className = ch === "." ? "dot" : "tube";
+            t.textContent = ch;
+            return t;
+        }));
+    }
+
     function renderValue(value) {
         if (!currentMeta) return;
         const color = accent(currentMeta, value);
         $("value").textContent = formatValue(value);
+        tubes($("value").textContent);
         $("units").textContent = currentMeta.units || "";
         $("label").textContent = sensorLabel(currentMeta);
         $("device").textContent = currentMeta.device || currentMeta.name || currentMeta.id;
@@ -182,7 +196,7 @@
         if (!client) {
             $("widget").dataset.state = "offline";
             $("label").textContent = "Sensors";
-            $("value").textContent = "--";
+            $("value").textContent = "--"; tubes("--");
             $("units").textContent = "";
             $("device").textContent = "Plugin unavailable";
             return;
@@ -209,7 +223,7 @@
             if (!meta) {
                 $("widget").dataset.state = "empty";
                 $("label").textContent = selected.automatic ? "Cooling" : "Manual sensor";
-                $("value").textContent = "--";
+                $("value").textContent = "--"; tubes("--");
                 $("units").textContent = "";
                 $("device").textContent = selected.automatic ? "No cooling sensor" : selected.id ? "Selected sensor unavailable" : "Choose a sensor in iCUE";
                 return;
@@ -225,7 +239,7 @@
             currentMeta = null;
             selectedId = "";
             $("widget").dataset.state = "offline";
-            $("value").textContent = "--";
+            $("value").textContent = "--"; tubes("--");
             $("units").textContent = "";
             $("device").textContent = "Sensor unavailable. Retrying…";
         } finally {

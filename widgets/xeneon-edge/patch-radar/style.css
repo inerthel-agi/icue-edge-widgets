@@ -1,0 +1,20 @@
+/* Patch Radar, a telex: announcements print on paper tape strips in a typewriter face; unread strips carry a
+   red edge, patch notes a small PATCH stamp. */
+:root { --paper: #efe6cf; --ink: #1d1a14; --cond: Bahnschrift, "Arial Narrow", sans-serif; }
+#widget { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--x-bg) 70%, #4a4f55), var(--x-bg)); }
+.hd { display: flex; justify-content: space-between; margin: 0; font: 700 var(--x-label-size) var(--cond); letter-spacing: .26em; color: var(--x-text); }
+.hd span { color: var(--x-accent); letter-spacing: .12em; }
+.tapes { display: grid; align-content: start; gap: 10px; min-height: 0; overflow: hidden; }
+.tape { position: relative; padding: 10px 18px 10px 30px; background: var(--paper); color: var(--ink); cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,.35);
+    -webkit-mask: radial-gradient(circle 4px at 13px 50%, transparent 98%, #000); mask: radial-gradient(circle 4px at 13px 50%, transparent 98%, #000); transition: transform .12s ease; }
+.tape:active { transform: translateX(4px); }
+.tape p { margin: 0; font: 600 calc(var(--x-label-size) * 0.85) "Courier New", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tape b { font-weight: 800; } .tape em { float: right; margin-left: 12px; font-style: normal; color: #6b5f48; }
+.tape small { display: block; margin-top: 4px; font: 500 calc(var(--x-label-size) * 0.72) "Courier New", monospace; color: #4d4535; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tape.new::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--x-accent); }
+.tape.patch::after { content: "PATCH"; position: absolute; right: 14px; bottom: 6px; padding: 0 6px; border: 2px solid #c4372b; color: #c4372b; font: 800 12px var(--cond); letter-spacing: .14em; transform: rotate(-6deg); opacity: .85; }
+.tape:not(.new) { opacity: .62; }
+.empty { margin: 0; color: var(--x-muted); font-size: var(--x-label-size); }
+/* S (840 x 344): titles only. */
+@media (max-height: 450px) { .tape small { display: none; } .tape { padding: 8px 16px 8px 28px; } .tape.patch::after { display: none; } }
+@media (prefers-reduced-motion: reduce) { .tape { transition: none; } }

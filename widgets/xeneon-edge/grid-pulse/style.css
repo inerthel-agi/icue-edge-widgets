@@ -1,0 +1,26 @@
+/* Grid Pulse, a power-station mimic board: enamel-green panel, an indicator lamp for the verdict, the
+   carbon figure in DIN, the mix as coloured bars like a control-room load diagram. */
+:root { --lamp: #3dff7a; --cond: Bahnschrift, "Arial Narrow", sans-serif; }
+#widget { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: calc(var(--x-gap) * 1.6); align-items: center;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--x-bg) 80%, #3a4a42), var(--x-bg)); }
+#widget[data-level="mid"] { --lamp: #ffc23d; } #widget[data-level="high"] { --lamp: #ff5a3d; }
+p { margin: 0; }
+.hero { display: grid; gap: 8px; min-width: 0; }
+.lamp { display: flex; align-items: center; gap: 12px; font: 700 var(--x-label-size) var(--cond); letter-spacing: .12em; color: var(--lamp); }
+.lamp i { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 16px var(--lamp); }
+.co2 { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.co2 b { font: 700 clamp(72px, 30vh, 220px) / 0.92 var(--cond); font-variant-numeric: tabular-nums; color: var(--x-text); }
+.co2 span { font: 600 var(--x-label-size) var(--cond); color: var(--x-muted); }
+.sub { color: var(--x-muted); font-size: calc(var(--x-label-size) * 0.85); }
+.mix { display: grid; gap: 8px; min-width: 0; }
+.t { font: 700 calc(var(--x-label-size) * 0.7) var(--cond); letter-spacing: .18em; color: var(--x-muted); text-transform: uppercase; }
+.bar { display: flex; height: clamp(24px, 7vh, 48px); border-radius: 4px; overflow: hidden; box-shadow: inset 0 0 0 2px rgba(0,0,0,.4); }
+.bar i { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: calc(var(--x-label-size) * 0.8); font-variant-numeric: tabular-nums; }
+.legend li::before { content: ""; display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 2px; background: var(--c); }
+.curve { width: 100%; height: clamp(40px, 16vh, 120px); }
+.curve path { fill: none; stroke: var(--x-text); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.curve .best { fill: color-mix(in srgb, var(--lamp) 22%, transparent); }
+/* S (840 x 344): hero and the bar. */
+@media (max-height: 450px) and (min-aspect-ratio: 1/1) { .curve, #curveTitle, .sub { display: none; } }
+@media (max-aspect-ratio: 1/1) { #widget { grid-template-columns: minmax(0, 1fr); align-content: center; } .co2 b { font-size: clamp(72px, 22vw, 180px); } }

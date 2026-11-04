@@ -684,3 +684,16 @@ button.time { min-height: 44px; padding: 0; border: 0; background: none; font-fa
 @media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 3/2) and (min-height: 451px) {
     :root[data-style] .art-frame { border-radius: 0; border: 0; box-shadow: none; }
 }
+
+/* State plate (shared look across widgets). */
+.empty { grid-template-columns: auto minmax(0, 1fr); place-content: center start; justify-items: start; align-items: center; column-gap: 28px; padding: 0 9%; text-align: left; }
+.empty::before { content: ""; grid-row: 1 / 4; width: clamp(56px, 14vmin, 96px); aspect-ratio: 1; border-radius: 24%; background: rgba(232,196,119,.16) no-repeat center / 54% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23e8c477' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M17 6v10M31 6v10M12 16h24v8a12 12 0 0 1-24 0zM24 36v8'/%3E%3C/svg%3E"); }
+.empty-title { font-family: Bahnschrift, "Segoe UI", sans-serif; }
+.empty-sub { max-width: 40ch; }
+.empty::after {
+    content: ""; position: absolute; left: 8%; right: 8%; bottom: 7%; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #e8c477, transparent) no-repeat -40% 0 / 40% 100%, rgba(255,255,255,.12);
+    animation: plate-retry 2.4s ease-in-out infinite;
+}
+@keyframes plate-retry { to { background-position: 140% 0, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .empty::after { animation: none; } }
