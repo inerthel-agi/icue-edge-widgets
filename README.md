@@ -1,6 +1,6 @@
 # icue-edge-widgets
 
-Widgets for CORSAIR iCUE on Windows: 29 for the XENEON EDGE touch screen and 5 for pump LCDs, plus [iCUE Edge Companion](companion/README.md), the tray application that feeds sixteen of them with local data (AI usage, music, games, network, mixer, stocks, screen time).
+Widgets for CORSAIR iCUE on Windows: 30 for the XENEON EDGE touch screen and 5 for pump LCDs, plus [iCUE Edge Companion](companion/README.md), the tray application that feeds sixteen of them with local data (AI usage, music, games, network, mixer, stocks, screen time) and gives Rig Monitor its RAM and VRAM figures.
 
 <img src="docs/screenshots/rig-pet.png" width="820" alt="Rig Pet, 2536 × 696" />
 
@@ -38,7 +38,7 @@ The packaging script finds `icuewidget` on PATH or under `%LOCALAPPDATA%\Program
 | --- | --- | --- |
 | `rig-pet` | A pet that reacts to CPU and GPU heat, with needs, levels, a room with the real weather and 39 mascots | iCUE Sensors plugin |
 | `system-pulse` | CPU, GPU, RAM and VRAM load rings with temperatures and the last minute | iCUE Sensors plugin |
-| `rig-monitor` | A graph of the last 3 minutes per part (CPU, GPU, memory, cooling) with min, average and peak; show any sections you like | iCUE Sensors plugin |
+| `rig-monitor` | A graph of the last 3 minutes per part (CPU, GPU, memory, cooling) with the part's brand name, min, average and peak; one to four sections | iCUE Sensors plugin; companion for RAM and VRAM in GB and for graphs that continue while the widget is hidden |
 | `flip-clock` | Flip, nixie or VFD clock | — |
 | `rain-window` | The weather outside as a window, with the time | Internet (Open-Meteo) |
 | `weather-now`, `daily-brief` | Current weather, sunrise and sunset; the day at a glance | Internet (Open-Meteo) |
@@ -89,6 +89,15 @@ Live data at capture time for weather, GitHub and the ISS; demo values for senso
 
 <img src="docs/screenshots/now-playing-xl.png" width="820" alt="Now Playing, 2536 × 696" /><br>Now Playing, 2536 × 696: player mark, cover colours, synced lyrics (tap a line to seek), shuffle, repeat, visualiser, volume and sleep timer.
 
+### iCUE Edge Companion
+
+Companion 0.1.8 with live data. Account names, the Spotify client ID and the computer name are masked.
+
+| | |
+| --- | --- |
+| <img src="docs/screenshots/companion/overview.png" width="400" alt="Companion Overview page" /><br>Overview: media and the layout of both screens | <img src="docs/screenshots/companion/widgets.png" width="400" alt="Companion Widgets page" /><br>Widgets: install, update, search and filter |
+| <img src="docs/screenshots/companion/community.png" width="400" alt="Companion Community page" /><br>Community: widgets shared by other people on GitHub | <img src="docs/screenshots/companion/spotify.png" width="400" alt="Companion Spotify page" /><br>Spotify: connection and playback status |
+
 ## Configuration
 
 All settings are made in iCUE, in the widget's properties. The main ones:
@@ -107,6 +116,7 @@ All settings are made in iCUE, in the widget's properties. The main ones:
 | ISS Horizon | `issMapStyle` | dark; also day, satellite, auto |
 | Network Pulse | `pingTarget`, `netUnits` | cloudflare (also google, quad9, off), bits |
 | Stocks | `stockSymbols` | `AAPL,NVDA,MSFT,TSLA,CRSR,^GSPC` |
+| Rig Monitor | `showCpu`, `showGpu`, `showMem`, `showCool` | all on |
 
 The companion has its own settings window; see [companion/README.md](companion/README.md).
 
@@ -136,6 +146,8 @@ cd companion\companion; cargo test --lib
 - Spotify can suspend an app that sends too many requests, for hours. The companion respects the wait, also across restarts, and reads the Web API less often when the Spotify app runs on the PC; queue, volume, shuffle and repeat are unavailable during a wait.
 - Weather (Open-Meteo), GitHub, ISS (Where the ISS At, OpenStreetMap or Esri tiles, Leaflet from its CDN) and stock quotes (Yahoo Finance, unofficial) need internet access and depend on those services. ISS pass estimates use a simplified orbital model.
 - The companion executable is not code-signed: Windows SmartScreen may warn on first launch.
+- The companion's API listens on `127.0.0.1:47821` only. It answers iCUE and refuses requests from remote web pages.
+- iCUE has no RAM sensor and its GPU "Frame Buffer" is the memory controller's load, so Rig Monitor shows RAM and VRAM in use only while the companion runs.
 - The Claude quota endpoint and the Claude and Codex log formats are internal interfaces and can change.
 
 ## License
