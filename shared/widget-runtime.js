@@ -123,10 +123,24 @@
         if (Number.isFinite(t)) css.setProperty("--x-bg-opacity", String(Math.max(0, Math.min(1, t / 100))));
     }
 
+    // iCUE may keep calling the packaged no-op icueEvents bridge instead of the widget's own handlers, so a
+    // changed setting (a city, a repo list) would never reach the widget. Compare the values each second
+    // and call onDataUpdated when one changed.
+    let lastSettings = null;
+    function watchSettings() {
+        if (window.__fitHost || parentHost) return;   // the editor-fit frames hand settings on themselves
+        let now;
+        try { now = JSON.stringify(settingNames().map(n => (n in window ? window[n] : null))); } catch (_) { return; }
+        if (lastSettings !== null && now !== lastSettings) {
+            try { window.icueEvents && window.icueEvents.onDataUpdated && window.icueEvents.onDataUpdated(); } catch (_) {}
+        }
+        lastSettings = now;
+    }
+
     // Applied on load and re-applied so edits in iCUE settings show without a reload.
     if (typeof CSS !== "undefined" && CSS.supports) {
         document.addEventListener("DOMContentLoaded", personalize);
-        setInterval(personalize, 1000);
+        setInterval(() => { personalize(); watchSettings(); }, 1000);
     }
 
     window.WidgetRuntime = { storage, requestJson, onResume, freshness, personalize };
