@@ -220,6 +220,10 @@ async fn set_renew_claude_token(app: AppHandle, enabled: bool) {
 
 #[tauri::command]
 async fn set_autostart(enabled: bool) -> bool {
+    write_autostart(enabled)
+}
+
+fn write_autostart(enabled: bool) -> bool {
     let reg = |args: &[&str]| hidden(std::process::Command::new(util::system_exe("reg.exe")).args(args)).output().is_ok_and(|o| o.status.success());
     let ok = if enabled {
         let Ok(exe) = std::env::current_exe() else { return false };
@@ -551,6 +555,12 @@ fn main() {
             let (handle, s) = (app.handle().clone(), Arc::clone(&shared));
             std::thread::spawn(move || forward_to_windows(handle, s));
             build_tray(app.handle(), Arc::clone(&shared))?;
+            // A moved or replaced exe would leave autostart launching the old one: point it at this exe.
+            std::thread::spawn(|| {
+                if autostart_enabled() {
+                    let _ = write_autostart(true);
+                }
+            });
             Ok(())
         })
         .build(tauri::generate_context!())
