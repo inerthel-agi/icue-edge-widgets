@@ -179,7 +179,7 @@
     // ---------- connection ----------
     const link = { state: "connecting", message: "" };
     let onUpdate = () => {};
-    let latest = null;
+    let latest = null, latestWire = null;
     let generation = 0;
 
     function setLink(state, message) {
@@ -190,6 +190,7 @@
     function receive(wire) {
         if (!wire || wire.schema !== "ai-usage/1") return setLink("error", "Unknown data version: update iCUE Edge Companion.");
         latest = toView(wire);
+        latestWire = wire;
         setLink("live");
     }
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -295,12 +296,21 @@
     }
 
     // CSP forbids inline style attributes: bar widths are applied through the CSSOM after rendering.
-    function applyWidths(root) {
-        root.querySelectorAll("[data-w]").forEach((el) => { el.style.width = Math.max(0, Math.min(100, Number(el.dataset.w))) + "%"; });
+    // `from` (the widths the same bars had before this render, empty on a new page) makes the bars grow from
+    // there; without it the widths are set at once, as the tray card and the widgets expect.
+    function applyWidths(root, from) {
+        const bars = [...root.querySelectorAll("[data-w]")];
+        const target = (el) => Math.max(0, Math.min(100, Number(el.dataset.w)));
+        const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const animate = Array.isArray(from) && !still && (from.length === 0 || from.length === bars.length);
+        bars.forEach((el, i) => { el.style.width = (animate ? Math.min(100, from[i] || 0) : target(el)) + "%"; });
+        if (!animate) return;
+        void root.offsetWidth;
+        requestAnimationFrame(() => bars.forEach((el) => { el.style.width = target(el) + "%"; }));
     }
 
     window.Usage = {
-        start, refresh, invoke, applyWidths, LOGO, limitBar, trend, forecast, contrast, get view() { return latest; }, link, TZ,
+        start, refresh, invoke, applyWidths, LOGO, limitBar, trend, forecast, contrast, get view() { return latest; }, get wire() { return latestWire; }, link, TZ,
         esc, big, dur, resetText, ago, level, tightest, nf,
     };
 })();

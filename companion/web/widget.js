@@ -16,7 +16,10 @@
   // iCUE "Widget Personalization" settings (globals set by iCUE); invalid or missing values keep the defaults.
   function theme() {
     const css = document.documentElement.style;
-    const color = (name, v) => { if (typeof v === "string" && CSS.supports("color", v)) css.setProperty(name, v); };
+    const DEFAULTS = ["#080a0b", "#f2f3ed", "#a8d5ba"]; // the iCUE defaults: not a choice, so the Style palette shows
+    const color = (name, v) => {
+      if (typeof v === "string" && CSS.supports("color", v) && !DEFAULTS.includes(v.trim().toLowerCase())) css.setProperty(name, v); else css.removeProperty(name);
+    };
     color("--bg", typeof backgroundColor !== "undefined" ? backgroundColor : null);
     color("--text", typeof textColor !== "undefined" ? textColor : null);
     color("--accent", typeof accentColor !== "undefined" ? accentColor : null);

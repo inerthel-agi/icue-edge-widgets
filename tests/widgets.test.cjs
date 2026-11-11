@@ -647,3 +647,11 @@ test('companion window scripts parse (a broken quote leaves the whole window bla
         assert.doesNotThrow(() => new vm.Script(fs.readFileSync(path.join(dir, f), 'utf8'), { filename: f }), f);
     }
 });
+
+test('usage widgets carry the companion/web copies (sync-widgets.ps1 keeps web/ the single source)', () => {
+    const read = (dir, f) => fs.readFileSync(path.join(dir, f), 'utf8').replace(/\r\n/g, '\n');
+    const web = path.join(root, 'companion/web');
+    for (const w of ['claude-usage', 'codex-usage']) {
+        for (const f of ['core.js', 'widget.js', 'widget.css']) assert.equal(read(widgetDir(w), f), read(web, f), `${w}/${f} drifted from companion/web`);
+    }
+});

@@ -88,6 +88,8 @@ def folder_widgets(it, out):
         return
     commit = head["sha"]
     tree = gh(f"repos/{name}/git/trees/{commit}?recursive=1") or {}
+    if tree.get("truncated"):
+        print(f"  warning: {name} tree truncated, some widgets may be missing", file=sys.stderr)
     blobs = [t for t in tree.get("tree", []) if t.get("type") == "blob"]
     manifests = [t["path"] for t in blobs if t["path"].split("/")[-1] == "manifest.json"
                  and not re.search(r"(^|/)(node_modules|vendor|docs?|\.github|test|tests|examples?)/", t["path"])]
@@ -247,10 +249,14 @@ def main():
     repos = {}
     for q in QUERIES:
         d = gh("search/repositories?per_page=100&q=" + urllib.request.quote(q)) or {}
+        if d.get("total_count", 0) > len(d.get("items", [])):
+            print(f"  warning: {q!r} found {d['total_count']} repositories, read {len(d.get('items', []))}", file=sys.stderr)
         for it in d.get("items", []):
             if it["full_name"] != OWN and not it.get("fork") and not it.get("archived") and not it.get("private"):
                 repos[it["full_name"]] = it
         time.sleep(2.5)  # search allows 30 requests a minute
+    if not repos:  # every search failed (rate limit, bad token): keep the published index
+        sys.exit("no repository search returned a result; index not written")
     widgets = []
     for name in sorted(repos):
         n = len(widgets)
@@ -271,6 +277,12 @@ def main():
     for w in widgets:
         del w["_order"]
     widgets.sort(key=lambda w: (-w["stars"], w["name"].lower()))
+    try:
+        before = len(json.loads(Path(args.out).read_text(encoding="utf-8")).get("widgets", []))
+    except (OSError, ValueError):
+        before = 0  # first run, or an unreadable index
+    if len(widgets) * 2 < before:  # a partial failure: keep the published index
+        sys.exit(f"only {len(widgets)} widgets found, {before} before; index not written")
     try:
         market = marketplace()
     except Exception as e:  # the Marketplace changed or is down: keep the last list rather than none

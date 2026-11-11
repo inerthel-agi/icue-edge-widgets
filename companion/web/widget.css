@@ -4,7 +4,7 @@
   color-scheme: dark;
   /* --bg, --text, --accent and --bg-opacity follow the iCUE "Widget Personalization" settings.
      Panels and lines are tints of the text colour, so they suit any background. */
-  --bg: #111111; --text: #f0f0f0; --accent: #f0f0f0; --bg-opacity: 1;
+  --bg: #080a0b; --text: #f2f3ed; --accent: #a8d5ba; --bg-opacity: 1;
   --panel: color-mix(in srgb, var(--text) 5%, transparent); --panel-2: color-mix(in srgb, var(--text) 9%, transparent);
   --line: color-mix(in srgb, var(--text) 10%, transparent); --track: color-mix(in srgb, var(--text) 16%, transparent);
   --muted: color-mix(in srgb, var(--text) 70%, transparent); --faint: color-mix(in srgb, var(--text) 58%, transparent);
@@ -103,3 +103,30 @@ body.short .more .lim ~ .lim, body.short .fact small { display: none; }
 body.tiny .more { display: none; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Style setting: every style except the default feeds the shared palette into this widget. */
+:root[data-style]:not([data-style="instrument"]) { --bg: var(--x-bg); --text: var(--x-text); --accent: var(--x-accent); }
+
+/* Style setting, shape: radius, font, casing and bars follow the --s-* tokens of shared/widget-styles.css. */
+:root[data-style]:not([data-style="instrument"]) { font-family: var(--s-font, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif); }
+:root[data-style]:not([data-style="instrument"]) .panel { border: var(--s-card-border, 1px solid var(--line)); border-radius: var(--s-radius, 18px); background: var(--s-bg-img, none), var(--panel); }
+:root[data-style]:not([data-style="instrument"]) .group, :root[data-style]:not([data-style="instrument"]) .details-btn, :root[data-style]:not([data-style="instrument"]) .alert { border-radius: min(var(--s-radius, 14px), 20px); }
+:root[data-style]:not([data-style="instrument"]) .pill { border-radius: var(--s-pill, 999px); text-transform: var(--s-badge-case, none); letter-spacing: var(--s-badge-track, 0); font-family: var(--s-label-font, inherit); }
+:root[data-style]:not([data-style="instrument"]) .head h1, :root[data-style]:not([data-style="instrument"]) .figure b, :root[data-style]:not([data-style="instrument"]) .fact b, :root[data-style]:not([data-style="instrument"]) .lim b { font-weight: var(--s-num-w, 600); font-family: var(--s-num-font, inherit); }
+:root[data-style]:not([data-style="instrument"]) .fact span, :root[data-style]:not([data-style="instrument"]) .lim span, :root[data-style]:not([data-style="instrument"]) .reset, :root[data-style]:not([data-style="instrument"]) .eta, :root[data-style]:not([data-style="instrument"]) .group-title { text-transform: var(--s-label-case, none); letter-spacing: var(--s-label-track, 0); font-family: var(--s-label-font, inherit); }
+:root[data-style]:not([data-style="instrument"]) .bar { height: var(--s-bar-h, 12px); border-radius: var(--s-bar-r, 999px); background: var(--s-bar-track, var(--track)); }
+:root[data-style]:not([data-style="instrument"]) .lim .bar { height: calc(var(--s-bar-h, 12px) * 0.6); }
+:root[data-style]:not([data-style="instrument"]) .bar > i { border-radius: var(--s-bar-r, 999px); }
+:root[data-style]:not([data-style="instrument"]) .bar:not(.warn):not(.danger) > i { background: var(--s-bar-fill, var(--bar, var(--accent))); }
+
+/* State plate (shared look across widgets): mark, what happened, and a sweep showing it keeps trying. */
+.message { position: relative; grid-template-columns: auto minmax(0, 1fr); place-content: center start; justify-items: start; align-items: center; column-gap: 28px; padding: 0 9%; text-align: left; }
+.message .mark { transform: scale(1.6); transform-origin: center; margin: 0 14px; }
+.message p { max-width: 34ch; color: var(--text, #f2f3ed); font: 600 clamp(20px, 3.4vw, 30px) / 1.3 Bahnschrift, "Segoe UI", sans-serif; }
+.message::after {
+    content: ""; position: absolute; left: 8%; right: 8%; bottom: 7%; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #e8c477, transparent) no-repeat -40% 0 / 40% 100%, rgba(255,255,255,.12);
+    animation: plate-retry 2.4s ease-in-out infinite;
+}
+@keyframes plate-retry { to { background-position: 140% 0, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .message::after { animation: none; } }
