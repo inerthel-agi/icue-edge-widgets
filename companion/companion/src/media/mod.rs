@@ -314,9 +314,12 @@ pub fn merge(st: &mut State, observed: Vec<Observed>, current_app: Option<String
         changed = true;
     }
     if let Some(m) = st.manual.clone() {
-        if st.missing_name.is_none() && !next.iter().any(|s| s.id == m) {
+        let back = next.iter().any(|s| s.id == m);
+        if st.missing_name.is_none() && !back {
             // Always Some: a None here (session already cleared) would re-trigger on every poll.
             st.missing_name = Some(st.find(&m).map_or_else(|| "Player".into(), |s| app_name(&s.app_id)));
+            changed = true;
+        } else if back && st.missing_name.take().is_some() {
             changed = true;
         }
     }
@@ -480,8 +483,10 @@ pub fn due_sleep(now: u64) -> Option<Target> {
     }
     st.sleep_at = None;
     st.publish(now);
+    // A manually picked session may be paused while another one plays.
     pick(&st)
         .filter(|s| s.playback == Playback::Playing)
+        .or_else(|| st.sessions.iter().find(|s| s.playback == Playback::Playing))
         .map(|s| Target { app_id: s.app_id.clone(), ordinal: s.ordinal, action: Action::Toggle, start_ticks: s.timeline.map_or(0, |t| t.start_ticks) })
 }
 
@@ -730,6 +735,17 @@ mod tests {
         assert!(due_sleep(999).is_none());
         assert_eq!(due_sleep(1_000).map(|t| t.action), Some(Action::Toggle));
         assert!(due_sleep(2_000).is_none());
+        // A paused session picked by hand: the timer pauses the one that plays.
+        {
+            let mut g = lock();
+            let mut paused = obs("Video", "", Thumb::Missing);
+            paused.app_id = "Brave.X".into();
+            paused.playback = Playback::Paused;
+            merge(&mut g, vec![obs("One", "", Thumb::Missing), paused], None, 0);
+            g.manual = Some(g.sessions[1].id.clone());
+            g.sleep_at = Some(3_000);
+        }
+        assert_eq!(due_sleep(3_000).map(|t| t.app_id), Some("Spotify.exe".into()));
     }
 
     #[test]
@@ -745,6 +761,10 @@ mod tests {
         let snap = snapshot(&st);
         assert_eq!(snap["selection"]["missing"], true);
         assert_eq!(snap["selection"]["missingName"], "Brave");
+        let mut back = obs("Video", "", Thumb::Missing);
+        back.app_id = "Brave.X".into();
+        merge(&mut st, vec![obs("One", "", Thumb::Missing), back], None, 200);
+        assert_eq!(snapshot(&st)["selection"]["missingName"], Value::Null);
     }
 
     #[test]

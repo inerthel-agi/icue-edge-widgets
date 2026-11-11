@@ -300,7 +300,13 @@ pub fn lyrics_for(title: &str, artist: &str, album: &str, secs: u64, current: &d
 /// None only when no source could be reached.
 fn find_lyrics_by(title: &str, artist: &str, album: &str, secs: u64, current: &dyn Fn() -> bool) -> Option<Lyrics> {
     for wait in [0, 5, 15, 30, 60, 60, 60] {
-        std::thread::sleep(Duration::from_secs(wait));
+        // Checked every second: a track change must not wait behind the old track's retries.
+        for _ in 0..wait {
+            if !current() {
+                return None;
+            }
+            std::thread::sleep(Duration::from_secs(1));
+        }
         if !current() {
             return None;
         }
@@ -509,6 +515,9 @@ fn fetch_profile() {
         if !product.is_empty() && product != "premium" {
             st.status = Status::PremiumRequired;
             st.message = Some("Spotify Premium is required for playback control.".into());
+        } else if product == "premium" && st.status == Status::PremiumRequired {
+            st.status = Status::Connected;
+            st.message = None;
         }
         st.account = Some((name, product));
         publish(&mut st);
@@ -537,8 +546,9 @@ fn poll_once(last_devices: &mut u64) -> Duration {
         }
         Ok(v) => {
             let player = v.as_ref().map(|v| player_from(v, now));
-            let (spawn, wait, reshuffled) = {
+            let (spawn, wait, reshuffled, restore) = {
                 let mut st = lock();
+                let restore = take_restore(&mut st.restore_volume, player.as_ref());
                 let reshuffled = matches!((&st.player, &player), (Some(a), Some(b)) if (a.shuffle, a.smart_shuffle) != (b.shuffle, b.smart_shuffle));
                 if st.status == Status::Connecting {
                     st.status = Status::Connected;
@@ -578,8 +588,13 @@ fn poll_once(last_devices: &mut u64) -> Duration {
                     (Some(p), true) if p.playing => 15,
                     (_, true) => 30,
                 };
-                (spawn, Duration::from_secs(wait), reshuffled)
+                (spawn, Duration::from_secs(wait), reshuffled, restore)
             };
+            if let Some(v) = restore {
+                if let Err(ApiError::RateLimited(_)) = call_api("PUT", &format!("/me/player/volume?volume_percent={v}"), None) {
+                    lock().restore_volume.get_or_insert(v);
+                }
+            }
             // Up next: at every track change or shuffle / Smart Shuffle toggle, and every 30 s while playing (the user may edit the queue).
             let playing = player.as_ref().is_some_and(|p| p.playing);
             if spawn.is_some() || reshuffled || (playing && now >= QUEUE_AT.load(Ordering::Relaxed) + QUEUE_EVERY_MS) {
@@ -609,13 +624,16 @@ pub fn run() {
     super::init();
     let mut last_devices = 0u64;
     let mut profiled_for: Option<String> = None;
+    let mut profiled_at = 0u64;
     loop {
         let status = lock().status;
         // Reading playback works without Premium, so keep polling in that state too.
         let wait = if matches!(status, Status::Connected | Status::Connecting | Status::PremiumRequired) {
             let who = lock().client_id.clone();
-            if profiled_for != who {
+            // An account upgraded to Premium is noticed within the hour.
+            if profiled_for != who || (status == Status::PremiumRequired && now_ms() >= profiled_at + 3600 * SEC) {
                 profiled_for = who;
+                profiled_at = now_ms();
                 fetch_profile();
             }
             poll_once(&mut last_devices)
@@ -626,6 +644,19 @@ pub fn run() {
         let st = lock();
         let (mut st, _) = HUB.changed.wait_timeout_while(st, wait, |s| !s.poke).unwrap_or_else(|e| e.into_inner());
         st.poke = false;
+    }
+}
+
+/// The volume a muted skip left unrestored, once a reading shows the device still at 0; dropped when
+/// another volume was set meanwhile, kept while no device volume is known.
+fn take_restore(pending: &mut Option<u8>, player: Option<&Player>) -> Option<u8> {
+    match player.and_then(|p| p.device.as_ref()).and_then(|d| d.volume) {
+        Some(0) => pending.take(),
+        Some(_) => {
+            *pending = None;
+            None
+        }
+        None => None,
     }
 }
 
@@ -650,7 +681,9 @@ pub fn execute(call: &Call) -> Result<(), (u16, &'static str)> {
         std::thread::sleep(Duration::from_millis(250));
         if volume(v).is_err() {
             std::thread::sleep(Duration::from_secs(1));
-            let _ = volume(v);
+            if volume(v).is_err() {
+                lock().restore_volume = Some(v);
+            }
         }
     }
     let mut st = lock();
@@ -697,6 +730,20 @@ mod tests {
         assert_eq!(ad.item.unwrap().title, "Advertisement");
         let fixed = device_from(&json!({ "id": "p", "supports_volume": false, "volume_percent": 30 }));
         assert_eq!(fixed.volume, None);
+    }
+
+    #[test]
+    fn unrestored_volume_waits_for_a_muted_reading() {
+        let at = |v: Option<u8>| Player { device: Some(Device { volume: v, ..Default::default() }), ..Default::default() };
+        let mut pending = Some(40);
+        assert_eq!(take_restore(&mut pending, None), None);
+        assert_eq!(take_restore(&mut pending, Some(&at(None))), None);
+        assert_eq!(pending, Some(40), "kept while no device volume is known");
+        assert_eq!(take_restore(&mut pending, Some(&at(Some(0)))), Some(40));
+        assert_eq!(pending, None);
+        pending = Some(40);
+        assert_eq!(take_restore(&mut pending, Some(&at(Some(25)))), None);
+        assert_eq!(pending, None, "a volume set meanwhile wins");
     }
 
     #[test]

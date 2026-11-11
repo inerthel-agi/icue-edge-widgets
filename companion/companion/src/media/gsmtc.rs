@@ -155,7 +155,7 @@ pub fn execute(target: &Target) -> Result<bool> {
                 Action::Toggle => session.TryTogglePlayPauseAsync()?.get(),
                 Action::Next => session.TrySkipNextAsync()?.get(),
                 Action::Prev => session.TrySkipPreviousAsync()?.get(),
-                Action::SeekMs(ms) => session.TryChangePlaybackPositionAsync(target.start_ticks + ms as i64 * 10_000)?.get(),
+                Action::SeekMs(ms) => session.TryChangePlaybackPositionAsync(target.start_ticks.saturating_add(i64::try_from(ms).unwrap_or(i64::MAX).saturating_mul(10_000)))?.get(),
                 Action::Shuffle(on) => session.TryChangeShuffleActiveAsync(on)?.get(),
                 Action::Repeat(mode) => session.TryChangeAutoRepeatModeAsync(MediaPlaybackAutoRepeatMode(mode as i32))?.get(),
             };

@@ -155,6 +155,8 @@ pub struct State {
     pub queue_art: Vec<Option<(&'static str, Arc<Vec<u8>>)>>,
     pub last_seen: u64,
     pub rate_limited_until: Option<u64>,
+    /// Volume a muted multi-track skip could not restore (a 429 mid-skip); the poller restores it once Spotify answers again.
+    pub restore_volume: Option<u8>,
     pub pending: Option<auth::Pending>,
     pub tokens: Option<auth::Tokens>,
     /// Set by commands and sign-in so the poller runs at once.
@@ -253,7 +255,9 @@ pub fn set_local(local: Option<Local>, now: u64) {
 pub fn local_command(st: &State, body: &Value) -> Option<Value> {
     let l = st.local.as_ref().filter(|_| banned(st))?;
     let cmd = body["cmd"].as_str().filter(|c| matches!(*c, "playPause" | "next" | "prev"))?;
-    Some(json!({ "cmd": cmd, "sessionId": l.session_id, "rev": l.rev }))
+    // The widget's rev for local data is LOCAL_REV + l.rev; any other rev names a track no longer shown, so media::resolve refuses the skip.
+    let rev = body["rev"].as_u64().map_or(l.rev, |r| r.checked_sub(LOCAL_REV).unwrap_or(u64::MAX));
+    Some(json!({ "cmd": cmd, "sessionId": l.session_id, "rev": rev }))
 }
 
 /// The widget's snapshot built from the Spotify app's Windows session (no queue, devices, volume or modes).
@@ -556,6 +560,29 @@ mod tests {
         assert!(local_command(&st, &json!({ "cmd": "volume", "value": 10 })).is_none());
         let rev = snap["item"]["rev"].as_u64().unwrap();
         assert!(art_for(&st, rev).is_some() && art_for(&st, rev + 1).is_none());
+    }
+
+    #[test]
+    fn local_skips_refuse_a_track_the_widget_no_longer_shows() {
+        use crate::media::{self, Caps, Meta, Modes, Observed, Playback, Thumb};
+        let mut m = media::State::new();
+        let o = Observed {
+            app_id: "Spotify.exe".into(), ordinal: 0, meta: Meta { title: "B".into(), ..Default::default() }, playback: Playback::Playing,
+            timeline: None, caps: Caps { play_pause: true, next: true, ..Default::default() }, modes: Modes::default(), thumb: Thumb::Missing,
+        };
+        media::merge(&mut m, vec![o], None, 0);
+        let (id, rev) = (m.sessions[0].id.clone(), m.sessions[0].rev);
+        let mut st = connected();
+        st.rate_limited_until = Some(now_ms() + 60 * SEC);
+        st.local = Some(Local {
+            session_id: id, rev, title: "B".into(), artist: String::new(), album: String::new(), playing: true, position_ms: 0,
+            duration_ms: 0, updated_at: 0, caps: (true, true, false), art: None, lyrics: Lyrics::None,
+        });
+        let run = |body: Value| media::resolve(&m, &local_command(&st, &body).unwrap(), 0).map(|t| t.action);
+        assert_eq!(run(json!({ "cmd": "next", "rev": LOCAL_REV + rev })), Ok(media::Action::Next));
+        assert_eq!(run(json!({ "cmd": "next", "rev": LOCAL_REV + rev - 1 })), Err((409, "track_changed")));
+        assert_eq!(run(json!({ "cmd": "next", "rev": 7 })), Err((409, "track_changed")), "a Web API rev is not this track");
+        assert_eq!(run(json!({ "cmd": "next" })), Ok(media::Action::Next), "no rev: as before");
     }
 
     #[test]

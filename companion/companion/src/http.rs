@@ -15,8 +15,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 pub const PORT: u16 = 47821;
-const MAX_CONNECTIONS: usize = 24;
-const MAX_STREAMS: usize = 8;
+const MAX_CONNECTIONS: usize = 32;
+const MAX_STREAMS: usize = 16;
 const MAX_HEAD: usize = 16 * 1024;
 const MAX_BODY: usize = 1024;
 const MAX_EVENT: usize = 512 * 1024;
@@ -481,7 +481,8 @@ fn handle(mut stream: TcpStream, shared: Shared) {
         ("POST", "/api/spotify/command") if req.json().is_some_and(|b| spotify::local_command(&spotify::lock(), &b).is_some()) => {
             // Spotify rate-limits the app: the command goes to the Spotify app through Windows instead.
             let body = req.json().and_then(|b| spotify::local_command(&spotify::lock(), &b)).unwrap_or_default();
-            match media::resolve(&media::lock(), &body, now_ms()).map(|t| media::execute(&t)) {
+            let target = media::resolve(&media::lock(), &body, now_ms());
+            match target.map(|t| media::execute(&t)) {
                 Ok(Ok(accepted)) => respond(&mut stream, 200, &headers, format!("{{\"ok\":{accepted}}}").as_bytes()),
                 Ok(Err(_)) => respond(&mut stream, 503, &headers, b"{\"error\":\"player_unreachable\"}"),
                 Err((code, error)) => respond(&mut stream, code, &headers, format!("{{\"error\":\"{error}\"}}").as_bytes()),

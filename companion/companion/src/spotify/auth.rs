@@ -156,11 +156,12 @@ pub fn load() -> Option<(String, Option<String>)> {
 fn disconnect_path(path: &std::path::Path) {
     let mut st = lock();
     match std::fs::remove_file(path) {
+        // The ban outlives the account: reconnecting during it must not call Spotify at once.
         Ok(()) => {
-            *st = State { version: st.version, ..State::default() };
+            *st = State { version: st.version, rate_limited_until: st.rate_limited_until, ..State::default() };
         }
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            *st = State { version: st.version, ..State::default() };
+            *st = State { version: st.version, rate_limited_until: st.rate_limited_until, ..State::default() };
         }
         Err(_) => {
             st.status = Status::Error;
@@ -283,7 +284,8 @@ pub fn callback(query: &str) -> (u16, &'static str) {
 
 fn fail(message: &'static str) -> (u16, &'static str) {
     let mut st = lock();
-    st.status = Status::Error;
+    // A failed re-link keeps the account that is already signed in (tokens survive a sign-in attempt).
+    st.status = if st.tokens.is_some() { Status::Connected } else { Status::Error };
     st.message = Some(message.into());
     publish(&mut st);
     (200, message)
