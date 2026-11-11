@@ -382,7 +382,6 @@ try {
   if ($hadOutput -and -not (Test-Path -LiteralPath $outRoot)) { Move-Item -LiteralPath $backup -Destination $outRoot }
   throw
 }
-Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue
 # Keep only the backup made by this run; older ones piled up at every build.
 Get-ChildItem -LiteralPath (Join-Path $root "icuewidget-build") -Directory | Where-Object { $_.Name -ne "previous-$runId" -and $_.Name -ne $runId } | ForEach-Object {
   Assert-RepoPath $_.FullName
@@ -390,4 +389,8 @@ Get-ChildItem -LiteralPath (Join-Path $root "icuewidget-build") -Directory | Whe
 }
 Write-Host "Packaged $($widgets.Count) widgets at version $Version into $outRoot"
 if ($hadOutput) { Write-Host "Previous packages retained at $backup" }
-} finally { $buildLock.Dispose() }
+} finally {
+  # The staged copy goes after a failed run too; backups and the lock stay.
+  Remove-Item -LiteralPath $workRoot -Recurse -Force -ErrorAction SilentlyContinue
+  $buildLock.Dispose()
+}

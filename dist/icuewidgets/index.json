@@ -3,143 +3,143 @@
     "widgets":  {
                     "isshorizon":  {
                                        "package":  "xeneon-edge/iss-horizon.icuewidget",
-                                       "build":  "717baab2c9fd6d59"
+                                       "build":  "7fef654704cafe01"
                                    },
                     "weathernow":  {
                                        "package":  "xeneon-edge/weather-now.icuewidget",
-                                       "build":  "372da657fe0016c3"
+                                       "build":  "b921c6c9b2babbe7"
                                    },
                     "githubrepomonitor":  {
                                               "package":  "xeneon-edge/github-repo-monitor.icuewidget",
-                                              "build":  "d2cf906193cb0f12"
+                                              "build":  "9c42adcf27f106e8"
                                           },
                     "windowsmediapump":  {
                                              "package":  "corsair-watercooling/windows-media-pump.icuewidget",
-                                             "build":  "1941bec79e7ec891"
+                                             "build":  "bb1825fe973b73ac"
                                          },
                     "coolingsensorpump":  {
                                               "package":  "corsair-watercooling/cooling-sensor-pump.icuewidget",
-                                              "build":  "6212da70e26d59c2"
+                                              "build":  "21d1f2f25e94c723"
                                           },
                     "worldclock":  {
                                        "package":  "xeneon-edge/world-clock.icuewidget",
-                                       "build":  "0ea774eeb1bc2410"
+                                       "build":  "a1b2e25a415e65a0"
                                    },
                     "focustimer":  {
                                        "package":  "xeneon-edge/focus-timer.icuewidget",
-                                       "build":  "2339585316260f06"
+                                       "build":  "29c737f83c62eabd"
                                    },
                     "dailybrief":  {
                                        "package":  "xeneon-edge/daily-brief.icuewidget",
-                                       "build":  "8c935315b5b54503"
+                                       "build":  "e7ab0cd726aaad62"
                                    },
                     "countdowns":  {
                                        "package":  "xeneon-edge/countdowns.icuewidget",
-                                       "build":  "80730da3f206e757"
+                                       "build":  "ea796b54e674457a"
                                    },
                     "habitrings":  {
                                        "package":  "xeneon-edge/habit-rings.icuewidget",
-                                       "build":  "8af4457fdac591a8"
+                                       "build":  "85665c4958f8757b"
                                    },
                     "claudeusage":  {
                                         "package":  "xeneon-edge/claude-usage.icuewidget",
-                                        "build":  "2f6845cf95f0c4b9"
+                                        "build":  "06eacea846e2a767"
                                     },
                     "codexusage":  {
                                        "package":  "xeneon-edge/codex-usage.icuewidget",
-                                       "build":  "bf3492e2b9ff6fa5"
+                                       "build":  "2fcda482cdf92406"
                                    },
                     "nowplaying":  {
                                        "package":  "xeneon-edge/now-playing.icuewidget",
-                                       "build":  "0903cdc3c7a5c6a7"
+                                       "build":  "bb1af776efeb19ce"
                                    },
                     "spotify":  {
                                     "package":  "xeneon-edge/spotify.icuewidget",
-                                    "build":  "82a29665cae05a10"
+                                    "build":  "2c1a338e0c4ae64d"
                                 },
                     "aicost":  {
                                    "package":  "xeneon-edge/ai-cost.icuewidget",
-                                   "build":  "40d601844b32d35a"
+                                   "build":  "35c6202dbf761fef"
                                },
                     "screentime":  {
                                        "package":  "xeneon-edge/screen-time.icuewidget",
-                                       "build":  "636c54b780a60dcb"
+                                       "build":  "1f7aec78fdc40fa6"
                                    },
                     "audiomixer":  {
                                        "package":  "xeneon-edge/audio-mixer.icuewidget",
-                                       "build":  "2e3f1a5bac9eca26"
+                                       "build":  "539a838e37330776"
                                    },
                     "agentactivity":  {
                                           "package":  "xeneon-edge/agent-activity.icuewidget",
-                                          "build":  "e45042b747125d8c"
+                                          "build":  "6ce6b23dd768bac9"
                                       },
                     "controldeck":  {
                                         "package":  "xeneon-edge/control-deck.icuewidget",
-                                        "build":  "ddfb3206dfc37fa6"
+                                        "build":  "a5bfc2143ddfacff"
                                     },
                     "stocks":  {
                                    "package":  "xeneon-edge/stocks.icuewidget",
-                                   "build":  "3e9d660d732fa4d1"
+                                   "build":  "04aa0bc404910b1a"
                                },
                     "networkpulse":  {
                                          "package":  "xeneon-edge/network-pulse.icuewidget",
-                                         "build":  "bf62bdaeea039528"
+                                         "build":  "aaba13f72da58220"
                                      },
                     "energycost":  {
                                        "package":  "xeneon-edge/energy-cost.icuewidget",
-                                       "build":  "4d76389e601b798e"
+                                       "build":  "ea3897daacc7a5c5"
                                    },
                     "gamesession":  {
                                         "package":  "xeneon-edge/game-session.icuewidget",
-                                        "build":  "30aee89d9aea5414"
+                                        "build":  "e7ba2a877698f5e6"
                                     },
                     "freegames":  {
                                       "package":  "xeneon-edge/free-games.icuewidget",
-                                      "build":  "5626df51f62bda86"
+                                      "build":  "57b56c0881a025c9"
                                   },
                     "gridpulse":  {
                                       "package":  "xeneon-edge/grid-pulse.icuewidget",
-                                      "build":  "33f2117488231db0"
+                                      "build":  "ceb1b5f7ed30714f"
                                   },
                     "patchradar":  {
                                        "package":  "xeneon-edge/patch-radar.icuewidget",
-                                       "build":  "4d3d336e92f09a0b"
+                                       "build":  "05af303c82e83ec0"
                                    },
                     "ciradar":  {
                                     "package":  "xeneon-edge/ci-radar.icuewidget",
-                                    "build":  "3fdfcf3df741eb08"
+                                    "build":  "59e30971eb71281f"
                                 },
                     "systempulse":  {
                                         "package":  "xeneon-edge/system-pulse.icuewidget",
-                                        "build":  "a004ffed473c82c1"
+                                        "build":  "1d77c17c89b717c5"
                                     },
                     "rigmonitor":  {
                                        "package":  "xeneon-edge/rig-monitor.icuewidget",
-                                       "build":  "5ba0c8b649369ff3"
+                                       "build":  "d92dd450c72fa832"
                                    },
                     "rigpet":  {
                                    "package":  "xeneon-edge/rig-pet.icuewidget",
-                                   "build":  "19d5286078415f0c"
+                                   "build":  "47520a6988335d63"
                                },
                     "flipclock":  {
                                       "package":  "xeneon-edge/flip-clock.icuewidget",
-                                      "build":  "c4e0c542f33d075c"
+                                      "build":  "a3a565036454fca4"
                                   },
                     "rainwindow":  {
                                        "package":  "xeneon-edge/rain-window.icuewidget",
-                                       "build":  "b30c0ee937720d0e"
+                                       "build":  "ae40d7922fe2ee6f"
                                    },
                     "racinggaugepump":  {
                                             "package":  "corsair-watercooling/racing-gauge-pump.icuewidget",
-                                            "build":  "b4a7ad17157f3e9a"
+                                            "build":  "39c9542b9e2cd8ee"
                                         },
                     "pumpfaces":  {
                                       "package":  "corsair-watercooling/pump-faces.icuewidget",
-                                      "build":  "19a0fcf81a7fb58f"
+                                      "build":  "43c8d99090832d81"
                                   },
                     "fpsgaugepump":  {
                                          "package":  "corsair-watercooling/fps-gauge-pump.icuewidget",
-                                         "build":  "99e36bccf3c4c2d8"
+                                         "build":  "644cd1dd87deba72"
                                      }
                 }
 }
