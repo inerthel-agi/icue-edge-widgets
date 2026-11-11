@@ -155,8 +155,8 @@ pub struct State {
     pub queue_art: Vec<Option<(&'static str, Arc<Vec<u8>>)>>,
     pub last_seen: u64,
     pub rate_limited_until: Option<u64>,
-    /// Volume a muted multi-track skip could not restore (a 429 mid-skip); the poller restores it once Spotify answers again.
-    pub restore_volume: Option<u8>,
+    /// Device and volume a muted multi-track skip could not restore (a 429 mid-skip); the poller restores it once Spotify answers again.
+    pub restore_volume: Option<(String, u8)>,
     pub pending: Option<auth::Pending>,
     pub tokens: Option<auth::Tokens>,
     /// Set by commands and sign-in so the poller runs at once.

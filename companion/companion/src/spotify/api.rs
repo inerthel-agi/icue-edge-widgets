@@ -590,9 +590,9 @@ fn poll_once(last_devices: &mut u64) -> Duration {
                 };
                 (spawn, Duration::from_secs(wait), reshuffled, restore)
             };
-            if let Some(v) = restore {
+            if let Some((device, v)) = restore {
                 if let Err(ApiError::RateLimited(_)) = call_api("PUT", &format!("/me/player/volume?volume_percent={v}"), None) {
-                    lock().restore_volume.get_or_insert(v);
+                    lock().restore_volume.get_or_insert((device, v));
                 }
             }
             // Up next: at every track change or shuffle / Smart Shuffle toggle, and every 30 s while playing (the user may edit the queue).
@@ -647,10 +647,11 @@ pub fn run() {
     }
 }
 
-/// The volume a muted skip left unrestored, once a reading shows the device still at 0; dropped when
-/// another volume was set meanwhile, kept while no device volume is known.
-fn take_restore(pending: &mut Option<u8>, player: Option<&Player>) -> Option<u8> {
-    match player.and_then(|p| p.device.as_ref()).and_then(|d| d.volume) {
+/// The volume a muted skip left unrestored, once a reading shows that same device still at 0; dropped when
+/// another volume was set there meanwhile, kept while it is not the active device or its volume is unknown.
+fn take_restore(pending: &mut Option<(String, u8)>, player: Option<&Player>) -> Option<(String, u8)> {
+    let device = player.and_then(|p| p.device.as_ref()).filter(|d| pending.as_ref().is_some_and(|(id, _)| *id == d.id));
+    match device.and_then(|d| d.volume) {
         Some(0) => pending.take(),
         Some(_) => {
             *pending = None;
@@ -682,7 +683,8 @@ pub fn execute(call: &Call) -> Result<(), (u16, &'static str)> {
         if volume(v).is_err() {
             std::thread::sleep(Duration::from_secs(1));
             if volume(v).is_err() {
-                lock().restore_volume = Some(v);
+                let mut st = lock();
+                st.restore_volume = st.player.as_ref().and_then(|p| p.device.as_ref()).map(|d| (d.id.clone(), v));
             }
         }
     }
@@ -734,15 +736,19 @@ mod tests {
 
     #[test]
     fn unrestored_volume_waits_for_a_muted_reading() {
-        let at = |v: Option<u8>| Player { device: Some(Device { volume: v, ..Default::default() }), ..Default::default() };
-        let mut pending = Some(40);
+        let on = |id: &str, v: Option<u8>| Player { device: Some(Device { id: id.into(), volume: v, ..Default::default() }), ..Default::default() };
+        let muted = || Some(("pc".to_string(), 40));
+        let mut pending = muted();
         assert_eq!(take_restore(&mut pending, None), None);
-        assert_eq!(take_restore(&mut pending, Some(&at(None))), None);
-        assert_eq!(pending, Some(40), "kept while no device volume is known");
-        assert_eq!(take_restore(&mut pending, Some(&at(Some(0)))), Some(40));
+        assert_eq!(take_restore(&mut pending, Some(&on("pc", None))), None);
+        assert_eq!(pending, muted(), "kept while no device volume is known");
+        assert_eq!(take_restore(&mut pending, Some(&on("phone", Some(0)))), None);
+        assert_eq!(take_restore(&mut pending, Some(&on("phone", Some(25)))), None);
+        assert_eq!(pending, muted(), "another device, even at 0, is left alone");
+        assert_eq!(take_restore(&mut pending, Some(&on("pc", Some(0)))), muted());
         assert_eq!(pending, None);
-        pending = Some(40);
-        assert_eq!(take_restore(&mut pending, Some(&at(Some(25)))), None);
+        pending = muted();
+        assert_eq!(take_restore(&mut pending, Some(&on("pc", Some(25)))), None);
         assert_eq!(pending, None, "a volume set meanwhile wins");
     }
 
