@@ -639,6 +639,10 @@ test('game session averages the frame rate, finds the 1 % low and thins long ses
     assert.ok(summarize(long).low > 30);
     assert.equal(lowOf({ 30: 200, 144: 19800 }), 30);
     assert.equal(lowOf({ 30: 1, 60: 1, 144: 198 }), 45);
+    // A session saved before the histogram keeps its dips: two samples at 30 among 198 at 144, then one more at 144.
+    const seeded = window.GameSession.countsOf([30, 30, ...Array(198).fill(144)]);
+    seeded[144]++;
+    assert.equal(lowOf(seeded), 30);
 });
 
 test('game session ends at the companion endedAt, without its 2-minute grace', async () => {

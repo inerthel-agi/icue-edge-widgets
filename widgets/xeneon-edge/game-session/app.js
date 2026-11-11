@@ -20,6 +20,7 @@
         const low = sorted.slice(0, k).reduce((a, b) => a + b, 0) / k;
         return { avg, low };
     }
+    const countsOf = samples => samples.reduce((c, v) => { const r = Math.round(v); c[r] = (c[r] || 0) + 1; return c; }, {});
     /** 1 % low from a count of samples per whole frame rate: exact however long the session, unlike thinned samples. */
     function lowOf(counts) {
         const rates = Object.keys(counts).map(Number).sort((a, b) => a - b);
@@ -68,8 +69,9 @@
             session.lastSeen = now;
             session.endedAt = null;
             if (fps !== null && (companion.foreground || !companion.ok)) {
+                // A session saved before the histogram existed starts it from its samples, so earlier dips still count.
+                const counts = session.counts = session.counts || countsOf(session.fps), r = Math.round(fps);
                 session.fps.push(fps); session.fps = thin(session.fps);
-                const counts = session.counts = session.counts || {}, r = Math.round(fps);
                 counts[r] = (counts[r] || 0) + 1;
             }
             const c = celsius(sensors.cpuTemp), g = celsius(sensors.gpuTemp);
@@ -131,7 +133,7 @@
         if (/demo=debrief/.test(location.search)) session.endedAt = Date.now() - 12 * 60000;
     } else if (window.SensorReader) SensorReader.watch(r => { sensors = r; });
 
-    window.GameSession = { summarize, thin, lowOf };
+    window.GameSession = { summarize, thin, lowOf, countsOf };
     window.icueEvents = { onICUEInitialized: () => {}, onDataUpdated: () => {} };
     poll().then(tick);
     setInterval(poll, 3000);

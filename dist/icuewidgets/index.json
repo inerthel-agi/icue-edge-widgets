@@ -91,7 +91,7 @@
                                    },
                     "gamesession":  {
                                         "package":  "xeneon-edge/game-session.icuewidget",
-                                        "build":  "e7ba2a877698f5e6"
+                                        "build":  "9bb987f188462e27"
                                     },
                     "freegames":  {
                                       "package":  "xeneon-edge/free-games.icuewidget",
