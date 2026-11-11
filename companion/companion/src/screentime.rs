@@ -75,7 +75,14 @@ fn path() -> std::path::PathBuf {
 }
 
 fn load() -> State {
-    std::fs::read(path()).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default()
+    match std::fs::read(path()) {
+        Ok(b) => serde_json::from_slice(&b).unwrap_or_else(|_| {
+            // Unreadable history is kept aside for inspection instead of being overwritten by an empty one.
+            let _ = std::fs::rename(path(), path().with_extension("json.bad"));
+            State::default()
+        }),
+        Err(_) => State::default(),
+    }
 }
 
 fn save(st: &mut State) {
@@ -135,14 +142,14 @@ pub fn category(name: &str) -> &'static str {
 
 /// Local day number and hour, from the Windows local time.
 #[cfg(windows)]
-fn local_day_hour() -> (u64, usize) {
+pub(crate) fn local_day_hour() -> (u64, usize) {
     use windows::Win32::System::SystemInformation::GetLocalTime;
     let t = unsafe { GetLocalTime() };
     (days_from_civil(t.wYear as i64, t.wMonth as u32, t.wDay as u32).max(0) as u64, t.wHour as usize % 24)
 }
 
 #[cfg(not(windows))]
-fn local_day_hour() -> (u64, usize) {
+pub(crate) fn local_day_hour() -> (u64, usize) {
     let secs = now_ms() / 1000;
     (secs / 86_400, (secs / 3600 % 24) as usize)
 }
@@ -204,9 +211,11 @@ pub fn record(st: &mut State, day: u64, hour: usize, name: &str, secs: u64) {
 
 pub fn run() {
     let mut last = std::time::Instant::now();
+    // Milliseconds counted but not yet stored: whole seconds are stored, the rest carries to the next tick.
+    let mut carry_ms = 0u64;
     loop {
         std::thread::sleep(TICK);
-        let elapsed = last.elapsed().as_secs().min(5);
+        let elapsed_ms = (last.elapsed().as_millis() as u64).min(5000);
         last = std::time::Instant::now();
         if !lock().enabled {
             continue;
@@ -221,7 +230,9 @@ pub fn run() {
             continue;
         }
         let (day, hour) = local_day_hour();
-        record(&mut st, day, hour, &name, elapsed);
+        let ms = carry_ms + elapsed_ms;
+        carry_ms = ms % 1000;
+        record(&mut st, day, hour, &name, ms / 1000);
         if now_ms().saturating_sub(st.last_saved) > SAVE_EVERY_MS {
             save(&mut st);
         }

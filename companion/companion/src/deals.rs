@@ -8,6 +8,7 @@ use std::sync::{LazyLock, Mutex};
 use std::time::Duration;
 
 const FRESH_MS: u64 = 60 * MIN;
+const RETRY_MS: u64 = 5 * MIN;
 const MAX_APPS: usize = 10;
 /// Image hosts the widget may load from (its page allows only these).
 const IMAGE_HOSTS: &[&str] = &["https://cdn1.epicgames.com/", "https://cdn2.unrealengine.com/", "https://shared.akamai.steamstatic.com/", "https://cdn.akamai.steamstatic.com/"];
@@ -121,19 +122,20 @@ pub(crate) fn get(url: &str) -> Option<Value> {
     serde_json::from_slice(&read_limited(r.into_reader(), 2 * 1024 * 1024).ok()?).ok()
 }
 
-/// Cached fetch: the last good value, refreshed once an hour.
+/// Cached fetch: the last good value, refreshed once an hour; a failure is retried after 5 minutes.
 pub(crate) fn cached(key: String, fetch: impl FnOnce() -> Option<Value>) -> Option<(u64, Value, bool)> {
     let now = now_ms();
-    let fresh = CACHE.lock().unwrap_or_else(|e| e.into_inner()).get(&key).is_some_and(|(at, ..)| at + FRESH_MS > now);
+    let fresh = CACHE.lock().unwrap_or_else(|e| e.into_inner()).get(&key).is_some_and(|(at, _, failed)| at + if *failed { RETRY_MS } else { FRESH_MS } > now);
     if !fresh {
         let got = fetch();
         let mut cache = CACHE.lock().unwrap_or_else(|e| e.into_inner());
         match got {
             Some(v) => { cache.insert(key.clone(), (now, v, false)); }
-            None => { if let Some(e) = cache.get_mut(&key) { e.0 = now; e.2 = true; } }
+            // A key that never answered is kept as Null, so each widget poll does not call out again.
+            None => { let e = cache.entry(key.clone()).or_insert((now, Value::Null, true)); e.0 = now; e.2 = true; }
         }
     }
-    CACHE.lock().unwrap_or_else(|e| e.into_inner()).get(&key).cloned()
+    CACHE.lock().unwrap_or_else(|e| e.into_inner()).get(&key).filter(|(_, v, _)| !v.is_null()).cloned()
 }
 
 /// The `deals/1` snapshot.
@@ -195,6 +197,26 @@ mod tests {
         let cs = parse_steam(&v, 10).unwrap();
         assert_eq!((cs["final"].as_u64(), cs["discount"].as_u64()), (Some(299), Some(70)));
         assert!(parse_steam(&json!({ "11": { "success": false } }), 11).is_none());
+    }
+
+    #[test]
+    fn failures_are_cached_and_retried_after_five_minutes() {
+        let calls = std::cell::Cell::new(0);
+        let fail = || { calls.set(calls.get() + 1); None };
+        assert!(cached("test:never".into(), fail).is_none());
+        assert!(cached("test:never".into(), fail).is_none());
+        assert_eq!(calls.get(), 1);
+        let age = |key: &str, ms: u64| CACHE.lock().unwrap().get_mut(key).unwrap().0 -= ms;
+        age("test:never", RETRY_MS + 1);
+        assert!(cached("test:never".into(), fail).is_none());
+        assert_eq!(calls.get(), 2);
+        // An old good value survives a failure, marked stale, and is retried after 5 minutes too.
+        cached("test:good".into(), || Some(json!(1)));
+        age("test:good", FRESH_MS + 1);
+        assert_eq!(cached("test:good".into(), fail).map(|(_, v, stale)| (v, stale)), Some((json!(1), true)));
+        assert_eq!(calls.get(), 3);
+        age("test:good", RETRY_MS + 1);
+        assert_eq!(cached("test:good".into(), || Some(json!(2))).map(|(_, v, stale)| (v, stale)), Some((json!(2), false)));
     }
 
     /// Calls the stores: `cargo test -- --ignored live_deals --nocapture`.

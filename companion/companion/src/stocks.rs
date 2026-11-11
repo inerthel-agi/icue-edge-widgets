@@ -9,13 +9,14 @@ use std::time::Duration;
 
 const MAX_SYMBOLS: usize = 8;
 const FRESH_MS: u64 = MIN;
+const MAX_CACHED: usize = 64;
 
 /// symbol -> (fetched at, quote, last attempt failed)
 static CACHE: LazyLock<Mutex<HashMap<String, (u64, Value, bool)>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// Ticker symbols as Yahoo writes them: letters, digits and . ^ = - (AAPL, BRK-B, ^GSPC, EURUSD=X, MC.PA).
 pub fn valid_symbol(s: &str) -> bool {
-    (1..=12).contains(&s.len()) && s.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '^' | '=' | '-'))
+    (1..=12).contains(&s.len()) && s.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '^' | '=' | '-')) && s.chars().any(|c| c.is_ascii_alphanumeric())
 }
 
 pub fn parse_list(raw: &str) -> Vec<String> {
@@ -75,6 +76,11 @@ pub fn snapshot(raw: &str) -> Value {
         if stale {
             let got = fetch(sym);
             let mut cache = CACHE.lock().unwrap_or_else(|e| e.into_inner());
+            if cache.len() >= MAX_CACHED && !cache.contains_key(sym) {
+                if let Some(oldest) = cache.iter().min_by_key(|(_, (at, ..))| *at).map(|(k, _)| k.clone()) {
+                    cache.remove(&oldest);
+                }
+            }
             match got {
                 Some(q) => { cache.insert(sym.clone(), (now, q, false)); }
                 // Keep the last good quote, marked stale; retry in a minute.
@@ -112,6 +118,8 @@ mod tests {
     fn symbols_are_checked_and_capped() {
         assert_eq!(parse_list(" aapl, NVDA ,^gspc,brk-b,eurusd=x, mc.pa ,AAPL"), ["AAPL", "NVDA", "^GSPC", "BRK-B", "EURUSD=X", "MC.PA"]);
         assert!(parse_list("../etc,a b,<x>,toolongsymbol1").is_empty());
+        assert!(!valid_symbol(".") && !valid_symbol("..") && !valid_symbol("^=-"));
+        assert!(valid_symbol("BRK.B"));
         assert_eq!(parse_list("A,B,C,D,E,F,G,H,I,J").len(), MAX_SYMBOLS);
     }
 

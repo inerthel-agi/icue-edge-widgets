@@ -8,7 +8,7 @@
 //! in this process: never logged, stored or sent to the page.
 use crate::usage::store::{hour_of, lock, update, Quota, QuotaSet, Session, Shared, Tok, ACTIVE_MS};
 use crate::tail::Tail;
-use crate::util::{home_dir, now_ms, parse_iso_ms, pseudonym, read_limited, DAY, MIN, SEC};
+use crate::util::{home_dir, now_ms, parse_iso_ms, pseudonym, read_limited, DAY, HOUR, MIN, SEC};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -144,7 +144,15 @@ fn apply_activity(shared: &Shared, acts: Vec<Activity>) {
     if acts.is_empty() {
         return;
     }
+    let (day, hour) = crate::screentime::local_day_hour();
+    let now = now_ms();
+    // Local midnight (exact for whole-hour UTC offsets): a catch-up after a restart skips yesterday's calls.
+    let midnight = now - hour as u64 * HOUR - now % HOUR;
     update(shared, |st| {
+        if st.claude.tools_today.0 != day {
+            st.claude.tools_today = (day, 0);
+        }
+        st.claude.tools_today.1 += acts.iter().filter(|a| a.at >= midnight).count() as u64;
         for a in acts {
             st.claude.activity.push_back((a.at, a.tool, a.target));
         }
@@ -157,7 +165,6 @@ fn apply_activity(shared: &Shared, acts: Vec<Activity>) {
 /// The `agent/1` snapshot for the Agent Activity widget.
 pub fn agent_snapshot(st: &crate::usage::store::Store, now: u64) -> Value {
     let rt = &st.claude;
-    let midnight = now - now % DAY; // UTC day start: good enough for a "today" counter
     let last = rt.activity.back();
     let session = st.saved.claude.sessions.values().filter(|s| s.client != "SDK").max_by_key(|s| s.last_event);
     let active = session.is_some_and(|s| s.last_event + 2 * MIN > now);
@@ -173,7 +180,7 @@ pub fn agent_snapshot(st: &crate::usage::store::Store, now: u64) -> Value {
         "model": session.map(|s| s.model.clone()),
         "step": last.filter(|(t, ..)| t + 10 * MIN > now).map(|(t, tool, target)| serde_json::json!({ "at": t, "tool": tool, "verb": verb(tool), "target": target })),
         "recent": rt.activity.iter().rev().filter(|(t, ..)| t + 30 * MIN > now).take(10).map(|(t, tool, target)| serde_json::json!({ "at": t, "tool": tool, "target": target })).collect::<Vec<_>>(),
-        "toolsToday": rt.activity.iter().filter(|(t, ..)| *t >= midnight).count(),
+        "toolsToday": if rt.tools_today.0 == crate::screentime::local_day_hour().0 { rt.tools_today.1 } else { 0 },
         "tokensPerMin": tokens5 / 5,
         "attention": attention(session.map_or(0, |s| s.last_event), now),
     })
@@ -418,7 +425,16 @@ fn renew_token() -> Result<String, FetchError> {
     let mut credentials = read_credentials()?;
     let token = apply_renewed(&mut credentials, &response, &used, now_ms()).ok_or(FetchError::RenewFailed)?;
     let bytes = serde_json::to_vec(&credentials).map_err(|_| FetchError::RenewFailed)?;
-    crate::util::atomic_write(&credentials_path(), &bytes).map_err(|_| FetchError::RenewFailed)?;
+    // The old refresh token is spent: losing this write loses the sign-in, and Claude Code may hold the file briefly.
+    let mut written = crate::util::atomic_write(&credentials_path(), &bytes);
+    for _ in 0..3 {
+        if written.is_ok() {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(200));
+        written = crate::util::atomic_write(&credentials_path(), &bytes);
+    }
+    written.map_err(|_| FetchError::RenewFailed)?;
     Ok(token)
 }
 
@@ -655,6 +671,15 @@ mod tests {
         let all = format!("{acts:?}");
         assert!(!all.contains("secret") && !all.contains("token") && !all.contains("Users"));
         assert_eq!(verb("Edit"), "Editing");
+    }
+
+    #[test]
+    fn tools_today_is_not_capped_by_the_activity_buffer() {
+        let shared = store::tests::load_for_test();
+        let now = now_ms();
+        apply_activity(&shared, (0..301).map(|_| Activity { at: now, tool: "Read".into(), target: String::new() }).collect());
+        assert_eq!(lock(&shared).claude.activity.len(), 300);
+        assert_eq!(agent_snapshot(&lock(&shared), now)["toolsToday"], 301);
     }
 
     #[test]

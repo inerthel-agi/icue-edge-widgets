@@ -63,7 +63,8 @@
         const signal = options.signal;
         if (signal && signal.aborted) abort();
         signal && signal.addEventListener("abort", abort, { once: true });
-        const timeout = setTimeout(abort, 12000);
+        let timedOut = false;
+        const timeout = setTimeout(() => { timedOut = true; abort(); }, 12000);
         try {
             const response = await fetch(url, { cache: "no-store", ...options, signal: controller.signal });
             if (!response.ok) {
@@ -79,6 +80,12 @@
                 throw error;
             }
             return { data: await readJson(response, abort), headers: response.headers };
+        } catch (error) {
+            // Callers ignore AbortError as a deliberate supersede; a timeout must stay a failure they retry.
+            if (!timedOut) throw error;
+            const timeoutError = new Error("request_timeout");
+            timeoutError.name = "TimeoutError";
+            throw timeoutError;
         } finally {
             clearTimeout(timeout);
             signal && signal.removeEventListener("abort", abort);

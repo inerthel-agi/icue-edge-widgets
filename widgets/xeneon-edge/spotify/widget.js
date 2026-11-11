@@ -212,7 +212,7 @@
         const p = s.playback;
         const until = stale(s) ? Math.min(Date.now(), s.source.lastSeen) : Date.now();
         const ms = p.position * 1000 + (p.playing ? Math.max(0, until - p.updatedAt) : 0);
-        return Math.min(ms, (s.item.duration || 0) * 1000);
+        return s.item.duration > 0 ? Math.min(ms, s.item.duration * 1000) : ms;
     }
 
     function render() {
@@ -227,6 +227,7 @@
         if (acc === "connecting" && !s.item) return overlay("SPOTIFY", "Connecting to Spotify…", "Finish the sign-in in your browser if it is open.");
         if (acc === "needs_login") return overlay("SPOTIFY", "Sign in again", "Spotify ended the session. Reconnect in iCUE Edge Companion › Spotify.");
         if (acc === "premium_required") return overlay("SPOTIFY", "Spotify Premium required", "Spotify only allows playback control for Premium accounts.");
+        if (acc === "error") return overlay("SPOTIFY", "Spotify error", s.account.message || "Check iCUE Edge Companion › Spotify.");
         if (!s.item && s.rateLimitedUntil) {
             const min = Math.max(1, Math.ceil((s.rateLimitedUntil - Date.now()) / 60000));
             return overlay("SPOTIFY", "Spotify is busy", "Spotify asked to wait. Retrying in about " + (min >= 120 ? Math.round(min / 60) + " h." : min + " min."));
@@ -403,12 +404,18 @@
         const body = { cmd: msg.cmd, rev: msg.rev, value: msg.value, deviceId: msg.deviceId, q: msg.q };
         // text/plain keeps it a simple request (no preflight); the companion parses the JSON body.
         fetch(ENDPOINT + "/api/spotify/command", { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(body), credentials: "omit", cache: "no-store" })
-            .then(r => {
+            .then(async r => {
+                if (r.ok) return;
+                // Codes and errors of /api/spotify/command (companion spotify::resolve, api::execute, media::resolve).
+                const error = await r.json().then(b => b && b.error, () => "");
                 if (r.status === 403) toast("Spotify refused this action");
                 else if (r.status === 404) toast("No active Spotify device");
                 else if (r.status === 429) toast("Spotify busy, retrying…");
+                else if (error === "not_connected") toast("Spotify not connected");
                 else if (r.status === 409) toast("Track changed, try again");
-                else if (!r.ok) toast("Action refused");
+                else if (r.status === 422) toast("Not supported by this player");
+                else if (r.status === 503) toast("Spotify player unreachable");
+                else toast("Action refused");
             })
             .catch(() => toast("Companion unreachable"));
     }

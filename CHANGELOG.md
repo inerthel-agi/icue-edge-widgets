@@ -16,15 +16,19 @@ Summary of what changed since iCUE Edge Companion 0.1.7 (details under Unrelease
 
 ## [Unreleased]
 
-### Security - audit follow-up (2026-11-04)
-- The companion API refuses requests from remote web pages (an `Origin` of `http(s)://` that is not this machine) with 403. Widgets run from local files (`Origin: null`) and are unaffected. A remote page that iCUE might render in its own process can no longer use the API with iCUE's identity.
-- The developer fallback that reads `dist/icuewidgets` and `community/index.json` from a checkout now only trusts the checkout the running exe was built in (`<root>/companion/companion/target/...`). It used to search six parent folders, up to `C:\`, where any Windows account can create folders. The local community list read is capped like the download (8 MiB).
-
-### Fixed - Now Playing cover for Spotify
-- The Spotify app often gives Windows no thumbnail, so Now Playing showed a blank cover. When the Spotify account is connected, the companion now uses the cover the Spotify Web API shows for the same track.
-
-### Added - Search on the Widgets page
-- A search box above the list on the Widgets page finds a widget by name or description, together with the filters and the screen choice.
+### Fixed - audit follow-up (2026-11)
+- Widgets whose request to the companion or a web service times out (12 s) now try again instead of waiting for the next change.
+- `agent-activity`, `rig-monitor`, `patch-radar`, `stocks` and `ci-radar` say when their data is old or missing instead of showing it as current.
+- `energy-cost`: the month's projection is based on the days actually measured. `countdowns`: the next event's colour no longer flickers.
+- `game-session`: the 1 % low stays exact on long sessions, and the duration ends when the game closed.
+- `pump-faces`: sunrise and sunset are right far from Greenwich, and a cover that arrives late no longer replaces the current one.
+- `spotify`: shows the account error, and says when an action is not supported or the player cannot be reached. A skip is refused when the widget shows another track than the one playing.
+- Spotify in the companion: a volume that a Spotify wait left at 0 comes back once Spotify answers; a failed reconnect keeps the signed-in account; Disconnect no longer ends a wait early; Premium is checked again every hour.
+- Media: a command no longer holds up the Now Playing and Spotify feeds; the sleep timer pauses what plays; lyrics stop retrying when the track changes.
+- `stocks`: prices below 1 show four decimals, and a settings change fetches the quotes again only when the symbols changed.
+- AI usage: a Claude or Codex session resumed after more than 7 idle days is no longer counted twice. Agent Activity counts all of today's tool calls, not only the last 300.
+- Free Games and Patch Radar wait 5 minutes after a failed fetch instead of retrying at every refresh. Screen Time keeps a history file it cannot read aside (`.bad`) instead of losing it.
+- The daily Community list is never replaced by an empty or much shorter one when the GitHub searches fail.
 
 ### Added - Rig Monitor widget
 - A graph of the last 3 minutes for each part of the PC, from the iCUE Sensors plugin: CPU (load, temperature, power), GPU (same), memory (RAM, VRAM) and cooling (coolant, pump, room). Each card shows the part's brand name, min, average and peak, with the peak marked on the graph; temperatures turn amber and red when hot.

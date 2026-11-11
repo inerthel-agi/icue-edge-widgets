@@ -224,7 +224,11 @@
                 const v = m ? (s.units === "°C" ? celsius(m) : m.value) : NaN;
                 row.v.textContent = fmt(v, s);
                 row.r.dataset.state = state(s, v);
-                if (!Number.isFinite(v)) return;
+                if (!Number.isFinite(v)) {
+                    // A companion-fed history must not keep drawing old min/avg/peak once the companion is gone.
+                    if (FROM_SYS[s.role] && s.graph !== false) sec.hist[s.role].length = 0;
+                    return;
+                }
                 if (s.graph !== false) found++;
                 if (row.r.dataset.state && s.graph !== false) alerts.push(`${sec.def.name} ${s.heat ? "temp" : s.label.toLowerCase()}`);
                 if (s.graph !== false) {

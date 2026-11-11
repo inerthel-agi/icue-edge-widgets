@@ -411,6 +411,8 @@
             stageView = "viz";
             queueKey = null;
             queueMeta = null;
+            for (const entry of queueBlobs.values()) if (entry.url) URL.revokeObjectURL(entry.url);
+            queueBlobs.clear();
             stage.dataset.view = "viz";
             tab.hidden = true;
             return;

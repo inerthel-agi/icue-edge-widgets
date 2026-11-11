@@ -7,7 +7,7 @@ $widgetDirs = @(Get-ChildItem -LiteralPath (Join-Path $repo "widgets") -Director
 foreach ($dir in $widgetDirs + @("scripts", "icons", "shared")) {
   $dst = Join-Path $fixture $dir
   New-Item -ItemType Directory -Path $dst | Out-Null
-  Get-ChildItem -LiteralPath (Join-Path $repo $dir) -File | Where-Object { $_.Extension -in @(".js", ".css", ".html", ".ps1", ".svg", ".woff2") } | Copy-Item -Destination $dst
+  Get-ChildItem -LiteralPath (Join-Path $repo $dir) -File | Where-Object { $_.Extension -in @(".js", ".css", ".html", ".ps1", ".svg", ".woff2", ".png", ".webp") } | Copy-Item -Destination $dst
 }
 Copy-Item -LiteralPath (Join-Path $repo "VERSION") -Destination $fixture
 $output = Join-Path $fixture "dist\icuewidgets"
@@ -60,8 +60,8 @@ Expect-BuildFailure "Promotion failure did not surface"
 Write-Output "PASS: failed promotion restores the previous distribution"
 
 & $builder -CliPath $cli *> (Join-Path $fixture "last-build.log")
-Assert-True (@(Get-ChildItem -LiteralPath $output -Filter *.icuewidget -File -Recurse).Count -eq 27) "Expected twenty-seven packages"
+Assert-True (@(Get-ChildItem -LiteralPath $output -Filter *.icuewidget -File -Recurse).Count -eq $widgetDirs.Count) "Expected $($widgetDirs.Count) packages"
 $backups = @(Get-ChildItem -LiteralPath (Join-Path $fixture "icuewidget-build") -Directory -Filter 'previous-*')
 Assert-True (@($backups | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'previous.txt') }).Count -gt 0) "Previous distribution was not retained"
-Write-Output "PASS: successful promotion publishes twenty-seven verified packages and keeps the backup"
+Write-Output "PASS: successful promotion publishes $($widgetDirs.Count) verified packages and keeps the backup"
 Write-Output "Fixtures and logs: $fixture"

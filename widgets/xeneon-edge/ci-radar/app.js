@@ -47,8 +47,8 @@
         $("lamps").style.setProperty("--n", String(Math.max(1, runs.length)));
         $("widget").dataset.queue = user ? "on" : "off";
         if (!user) return;
-        $("queueTitle").textContent = `REVIEW QUEUE · ${queue.length}`;
-        $("queue").replaceChildren(...queue.slice(0, 4).map(pr => {
+        $("queueTitle").textContent = queue ? `REVIEW QUEUE · ${queue.length}` : "REVIEW QUEUE";
+        $("queue").replaceChildren(...(queue || []).slice(0, 4).map(pr => {
             const fs = document.createElement("div");
             const days = (Date.now() - Date.parse(pr.created_at)) / 86400000;
             fs.className = "fs" + (days >= 3 ? " old" : "");
@@ -59,7 +59,7 @@
             fs.addEventListener("click", () => open(pr.html_url));
             return fs;
         }));
-        if (!queue.length) { const p = document.createElement("p"); p.className = "none"; p.textContent = "Nothing waiting for you."; $("queue").append(p); }
+        if (!queue || !queue.length) { const p = document.createElement("p"); p.className = "none"; p.textContent = queue ? "Nothing waiting for you." : "Review queue unavailable"; $("queue").append(p); }
     }
 
     async function update() {
@@ -78,7 +78,7 @@
             .catch(e => ({ repo, error: e && e.status === 404 ? "not found" : e && e.rateLimited ? "rate limited" : "unreachable" }))));
         let queue = [];
         if (/^[A-Za-z0-9-]{1,39}$/.test(user)) {
-            try { queue = ((await get(`/search/issues?q=${encodeURIComponent(`is:pr is:open archived:false review-requested:${user}`)}&per_page=5`)) || {}).items || []; } catch (_) { queue = []; }
+            try { queue = ((await get(`/search/issues?q=${encodeURIComponent(`is:pr is:open archived:false review-requested:${user}`)}&per_page=5`)) || {}).items || []; } catch (_) { queue = null; }
         }
         const allDown = runs.length && runs.every(r => r.error === "unreachable");
         $("overlay").classList.toggle("visible", !!allDown);

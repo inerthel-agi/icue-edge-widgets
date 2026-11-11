@@ -232,7 +232,7 @@
     // Sunrise and sunset from the latitude and longitude (NOAA-style approximation, a few minutes off at most),
     // the moon's age from a known new moon. Computed here, nothing is fetched.
     function coord(name, def, lim) { const v = Number.parseFloat(String(typeof window[name] !== "undefined" ? window[name] : "").replace(",", ".")); return Number.isFinite(v) && Math.abs(v) <= lim ? v : def; }
-    function sunTimes(now, lat, lon) {
+    function sunDay(now, lat, lon) {
         const start = Date.UTC(now.getUTCFullYear(), 0, 0), n = Math.floor((now - start) / 86400000);
         const b = 2 * Math.PI * (n - 81) / 364, eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
         const decl = -23.44 * Math.cos(2 * Math.PI * (n + 10) / 365) * Math.PI / 180, phi = lat * Math.PI / 180;
@@ -241,6 +241,11 @@
         if (cosW >= 1) return { polar: "night", noon }; if (cosW <= -1) return { polar: "day", noon };
         const half = Math.acos(cosW) * 180 / Math.PI / 15 * 3600000;
         return { rise: noon - half, set: noon + half, noon };
+    }
+    // Far from Greenwich the daylight around now can belong to the UTC day before or after: take the one holding now.
+    function sunTimes(now, lat, lon) {
+        const days = [-1, 0, 1].map(k => sunDay(new Date(now.getTime() + k * 86400000), lat, lon));
+        return days.find(s => now >= s.rise && now < s.set) || days[1];
     }
     const hourOf = ms => { const d = new Date(ms); return d.getHours() + d.getMinutes() / 60; };
     const hm = ms => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -372,12 +377,12 @@
             const res = await fetch(ENDPOINT + "/api/media/state", { cache: "no-store", credentials: "omit" });
             if (Date.now() - media.relayAt < RELAY_MS) return;
             if (!res.ok) { media.now = null; media.reason = res.status === 401 ? "Update iCUE Edge Companion" : "Companion not running"; return; }
-            const wire = await res.json(), key0 = media.artKey;
-            const art = show(wire && wire.session);
+            const wire = await res.json();
+            const art = show(wire && wire.session), key = media.artKey;
             if (art) {
                 const r = await fetch(ENDPOINT + art.url, { cache: "no-store", credentials: "omit" });
                 const blob = r.ok ? await r.blob() : null;
-                if (blob && /^image\//.test(blob.type) && blob.size <= 4 * 1024 * 1024 && media.artKey !== key0) {
+                if (blob && /^image\//.test(blob.type) && blob.size <= 4 * 1024 * 1024 && media.artKey === key) {
                     media.artUrl = URL.createObjectURL(blob);
                     media.art = new Image(); media.art.src = media.artUrl;
                 }

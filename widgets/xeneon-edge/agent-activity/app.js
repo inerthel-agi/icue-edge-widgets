@@ -79,10 +79,18 @@
             failed = false;
             if (!data.detected) { show("Claude Code not detected", "Its logs appear in your user folder (.claude) once you use it on this PC."); return; }
             render(data);
+            $("status").textContent = "Tool names and file names only: no prompt or file content.";
             $("overlay").classList.remove("visible");
         } catch (error) {
             if (error && error.name === "AbortError") return;
             if (!failed && !last) show("Companion not running", "Start iCUE Edge Companion; it reads Claude Code's activity on this PC.");
+            else if (last) {
+                // The last reading stays visible but no longer claims Claude Code is working or waiting.
+                renderAsk(null);
+                $("widget").dataset.state = "idle";
+                $("badge").textContent = "Offline";
+                $("status").textContent = "Companion not running · showing the last data";
+            }
             failed = true;
         }
     }
@@ -105,7 +113,7 @@
             attention: { kind: "permission", message: "Claude needs your permission to use Bash", project: "icue-edge-widgets", since: Date.now() - 42000 } } });
     }
     window.AgentActivity = { start, render };
-    window.icueEvents = { onICUEInitialized: start, onDataUpdated: () => { if (last) render(last); } };
+    window.icueEvents = { onICUEInitialized: start, onDataUpdated: () => { if (last && !failed) render(last); } };
     WidgetRuntime.onResume(update);
     start();
 })();
