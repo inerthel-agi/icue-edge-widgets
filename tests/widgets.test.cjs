@@ -35,7 +35,8 @@ function runtime(widget, globals = {}, storage = new Map()) {
             removeAttribute(key) { delete this.attributes[key]; },
             remove() {},
             toggleAttribute(key, on) { if (on) this.attributes[key] = ''; else delete this.attributes[key]; },
-            addEventListener(name, fn) { this[name] = fn; }
+            addEventListener(name, fn) { this[name] = fn; },
+            getContext: () => new Proxy({}, { get: () => () => {} })
         };
     }
     const get = id => {
@@ -281,8 +282,20 @@ test('requests time out and release their timer', async () => {
     }) });
     const result = app.context.WidgetRuntime.requestJson('https://example.test/data');
     app.runTimeout(12000);
-    await assert.rejects(result, /aborted/);
+    await assert.rejects(result, { name: 'TimeoutError' });
     assert.equal([...app.timeouts.values()].filter(t => t.ms === 12000).length, 0);
+});
+
+test('a request timeout is a failure that rain window retries, not a silent cancel', async () => {
+    const app = runtime('rain-window', {
+        URLSearchParams, ResizeObserver: class { observe() {} }, matchMedia: () => ({ matches: false }),
+        fetch: (url, { signal }) => new Promise((resolve, reject) => {
+            signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+        })
+    });
+    app.runTimeout(12000); await flush();
+    assert.equal([...app.timeouts.values()].filter(t => t.ms === 15000).length, 1);
+    assert.equal(app.get('overlayTitle').textContent, 'Weather offline');
 });
 
 test('an external abort cancels the actual fetch', async () => {
@@ -602,6 +615,9 @@ test('energy cost counts watt-hours per hour and day, skips gaps, and prices the
     s = account(s, 300, new Date(2026, 10, 5, 0, 0, 1).getTime());     // next day: today's hours start again
     assert.equal(s.hours.reduce((a, b) => a + b, 0), 0);
     assert.ok(s.days['2026-11-04'] > 0);
+    // Installed on the 10th: the projection follows the 1.5 days measured, not the 10.5 days since the 1st.
+    const p = costs({ days: { '2026-11-10': 2400, '2026-11-11': 1200 } }, 0.25, new Date(2026, 10, 11, 12, 0, 0).getTime());
+    assert.ok(Math.abs(p.projected - 18) < 1e-6, String(p.projected));
 });
 
 test('game session averages the frame rate, finds the 1 % low and thins long sessions', () => {
@@ -616,6 +632,43 @@ test('game session averages the frame rate, finds the 1 % low and thins long ses
     assert.equal(r.low, 30);
     assert.equal(summarize([]).avg, null);
     assert.ok(thin(Array(2401).fill(100)).length < 2401);
+    // A long session: thinning averages the dips away, the per-rate counts keep the 1 % low exact.
+    const { lowOf } = window.GameSession;
+    let long = [];
+    for (let i = 0; i < 20000; i++) long = thin(long.concat(i % 100 === 0 ? 30 : 144));
+    assert.ok(summarize(long).low > 30);
+    assert.equal(lowOf({ 30: 200, 144: 19800 }), 30);
+    assert.equal(lowOf({ 30: 1, 60: 1, 144: 198 }), 45);
+});
+
+test('game session ends at the companion endedAt, without its 2-minute grace', async () => {
+    const nodes = new Map(), intervals = [];
+    const node = id => nodes.get(id) || nodes.set(id, { textContent: '', dataset: {}, classList: { toggle() {} }, style: { setProperty() {} }, setAttribute() {} }).get(id);
+    const t0 = Date.now() - 600000;
+    let wire = { schema: 'game/1', game: { name: 'G', startedAt: t0, lastSeen: Date.now() }, foreground: true, last: null };
+    const window = { location: { search: '' }, addEventListener() {} };
+    window.WidgetRuntime = { storage: () => ({ read: () => null, write() {} }), requestJson: async () => ({ data: wire }) };
+    vm.runInNewContext(fs.readFileSync(path.join(widgetDir('game-session'), 'app.js'), 'utf8'), { window, location: window.location, document: { body: { dataset: {} }, getElementById: node }, setInterval: (fn, ms) => intervals.push({ fn, ms }), setTimeout() {}, Promise });
+    await flush();
+    assert.equal(node('kind').textContent, 'LIVE');
+    wire = { schema: 'game/1', game: null, foreground: false, last: { name: 'G', startedAt: t0, lastSeen: t0 + 60000, endedAt: t0 + 60000 } };
+    intervals.find(i => i.ms === 3000).fn(); await flush();
+    intervals.find(i => i.ms === 1500).fn();
+    assert.equal(node('kind').textContent, 'DEBRIEF');
+    assert.equal(node('clock').textContent, '0:01:00');
+});
+
+test('pump sky finds the daylight around now on either side of UTC midnight, and Paris is unchanged', () => {
+    const src = fs.readFileSync(path.join(root, 'widgets/pump/pump-faces/app.js'), 'utf8');
+    const sunTimes = vm.runInNewContext(`${src.match(/function sunDay[\s\S]*?function sunTimes[\s\S]*?\n    }/)[0]}; sunTimes`);
+    const day = (iso, lat, lon) => { const now = new Date(iso), s = sunTimes(now, lat, lon); return now >= s.rise && now < s.set; };
+    assert.equal(day('2026-11-11T21:30:00Z', 35.68, 139.69), true);    // Tokyo, 06:30 local
+    assert.equal(day('2026-11-11T00:30:00Z', 34.05, -118.24), true);   // Los Angeles, 16:30 local the day before
+    assert.equal(day('2026-11-11T05:00:00Z', 34.05, -118.24), false);
+    for (const iso of ['2026-11-11T03:00:00Z', '2026-11-11T12:00:00Z', '2026-11-11T22:00:00Z']) {
+        const s = sunTimes(new Date(iso), 48.85, 2.35);
+        assert.deepEqual([new Date(s.rise).toISOString(), new Date(s.set).toISOString()], ['2026-11-11T06:57:14.682Z', '2026-11-11T16:12:58.497Z'], iso);
+    }
 });
 
 test('grid pulse grades carbon intensity and splits the mix; ci radar picks a lamp per run', () => {

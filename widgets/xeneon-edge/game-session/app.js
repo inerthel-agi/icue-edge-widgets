@@ -20,6 +20,14 @@
         const low = sorted.slice(0, k).reduce((a, b) => a + b, 0) / k;
         return { avg, low };
     }
+    /** 1 % low from a count of samples per whole frame rate: exact however long the session, unlike thinned samples. */
+    function lowOf(counts) {
+        const rates = Object.keys(counts).map(Number).sort((a, b) => a - b);
+        const k = Math.max(1, Math.round(rates.reduce((n, r) => n + counts[r], 0) * 0.01));
+        let need = k, sum = 0;
+        for (const r of rates) { const c = Math.min(counts[r], need); sum += c * r; need -= c; if (!need) break; }
+        return sum / k;
+    }
     /** Keeps at most MAX_SAMPLES by averaging pairs of the oldest half. */
     function thin(samples) {
         if (samples.length <= MAX_SAMPLES) return samples;
@@ -44,7 +52,7 @@
         }
         try {
             const { data } = await window.WidgetRuntime.requestJson(ENDPOINT + "/api/game/state", { credentials: "omit" });
-            companion = { ok: data && data.schema === "game/1", game: data.game || null, foreground: !!data.foreground };
+            companion = { ok: data && data.schema === "game/1", game: data.game || null, foreground: !!data.foreground, last: data.last || null };
         } catch (_) { companion = { ok: false, game: null, foreground: false }; }
     }
 
@@ -59,11 +67,19 @@
         if (live) {
             session.lastSeen = now;
             session.endedAt = null;
-            if (fps !== null && (companion.foreground || !companion.ok)) { session.fps.push(fps); session.fps = thin(session.fps); }
+            if (fps !== null && (companion.foreground || !companion.ok)) {
+                session.fps.push(fps); session.fps = thin(session.fps);
+                const counts = session.counts = session.counts || {}, r = Math.round(fps);
+                counts[r] = (counts[r] || 0) + 1;
+            }
             const c = celsius(sensors.cpuTemp), g = celsius(sensors.gpuTemp);
             if (c !== null) session.cpuPeak = Math.max(session.cpuPeak || 0, c);
             if (g !== null) session.gpuPeak = Math.max(session.gpuPeak || 0, g);
-        } else if (session && !session.endedAt) session.endedAt = session.lastSeen;
+        } else if (session && !session.endedAt) {
+            // The companion keeps a game for 2 min after it leaves the foreground: its endedAt drops that grace.
+            const last = companion.last;
+            session.endedAt = (last && `${last.name}|${last.startedAt}` === session.key && last.endedAt) || session.lastSeen;
+        }
         if (store && session && now - lastSave > 20000) { store.write(session); lastSave = now; }
         render(live ? "live" : session ? "debrief" : "idle", fps, now);
     }
@@ -86,7 +102,8 @@
             $("foot").textContent = companion.ok ? "Start a game: it shows up here" : "Start iCUE Edge Companion to name the game";
             return;
         }
-        const s = session, { avg, low } = summarize(s.fps);
+        const s = session, { avg, low: sampled } = summarize(s.fps);
+        const low = s.counts && Object.keys(s.counts).length ? lowOf(s.counts) : sampled;
         const dur = (view === "live" ? now : s.endedAt) - s.startedAt;
         $("kind").textContent = view === "live" ? "LIVE" : "DEBRIEF";
         $("game").textContent = s.name;
@@ -114,7 +131,7 @@
         if (/demo=debrief/.test(location.search)) session.endedAt = Date.now() - 12 * 60000;
     } else if (window.SensorReader) SensorReader.watch(r => { sensors = r; });
 
-    window.GameSession = { summarize, thin };
+    window.GameSession = { summarize, thin, lowOf };
     window.icueEvents = { onICUEInitialized: () => {}, onDataUpdated: () => {} };
     poll().then(tick);
     setInterval(poll, 3000);

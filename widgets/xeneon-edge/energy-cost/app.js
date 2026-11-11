@@ -32,8 +32,10 @@
         const todayWh = state.days[dayKey(now)] || 0;
         const monthWh = Object.entries(state.days).filter(([k]) => k.startsWith(month)).reduce((a, [, v]) => a + v, 0);
         const daysIn = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-        const elapsed = d.getDate() - 1 + (d.getHours() * 60 + d.getMinutes()) / 1440;
-        const projected = elapsed > 0.5 ? monthWh / elapsed * daysIn : null;
+        // Days actually measured this month (today as its elapsed fraction), not calendar days since the 1st.
+        const measured = Object.keys(state.days).filter(k => k.startsWith(month))
+            .reduce((n, k) => n + (k === dayKey(now) ? (d.getHours() * 60 + d.getMinutes()) / 1440 : 1), 0);
+        const projected = measured > 0.5 ? monthWh / measured * daysIn : null;
         const eur = wh => wh / 1000 * price;
         return { today: eur(todayWh), todayKwh: todayWh / 1000, month: eur(monthWh), projected: projected === null ? null : eur(projected) };
     }

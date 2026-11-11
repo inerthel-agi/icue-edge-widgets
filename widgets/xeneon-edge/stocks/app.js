@@ -14,7 +14,7 @@
         return DEFAULT;
     }
 
-    const fmt = v => (typeof v !== "number" || !isFinite(v) ? "--" : Math.abs(v) >= 1000 ? v.toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 1 }) : v.toFixed(2));
+    const fmt = v => (typeof v !== "number" || !isFinite(v) ? "--" : Math.abs(v) >= 1000 ? v.toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 1 }) : v.toFixed(Math.abs(v) < 1 ? 4 : 2));
     const signed = (v, d = 2) => (typeof v !== "number" ? "--" : `${v >= 0 ? "+" : ""}${v.toFixed(d)}`);
     const big = n => (typeof n !== "number" ? "--" : n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : String(n));
     const dir = q => (typeof q.change !== "number" ? "" : q.change >= 0 ? "up" : "down");
@@ -94,7 +94,7 @@
             $("fO").textContent = fmt(f.open); $("fH").textContent = fmt(f.high); $("fL").textContent = fmt(f.low);
             $("fP").textContent = fmt(f.prevClose); $("fV").textContent = big(f.volume);
             chart(f);
-            $("market").textContent = f.marketOpen ? "MARKET OPEN" : "MARKET CLOSED";
+            $("market").textContent = typeof f.price !== "number" ? "" : f.marketOpen ? "MARKET OPEN" : "MARKET CLOSED";
             $("market").className = f.marketOpen ? "open" : "";
         }
         const tape = quotes.map(q => `${q.symbol} ${fmt(q.price)} ${dir(q) === "up" ? "▲" : dir(q) === "down" ? "▼" : ""} ${typeof q.changePct === "number" ? Math.abs(q.changePct).toFixed(2) + "%" : ""}`);
@@ -138,7 +138,8 @@
     }
 
     window.Stocks = { start, render };
-    window.icueEvents = { onICUEInitialized: start, onDataUpdated: () => { last = null; update(); } };
+    let key = symbols();
+    window.icueEvents = { onICUEInitialized: start, onDataUpdated: () => { const k = symbols(); if (k !== key) { key = k; last = null; update(); } } };
     WidgetRuntime.onResume(update);
     tick();
     setInterval(tick, 1000);

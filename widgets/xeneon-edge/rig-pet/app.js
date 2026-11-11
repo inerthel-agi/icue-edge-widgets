@@ -150,7 +150,7 @@
         const p = String(raw).trim();
         if (!p) return "";
         if (/^(file|https?|data|blob):/i.test(p)) return p;
-        if (/^[a-z]:[\\/]/i.test(p) || p.startsWith("\\\\")) return `file:///${encodeURI(p.replace(/\\/g, "/").replace(/^\/+/, ""))}`;
+        if (/^[a-z]:[\\/]/i.test(p) || p.startsWith("\\\\")) return `file:///${encodeURI(p.replace(/\\/g, "/").replace(/^\/+/, "")).replace(/[?#]/g, encodeURIComponent)}`;
         return p;
     }
 
@@ -280,7 +280,7 @@
 
     const KINDS = ["bit", "claude", "ghost", "robot", "slime", "clawd", "grace", "sealion", "jennie", "claire", "dario", "tom", "patrick", "pepe", "rick", "doge", "elon", "kirby", "clippy", "tux", "frieren", "anya", "miku", "luffy", "goku", "gojo", "umaru", "asuka", "doraemon", "elaina", "violet", "bocchi", "xiaohei", "sama", "doro", "guga", "kiki", "usagi", "hachiware", "custom"];
     // Pixel pets shipped with the widget, Codex pet sheets drawn by the author.
-    const BUILTIN = { clawd: "./pet-clawd.webp", grace: "./pet-grace.webp", sealion: "./pet-sealion.webp", jennie: "./pet-jennie.webp", claire: "./pet-claire.webp", dario: "./pet-dario.webp", tom: "./pet-tom.webp", patrick: "./pet-patrick.webp", pepe: "./pet-pepe.webp", rick: "./pet-rick.webp", doge: "./pet-doge.webp", elon: "./pet-elon.webp", kirby: "./pet-kirby.webp", clippy: "./pet-clippy.webp", tux: "./pet-tux.webp", frieren: "./pet-frieren.webp", anya: "./pet-anya.webp", miku: "./pet-miku.webp", luffy: "./pet-luffy.webp", goku: "./pet-goku.webp", gojo: "./pet-gojo.webp", umaru: "./pet-umaru.webp", asuka: "./pet-asuka.webp", doraemon: "./pet-doraemon.webp", elaina: "./pet-elaina.webp", violet: "./pet-violet.webp", bocchi: "./pet-bocchi.webp", xiaohei: "./pet-xiaohei.webp", sama: "./pet-sama.webp", doro: "./pet-doro.webp", guga: "./pet-guga.webp", kiki: "./pet-kiki.webp", usagi: "./pet-usagi.webp", hachiware: "./pet-hachiware.webp", chispa: "./pet-chispa.webp" };
+    const BUILTIN = { clawd: "./pet-clawd.webp", grace: "./pet-grace.webp", sealion: "./pet-sealion.webp", jennie: "./pet-jennie.webp", claire: "./pet-claire.webp", dario: "./pet-dario.webp", tom: "./pet-tom.webp", patrick: "./pet-patrick.webp", pepe: "./pet-pepe.webp", rick: "./pet-rick.webp", doge: "./pet-doge.webp", elon: "./pet-elon.webp", kirby: "./pet-kirby.webp", clippy: "./pet-clippy.webp", tux: "./pet-tux.webp", frieren: "./pet-frieren.webp", anya: "./pet-anya.webp", miku: "./pet-miku.webp", luffy: "./pet-luffy.webp", goku: "./pet-goku.webp", gojo: "./pet-gojo.webp", umaru: "./pet-umaru.webp", asuka: "./pet-asuka.webp", doraemon: "./pet-doraemon.webp", elaina: "./pet-elaina.webp", violet: "./pet-violet.webp", bocchi: "./pet-bocchi.webp", xiaohei: "./pet-xiaohei.webp", sama: "./pet-sama.webp", doro: "./pet-doro.webp", guga: "./pet-guga.webp", kiki: "./pet-kiki.webp", usagi: "./pet-usagi.webp", hachiware: "./pet-hachiware.webp" };
 
     // ponytail: pictures and sheets are fitted whole in the pet's place; iCUE's scale, position and angle are not applied.
     function showPet() {

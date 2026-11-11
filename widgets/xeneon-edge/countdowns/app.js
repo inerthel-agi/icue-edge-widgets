@@ -133,7 +133,8 @@
 
         $("overlay").classList.remove("visible");
         const nextDays = daysLeft(next.date);
-        document.documentElement.style.setProperty("--x-accent", next.color);
+        // On the widget, not the root: WidgetRuntime.personalize() rewrites the root's --x-accent every second.
+        $("widget").style.setProperty("--x-accent", next.color);
         $("nextLabel").textContent = next.label;
         $("nextDays").textContent = nextDays < 0 ? "Done" : String(nextDays);
         $("nextUnit").textContent = nextDays === 1 ? "day" : "days";

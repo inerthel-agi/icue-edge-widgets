@@ -12,7 +12,7 @@
 
     /** All games' items in one list, newest first, at most `n`. */
     function merge(games, n) {
-        return games.flatMap(g => (g.items || []).map(it => ({ ...it, game: g.name }))).sort((a, b) => b.at - a.at).slice(0, n);
+        return games.flatMap(g => (g.items || []).map(it => ({ ...it, game: g.name, stale: !!g.stale }))).sort((a, b) => b.at - a.at).slice(0, n);
     }
     function when(at) {
         const d = new Date(at), today = new Date();
@@ -37,7 +37,8 @@
             tape.setAttribute("role", "button"); tape.tabIndex = 0;
             const top = document.createElement("p"), b = document.createElement("b"), em = document.createElement("em");
             b.textContent = it.game.toUpperCase();
-            em.textContent = when(it.at);
+            // The companion could not refresh this game from Steam: its announcements may be out of date.
+            em.textContent = when(it.at) + (it.stale ? " · NOT UPDATED" : "");
             top.append(b, document.createTextNode(` · ${it.title.toUpperCase()}`), em);
             const body = document.createElement("small");
             body.textContent = it.text || "";
