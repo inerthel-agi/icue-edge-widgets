@@ -1,6 +1,6 @@
 [package]
 name = "icue-edge-companion"
-version = "0.1.8"
+version = "0.1.9"
 description = "iCUE Edge Companion"
 authors = ["Inerthel"]
 license = "MIT"

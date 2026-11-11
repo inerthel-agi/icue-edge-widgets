@@ -4,6 +4,16 @@ All notable changes to **icue-edge-widgets** are documented here.
 
 ---
 
+## [Companion 0.1.9] - 2026-11-11
+
+Summary of what changed since iCUE Edge Companion 0.1.8 (details under "Fixed - audit follow-up" below).
+
+- **Spotify**: a volume that a Spotify wait left at 0 comes back once Spotify answers, on the device that was muted; a failed reconnect keeps the signed-in account; Disconnect no longer ends a wait early; Premium is checked again every hour.
+- **Media**: a command no longer holds up the Now Playing and Spotify feeds; the sleep timer pauses what plays; lyrics stop retrying when the track changes.
+- **AI usage**: a session resumed after more than 7 idle days is no longer counted twice; Agent Activity counts all of today's tool calls.
+- **Free Games, Patch Radar, Screen Time, Community**: a failed fetch waits 5 minutes before retrying, an unreadable Screen Time history is kept aside, and the Community list is never replaced by an empty one.
+- **Widgets**: requests that time out try again, stale data is labelled, and several widget fixes (see below). Update widgets from the companion's Widgets page.
+
 ## [Companion 0.1.8] - 2026-11-04
 
 Summary of what changed since iCUE Edge Companion 0.1.7 (details under Unreleased below).
