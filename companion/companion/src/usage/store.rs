@@ -144,6 +144,8 @@ pub struct Runtime {
     pub events: VecDeque<(u64, String)>,
     /// Agent Activity widget: the latest tool calls (time, tool, short target), newest last; Claude only.
     pub activity: VecDeque<(u64, String, String)>,
+    /// (local day, tool calls that day); Claude only. Counted apart because `activity` is capped.
+    pub tools_today: (u64, u64),
     /// Tokens counted per message over the last 15 minutes (time, tokens), for tokens per minute.
     pub recent_tokens: VecDeque<(u64, u64)>,
 }
@@ -248,7 +250,8 @@ fn save_to(shared: &Shared, path: &std::path::Path) -> std::io::Result<()> {
         let saved = &mut st.saved;
         for p in [&mut saved.claude, &mut saved.codex] {
             p.hours.retain(|h, _| *h + HISTORY_MS > now);
-            p.files.retain(|_, f| f.last_seen + 7 * DAY > now);
+            // A log still on disk keeps its offset: a session resumed after a week must not be read again from 0.
+            p.files.retain(|k, f| f.last_seen + 7 * DAY > now || std::path::Path::new(k).exists());
             p.sessions.retain(|_, s| s.last_event + 30 * DAY > now);
             p.counted.retain(|_, (_, seen)| *seen + 7 * DAY > now);
             for h in p.quota_history.values_mut() {
@@ -526,6 +529,26 @@ pub mod tests {
         std::fs::write(&parent_file, b"x").unwrap();
         assert!(save_to(&shared, &parent_file.join("state.json")).is_err());
         assert!(lock(&shared).dirty);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn idle_log_keeps_its_offset_while_the_file_exists() {
+        let shared = load_for_test();
+        let root = std::env::temp_dir().join(format!("companion-files-{}", random_hex(4)));
+        std::fs::create_dir_all(&root).unwrap();
+        let (kept, gone) = (root.join("kept.jsonl"), root.join("gone.jsonl"));
+        std::fs::write(&kept, b"x").unwrap();
+        update(&shared, |st| {
+            for p in [&kept, &gone] {
+                st.saved.claude.files.insert(p.to_string_lossy().to_string(), FileCtx { offset: 42, last_seen: now_ms() - 8 * DAY, ..Default::default() });
+            }
+        });
+        save_to(&shared, &root.join("state.json")).unwrap();
+        let st = lock(&shared);
+        let files = &st.saved.claude.files;
+        assert_eq!(files.get(kept.to_string_lossy().as_ref()).map(|f| f.offset), Some(42));
+        assert!(!files.contains_key(gone.to_string_lossy().as_ref()));
         std::fs::remove_dir_all(root).unwrap();
     }
 

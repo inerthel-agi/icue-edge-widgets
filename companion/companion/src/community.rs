@@ -55,7 +55,8 @@ pub fn index() -> Option<Value> {
     }
     let disk = app_dir().join("community-index.json");
     let mut g = INDEX.lock().unwrap_or_else(|e| e.into_inner());
-    if g.1.is_none() || g.0 + FRESH_MS < now_ms() {
+    // Starts at 0, so the first call downloads; after a failure the retry time holds even with no list.
+    if g.0 + FRESH_MS < now_ms() {
         match download(INDEX_URL, MAX_INDEX).ok().and_then(|b| serde_json::from_slice::<Value>(&b).ok().filter(valid).map(|v| (b, v))) {
             Some((bytes, v)) => {
                 let _ = std::fs::create_dir_all(app_dir()).and_then(|_| atomic_write(&disk, &bytes));
